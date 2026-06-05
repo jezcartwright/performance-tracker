@@ -346,6 +346,10 @@ tbody td{padding:14px 16px;vertical-align:middle}
 .arch-meta .as{font-size:11.5px;color:var(--t3);margin-top:2px}
 .poweredby{position:fixed;left:50%;bottom:16px;transform:translateX(-50%);display:flex;align-items:center;gap:7px;background:#fff;border:1px solid var(--b);border-radius:30px;padding:6px 14px;box-shadow:0 8px 22px rgba(0,0,0,.10);font-size:11.5px;color:var(--t3);font-weight:700;z-index:50}
 .poweredby img{height:16px;width:auto;display:block}
+.logo{overflow:hidden}
+.logo-up{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.logo-prev{width:46px;height:46px;border-radius:11px;display:grid;place-items:center;color:#fff;flex-shrink:0;overflow:hidden;box-shadow:inset 0 -3px 7px rgba(0,0,0,.18)}
+.upbtn{cursor:pointer;display:inline-block}
 @media(max-width:560px){.poweredby{bottom:12px}}
 .admcols{display:grid;grid-template-columns:1fr 1fr;gap:26px}
 @media(max-width:760px){.admcols{grid-template-columns:1fr}}
@@ -401,7 +405,7 @@ tr.rowdone:hover td{opacity:.78}
 <div class="wrap">
 
   <header class="mast">
-    <div class="logo"><img src="data:image/png;base64,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" alt="PI" style="height:26px;width:auto;display:block"></div>
+    <div class="logo" id="clientLogo"></div>
     <div class="mast-id">
       <div class="eyebrow">Performance Intelligence</div>
       <div class="wordmark">Progress Tracker</div>
@@ -629,7 +633,14 @@ tr.rowdone:hover td{opacity:.78}
       <div class="panel">
         <h3>Branding</h3>
         <p class="psub">Live preview — click a colour to theme the whole app.</p>
-        <div class="drop">⬆ Drop your logo here (PNG / SVG)</div>
+        <div class="logo-up">
+          <div class="logo-prev" id="logoPrev"></div>
+          <div>
+            <label class="tinybtn upbtn">Upload client logo<input type="file" accept="image/*" id="logoFile" onchange="uploadLogo(this.files[0])" style="display:none"></label>
+            <button class="tinybtn" id="logoRm" onclick="removeLogo()" style="display:none;margin-left:6px">Remove</button>
+          </div>
+        </div>
+        <p class="psub" style="margin:9px 0 14px">Shown top-left for this client. PNG with a transparent background works best; falls back to the company code when none is set.</p>
         <div class="sw-lbl">Accent (strip) colour</div>
         <div class="sws" id="sws">
           <div class="sw" style="background:#ff6600" data-c="#ff6600" data-i="#d95800" data-s="#fff4ee" data-m="#ffe0cc"></div>
@@ -806,7 +817,27 @@ function setHeader(){
   document.getElementById('meName').textContent=ME.first;
   document.getElementById('meFull').textContent=ME.name||ME.first;
   document.getElementById('meEmail').textContent=ME.email;
+  renderClientLogo();
 }
+function clientMonogram(){ return String((activeCid?(company.code||initials(company.name||'')):'PI')||'•').toUpperCase().slice(0,3); }
+function renderClientLogo(){
+  var el=document.getElementById('clientLogo'); if(!el)return;
+  if(activeCid && company && company.logo){
+    el.style.background='#fff';
+    el.innerHTML='<img src="'+company.logo+'" alt="'+esc(company.name||'')+'" style="width:100%;height:100%;object-fit:contain;padding:5px">';
+  } else {
+    var t=clientMonogram();
+    el.style.background='var(--strip)';
+    el.innerHTML='<span style="font-family:var(--display);font-weight:700;color:#fff;line-height:1;font-size:'+(t.length>=3?'15px':'20px')+';letter-spacing:.5px">'+esc(t)+'</span>';
+  }
+  renderLogoPrev();
+}
+function renderLogoPrev(){ var p=document.getElementById('logoPrev'); var rm=document.getElementById('logoRm'); if(!p)return;
+  if(activeCid && company && company.logo){ p.style.background='#fff'; p.innerHTML='<img src="'+company.logo+'" style="width:100%;height:100%;object-fit:contain;padding:5px">'; if(rm)rm.style.display=''; }
+  else { var t=clientMonogram(); p.style.background='var(--strip)'; p.innerHTML='<span style="font-family:var(--display);font-weight:700;color:#fff;font-size:'+(t.length>=3?'15px':'20px')+'">'+esc(t)+'</span>'; if(rm)rm.style.display='none'; }
+}
+window.uploadLogo=function(file){ if(!isAdmin||!activeCid||!file)return; var rd=new FileReader(); rd.onload=function(){ var img=new Image(); img.onload=function(){ var max=128, sc=Math.min(max/img.width,max/img.height,1); var w=Math.max(1,Math.round(img.width*sc)),h=Math.max(1,Math.round(img.height*sc)); var cv=document.createElement('canvas'); cv.width=w; cv.height=h; cv.getContext('2d').drawImage(img,0,0,w,h); var url; try{url=cv.toDataURL('image/png');}catch(e){url=rd.result;} if(url.length>900000){ alert('That logo is large after processing — try a smaller or simpler image.'); return; } cRef().update({logo:url}).catch(function(e){alert('Could not save logo: '+e.message);}); }; img.onerror=function(){alert('Could not read that image file.');}; img.src=rd.result; }; rd.readAsDataURL(file); };
+window.removeLogo=function(){ if(!isAdmin||!activeCid)return; if(!confirm('Remove this client logo? The top-left mark will fall back to the company code.'))return; cRef().update({logo:FV.delete()}).catch(function(e){alert('Could not remove: '+e.message);}); };
 function renderCoSwitch(){
   var wrap=document.getElementById('coWrap'); if(!wrap)return;
   var ids=Object.keys(companies);
@@ -846,13 +877,14 @@ function startApp(){
   if(!activeCid){
     isAdmin=ME.isSuper; company={}; fns={}; members={}; issues=[]; ME.mid=null;
     document.getElementById('tabAdmin').style.display=isAdmin?'':'none';
-    applyTheme(DEFAULT_THEME); render(); renderAdmin();
+    applyTheme(DEFAULT_THEME); renderClientLogo(); render(); renderAdmin();
     return;
   }
   subC=cRef().onSnapshot(function(s){
     company=s.exists?s.data():{}; company.adminUids=company.adminUids||[];
     isAdmin=ME.isSuper||company.adminUids.indexOf(ME.uid)>=0;
     applyTheme(company.theme||DEFAULT_THEME);
+    renderClientLogo();
     setVisibilityUI(company.visibility||'team');
     document.getElementById('tabAdmin').style.display=isAdmin?'':'none';
     renderAdmin();
