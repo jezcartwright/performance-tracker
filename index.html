@@ -37,7 +37,7 @@
 body{font-family:var(--ui);background:var(--bg);color:var(--t);-webkit-font-smoothing:antialiased;font-size:14px;line-height:1.5;min-height:100vh}
 button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit;-webkit-tap-highlight-color:transparent}
 input,textarea,select{font-family:inherit;font-size:inherit}
-.wrap{max-width:1080px;margin:0 auto;padding:calc(var(--st) + 22px) 22px 70px}
+.wrap{max-width:1080px;margin:0 auto;padding:calc(var(--st) + 22px) 22px 72px}
 
 /* Masthead */
 .mast{display:flex;align-items:flex-start;gap:14px;padding-bottom:18px;border-bottom:1px solid var(--b)}
@@ -282,6 +282,9 @@ tbody td{padding:14px 16px;vertical-align:middle}
 .pcard .pn{font-weight:700;font-size:13.5px;line-height:1.2}
 .pcard .pr{font-size:10.5px;color:var(--t3);margin-top:3px;text-transform:uppercase;letter-spacing:.4px;font-weight:700}
 .pcard .pc{margin-top:8px;font-size:11px;font-weight:700;color:var(--strip-ink);background:var(--card);border:1px solid var(--strip-mid);border-radius:20px;padding:2px 9px;display:inline-block}
+.pcard .chips{display:flex;gap:5px;justify-content:center;flex-wrap:wrap;margin-top:8px}
+.pcard .chips .pc{margin-top:0}
+.pcard .pcount{font-size:11px;font-weight:700;color:var(--t2);background:var(--bg);border:1px solid var(--b);border-radius:20px;padding:2px 9px;display:inline-block}
 /* whole-org chart */
 .orgchart{padding-top:8px}
 .orgbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:0 2px 4px;padding-bottom:14px}
@@ -344,7 +347,7 @@ tbody td{padding:14px 16px;vertical-align:middle}
 .arch-meta{flex:1;min-width:0}
 .arch-meta .an{font-weight:700;font-size:14px}
 .arch-meta .as{font-size:11.5px;color:var(--t3);margin-top:2px}
-.poweredby{position:fixed;left:50%;bottom:14px;transform:translateX(-50%);display:flex;align-items:center;gap:6px;font-size:9.5px;letter-spacing:.3px;color:var(--t3);font-weight:700;z-index:50}
+.poweredby{position:fixed;left:50%;bottom:14px;transform:translateX(-50%);display:flex;align-items:center;gap:6px;font-size:9.5px;letter-spacing:.3px;color:var(--t3);font-weight:700;z-index:50;background:var(--bg);padding:7px 16px;border-radius:30px}
 .poweredby img{height:13px;width:auto;display:block}
 .logo{overflow:hidden}
 .logo-up{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
@@ -1170,12 +1173,20 @@ function nodeLI(mid,fid,seen){ seen=seen||{}; if(seen[mid])return ''; seen[mid]=
 }
 function deptList(){ return Object.keys(fns).sort(function(a,b){return (fns[a].name||'').localeCompare(fns[b].name||'');}); }
 function fnNameOfLeader(mid){ var ks=Object.keys(fns); for(var i=0;i<ks.length;i++){ if(fns[ks[i]].leaderMid===mid) return fns[ks[i]].name; } return ''; }
+function teamCount(mid){
+  if(company.ceoMemberId===mid) return Object.keys(members).filter(function(x){return x!==mid;}).length;
+  var m=members[mid]; if(!m) return 0; var fid=m.functionId;
+  if(fnsLeader(fid)===mid) return Object.keys(members).filter(function(x){return members[x].functionId===fid && x!==mid;}).length;
+  function rec(id){ var k=childrenOf(id,fid); var n=k.length; k.forEach(function(x){n+=rec(x);}); return n; }
+  return rec(mid);
+}
+function peopleChip(mid){ var n=teamCount(mid); return n>0?'<div class="pcount">'+n+(n===1?' person':' people')+'</div>':''; }
 function orgCard(mid,kind){
   var lead=(kind==='leader'), ceo=(kind==='ceo');
   var oc=openCountFor(mid); var chip=oc>0?'<div class="pc">'+oc+' open</div>':'';
   var role=ceo?'CEO':(lead?('Leader · '+esc(fnNameOfLeader(mid)||'')):'Team member');
   var dots=MANAGING?'<span class="ocdots" onclick="event.stopPropagation();toggleCardMenu(\''+mid+'\')">⋯</span>'+cardMenu(mid,kind):'';
-  return '<div class="pcard'+(lead?' leader':'')+(ceo?' ceoc':'')+'" onclick="openProfile(\''+mid+'\')">'+dots+'<div class="av" style="background:'+(ceo?'#1a1a1a':personColor(mid))+'">'+esc(personInit(mid))+'</div><div class="pn">'+esc(personName(mid))+'</div><div class="pr">'+role+'</div>'+chip+'</div>';
+  return '<div class="pcard'+(lead?' leader':'')+(ceo?' ceoc':'')+'" onclick="openProfile(\''+mid+'\')">'+dots+'<div class="av" style="background:'+(ceo?'#1a1a1a':personColor(mid))+'">'+esc(personInit(mid))+'</div><div class="pn">'+esc(personName(mid))+'</div><div class="pr">'+role+'</div><div class="chips">'+peopleChip(mid)+chip+'</div></div>';
 }
 function cardMenu(mid,kind){
   var m=members[mid]; var fid=m?m.functionId:null; var items='';
@@ -1185,8 +1196,8 @@ function cardMenu(mid,kind){
   if(kind!=='ceo') items+='<div class="dz" onclick="event.stopPropagation();removeFromOrg(\''+mid+'\')">Remove from org</div>';
   return '<div class="ocmenu" id="ocm_'+mid+'">'+items+'</div>';
 }
-function emptyCeoSlot(){ return '<div class="pcard empty ceoc" onclick="appointCEOPick()"><div class="av" style="background:var(--t3)">♛</div><div class="pn">No CEO yet</div><div class="pr">'+(MANAGING?'tap to appoint':'not set')+'</div></div>'; }
-function emptyLeaderSlot(fid){ var f=fns[fid]; return '<div class="pcard empty" onclick="appointLeaderPick(\''+fid+'\')"><div class="av" style="background:'+(f?f.color:'var(--t3)')+';opacity:.45">?</div><div class="pn">'+esc(f?f.name:'')+'</div><div class="pr">'+(MANAGING?'tap to set leader':'no leader')+'</div></div>'; }
+function emptyCeoSlot(){ var n=Object.keys(members).length; return '<div class="pcard empty ceoc" onclick="appointCEOPick()"><div class="av" style="background:var(--t3)">♛</div><div class="pn">No CEO yet</div><div class="pr">'+(MANAGING?'tap to appoint':'not set')+'</div>'+(n?'<div class="chips"><div class="pcount">'+n+(n===1?' person':' people')+'</div></div>':'')+'</div>'; }
+function emptyLeaderSlot(fid){ var f=fns[fid]; var n=Object.keys(members).filter(function(x){return members[x].functionId===fid;}).length; return '<div class="pcard empty" onclick="appointLeaderPick(\''+fid+'\')"><div class="av" style="background:'+(f?f.color:'var(--t3)')+';opacity:.45">?</div><div class="pn">'+esc(f?f.name:'')+'</div><div class="pr">'+(MANAGING?'tap to set leader':'no leader')+'</div>'+(n?'<div class="chips"><div class="pcount">'+n+(n===1?' person':' people')+'</div></div>':'')+'</div>'; }
 function leaderNode(fid,seen){
   var lid=fnsLeader(fid);
   if(lid && members[lid]){
