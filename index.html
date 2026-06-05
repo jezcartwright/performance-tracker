@@ -256,7 +256,7 @@ tbody td{padding:14px 16px;vertical-align:middle}
 .co-row:first-child{border-top:none}
 .co-row .nm{font-weight:700;flex:1}
 .co-row .swatch{width:16px;height:16px;border-radius:5px;flex-shrink:0}
-#orgWrap{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:18px}
+#orgWrap{display:block}
 .dept{background:var(--card);border:1px solid var(--b);border-radius:14px;padding:18px 14px 24px;overflow-x:auto}
 .dept-h{display:flex;align-items:center;gap:9px;margin:0 4px 14px}
 .dept-h .dh-name{font-family:var(--ui);font-weight:800;font-size:13px;letter-spacing:.3px;flex:1}
@@ -1228,6 +1228,7 @@ function renderTeam(){
   var rootCard=(ceo&&members[ceo])?orgCard(ceo,'ceo'):emptyCeoSlot();
   var tree='<div class="tree"><ul><li>'+rootCard+senior+'</li></ul></div>';
   wrap.innerHTML=controlsBar()+'<div class="dept orgchart">'+tree+'</div>';
+  var sc=wrap.querySelector('.orgchart'); if(sc){ sc.scrollLeft=Math.max(0,(sc.scrollWidth-sc.clientWidth)/2); }
 }
 window.toggleManageOrg=function(){ MANAGING=!MANAGING; if(openOcm){openOcm.classList.remove('on');openOcm=null;} renderTeam(); };
 var openOcm=null;
