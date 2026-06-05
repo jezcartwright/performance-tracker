@@ -255,24 +255,35 @@ tbody td{padding:14px 16px;vertical-align:middle}
 .co-row:first-child{border-top:none}
 .co-row .nm{font-weight:700;flex:1}
 .co-row .swatch{width:16px;height:16px;border-radius:5px;flex-shrink:0}
-#orgWrap{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:18px}
-.dept{background:var(--card);border:1px solid var(--b);border-radius:14px;padding:18px 18px 24px}
-.dept-h{display:flex;align-items:center;gap:9px;margin-bottom:18px}
+#orgWrap{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:18px}
+.dept{background:var(--card);border:1px solid var(--b);border-radius:14px;padding:18px 14px 24px;overflow-x:auto}
+.dept-h{display:flex;align-items:center;gap:9px;margin:0 4px 14px}
 .dept-h .dh-name{font-family:var(--ui);font-weight:800;font-size:13px;letter-spacing:.3px;flex:1}
 .dept-h .dh-meta{font-size:11.5px;color:var(--t3);font-weight:600}
-.org{display:flex;flex-direction:column;align-items:center}
-.org-stem{width:2px;height:20px;background:var(--b)}
-.org-members{display:flex;gap:22px;position:relative;padding-top:20px}
-.org-members::before{content:"";position:absolute;top:0;left:25%;right:25%;height:2px;background:var(--b)}
-.org-members>.pcard{position:relative}
-.org-members>.pcard::before{content:"";position:absolute;top:-20px;left:50%;width:2px;height:20px;background:var(--b);transform:translateX(-50%)}
-.pcard{width:148px;border:1px solid var(--b);border-radius:12px;padding:13px 10px;text-align:center;background:#fff;cursor:pointer;transition:transform .12s,box-shadow .12s,border-color .12s}
+.tree{display:flex;justify-content:center;min-width:max-content;margin:0 auto}
+.tree ul{position:relative;padding-top:20px;display:flex;justify-content:center}
+.tree li{list-style:none;position:relative;padding:20px 9px 0;text-align:center}
+.tree li::before,.tree li::after{content:"";position:absolute;top:0;right:50%;border-top:2px solid var(--b);width:50%;height:20px}
+.tree li::after{right:auto;left:50%;border-left:2px solid var(--b)}
+.tree li::before{border-right:2px solid var(--b)}
+.tree li:only-child::before,.tree li:only-child::after{display:none}
+.tree li:first-child::before,.tree li:last-child::after{border:0 none}
+.tree li:last-child::before{border-right:2px solid var(--b)}
+.tree ul ul::before{content:"";position:absolute;top:0;left:50%;border-left:2px solid var(--b);width:0;height:20px}
+.tree>ul{padding-top:0}
+.tree>ul>li{padding-top:0}
+.tree>ul>li::before,.tree>ul>li::after{display:none}
+.pcard{display:inline-block;width:150px;border:1px solid var(--b);border-radius:12px;padding:13px 10px;text-align:center;background:#fff;cursor:pointer;vertical-align:top;transition:transform .12s,box-shadow .12s,border-color .12s}
 .pcard:hover{border-color:var(--strip);box-shadow:0 7px 18px rgba(0,0,0,.07);transform:translateY(-2px)}
 .pcard.leader{border-color:var(--strip-mid);background:var(--strip-soft)}
 .pcard .av{width:42px;height:42px;border-radius:50%;margin:0 auto 9px;display:grid;place-items:center;color:#fff;font-weight:700;font-size:15px}
 .pcard .pn{font-weight:700;font-size:13.5px;line-height:1.2}
 .pcard .pr{font-size:10.5px;color:var(--t3);margin-top:3px;text-transform:uppercase;letter-spacing:.4px;font-weight:700}
 .pcard .pc{margin-top:8px;font-size:11px;font-weight:700;color:var(--strip-ink);background:var(--card);border:1px solid var(--strip-mid);border-radius:20px;padding:2px 9px;display:inline-block}
+.admcols{display:grid;grid-template-columns:1fr 1fr;gap:26px}
+@media(max-width:760px){.admcols{grid-template-columns:1fr}}
+.admsub{font-family:var(--ui);font-size:11px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;color:var(--t3);margin:0 0 11px;padding-bottom:8px;border-bottom:1px solid var(--b2)}
+.mrow-ctl{display:flex;gap:6px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
 .pf-head{display:flex;align-items:center;gap:16px;margin:6px 0 22px}
 .pf-ava{width:62px;height:62px;border-radius:50%;display:grid;place-items:center;color:#fff;font-weight:700;font-size:22px;flex-shrink:0;background:var(--strip)}
 .pf-name{font-family:var(--display);font-size:30px;font-weight:600;margin:0}
@@ -495,14 +506,32 @@ tr.rowdone:hover td{opacity:.78}
           <button class="tg" onclick="seedTestData()">⚙ Seed test data (123 &amp; ABC)</button>
         </div>
       </div>
-      <div class="panel">
-        <h3>Functions &amp; leaders</h3>
-        <p class="psub">Admin defines the list. Each function has one leader, tagged automatically.</p>
-        <div id="admFns"></div>
-        <div id="addFnWrap" style="margin-top:13px;display:none">
-          <input class="adm-input" id="newFnName" placeholder="New function name">
-          <div id="newFnColors" class="sws" style="margin-bottom:10px"></div>
-          <button class="tg" style="width:100%;justify-content:center" onclick="addFunction()">+ Add function</button>
+      <div class="panel" style="grid-column:1/-1">
+        <h3>Departments &amp; people</h3>
+        <p class="psub">Define departments and leaders, then add people and set who they report to. The <a href="#" onclick="goTeam();return false" style="color:var(--strip-ink);font-weight:700;text-decoration:none">Team org chart</a> shows it all visually.</p>
+        <div class="admcols">
+          <div>
+            <div class="admsub">Departments &amp; leaders</div>
+            <div id="admFns"></div>
+            <div id="addFnWrap" style="margin-top:13px;display:none">
+              <input class="adm-input" id="newFnName" placeholder="New department name">
+              <div id="newFnColors" class="sws" style="margin-bottom:10px"></div>
+              <button class="tg" style="width:100%;justify-content:center" onclick="addFunction()">+ Add department</button>
+            </div>
+          </div>
+          <div>
+            <div class="admsub">People &amp; reporting</div>
+            <div id="admMembers"></div>
+            <div id="addMemberWrap" style="margin-top:13px;display:none">
+              <div style="display:flex;gap:8px"><input class="adm-input" id="nmFirst" placeholder="First name"><input class="adm-input" id="nmLast" placeholder="Last name"></div>
+              <input class="adm-input" id="nmEmail" type="email" placeholder="email@company.com">
+              <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
+                <select class="fn-sel" id="nmFn" style="max-width:none;flex:1"></select>
+                <label class="showdone" style="margin:0"><input type="checkbox" id="nmLeader"> Leader</label>
+              </div>
+              <button class="tg" style="width:100%;justify-content:center" onclick="addMember()">+ Add member</button>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -526,21 +555,6 @@ tr.rowdone:hover td{opacity:.78}
           <div class="sw" style="background:#2563eb" data-c="#2563eb" data-i="#1d4ed8" data-s="#eef3fe" data-m="#cfddfb"></div>
           <div class="sw" style="background:#7c3aed" data-c="#7c3aed" data-i="#6427c7" data-s="#f4eefe" data-m="#e0cdfb"></div>
           <div class="sw" style="background:#1a1a1a" data-c="#1a1a1a" data-i="#000000" data-s="#efedea" data-m="#d8d4cf"></div>
-        </div>
-      </div>
-
-      <div class="panel">
-        <h3>Members &amp; roles</h3>
-        <p class="psub">Add people by email — they're tagged into their function straight away, and their login links automatically when they first sign in.</p>
-        <div id="admMembers"></div>
-        <div id="addMemberWrap" style="margin-top:13px;display:none">
-          <div style="display:flex;gap:8px"><input class="adm-input" id="nmFirst" placeholder="First name"><input class="adm-input" id="nmLast" placeholder="Last name"></div>
-          <input class="adm-input" id="nmEmail" type="email" placeholder="email@company.com">
-          <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
-            <select class="fn-sel" id="nmFn" style="max-width:none;flex:1"></select>
-            <label class="showdone" style="margin:0"><input type="checkbox" id="nmLeader"> Leader</label>
-          </div>
-          <button class="tg" style="width:100%;justify-content:center" onclick="addMember()">+ Add member</button>
         </div>
       </div>
 
@@ -929,7 +943,8 @@ document.addEventListener('click',function(){ hideMenus(); });
 function setVisibilityUI(v){ document.querySelectorAll('#admin .radio[data-v]').forEach(function(r){ r.classList.toggle('sel',r.dataset.v===v); r.style.pointerEvents=isAdmin?'':'none'; r.style.opacity=isAdmin?'':'.65'; }); }
 window.setVisibility=function(v){ if(!isAdmin||!activeCid)return; cRef().update({visibility:v}); };
 window.setLeader=function(fid,mid){ if(!isAdmin)return; fnsRef().doc(fid).update({leaderMid:mid||null,leaderName: mid?personName(mid):''}); };
-window.setMemberFn=function(mid,fid){ if(!isAdmin)return; membersRef().doc(mid).update({functionId:fid||null}); };
+window.setMemberFn=function(mid,fid){ if(!isAdmin)return; membersRef().doc(mid).update({functionId:fid||null,managerMid:null}); };
+window.setManager=function(mid,mgr){ if(!isAdmin)return; if(mgr===mid)return; membersRef().doc(mid).update({managerMid:mgr||null}); };
 window.removeMember=function(mid){ if(!isAdmin)return; if(!confirm('Remove '+personName(mid)+' from this company?'))return; membersRef().doc(mid).delete(); };
 window.pickNewColor=function(el){ document.querySelectorAll('#newFnColors .cpick').forEach(function(x){x.classList.remove('sel');}); el.classList.add('sel'); newFnColor=el.dataset.c; };
 window.addFunction=function(){ if(!isAdmin)return; var n=document.getElementById('newFnName').value.trim(); if(!n)return; fnsRef().add({name:n,color:newFnColor,leaderMid:null,leaderName:''}); document.getElementById('newFnName').value=''; };
@@ -972,15 +987,20 @@ function renderAdmin(){
   if(afw){ afw.style.display=(isAdmin&&activeCid)?'block':'none'; var cc=document.getElementById('newFnColors'); if(cc&&!cc.dataset.built){ cc.innerHTML=PALETTE.map(function(c,n){return '<span class="cpick'+(n===0?' sel':'')+'" style="background:'+c+'" data-c="'+c+'" onclick="pickNewColor(this)"></span>';}).join(''); cc.dataset.built='1'; } }
   // members
   var me=document.getElementById('admMembers');
-  if(me){ var mk=Object.keys(members);
-    me.innerHTML = mk.length ? mk.map(function(mid){ var m=members[mid]; var adm=(company.adminUids||[]).indexOf(m.uid)>=0 && m.uid;
-      var fnsel = isAdmin ? '<select class="fn-sel" onchange="setMemberFn(\''+mid+'\',this.value)"><option value="">— function —</option>'+fnOptions(m.functionId)+'</select>' : (m.functionId&&fns[m.functionId]?esc(fns[m.functionId].name):'—');
-      var tags=''; if(adm)tags+=' <span class="ld" style="color:var(--strip-ink)">admin</span>'; if(!m.uid)tags+=' <span class="ld" style="opacity:.6">invited</span>';
+  if(me){ var mk=Object.keys(members).sort(function(a,b){return personName(a).localeCompare(personName(b));});
+    me.innerHTML = mk.length ? mk.map(function(mid){ var m=members[mid]; var adm=(company.adminUids||[]).indexOf(m.uid)>=0 && m.uid; var isLead=isLeaderOfMid(mid);
+      var fnsel = isAdmin ? '<select class="fn-sel" onchange="setMemberFn(\''+mid+'\',this.value)"><option value="">— dept —</option>'+fnOptions(m.functionId)+'</select>' : (m.functionId&&fns[m.functionId]?esc(fns[m.functionId].name):'—');
+      var mgrsel='';
+      if(isAdmin && m.functionId && !isLead){
+        var opts=Object.keys(members).filter(function(o){return o!==mid && members[o].functionId===m.functionId;}).map(function(o){ var sel=(m.managerMid===o)?' selected':''; var lead=(o===fnsLeader(m.functionId))?' (leader)':''; return '<option value="'+o+'"'+sel+'>'+esc(personName(o))+lead+'</option>'; }).join('');
+        mgrsel=' <select class="fn-sel" title="Reports to" onchange="setManager(\''+mid+'\',this.value)"><option value="">↳ reports to leader</option>'+opts+'</select>';
+      }
+      var tags=''; if(isLead)tags+=' <span class="ld" style="color:var(--strip-ink)">leader</span>'; if(adm)tags+=' <span class="ld" style="color:var(--strip-ink)">admin</span>'; if(!m.uid)tags+=' <span class="ld" style="opacity:.6">invited</span>';
       var rm = isAdmin ? '<button class="tinybtn" onclick="removeMember(\''+mid+'\')" style="background:#fbeaea;color:#b42318;border-color:#f3c9c4">Remove</button>' : '';
-      return '<div class="frow"><span class="mini" style="background:'+personColor(mid)+';width:24px;height:24px;font-size:10px">'+esc(personInit(mid))+'</span><span class="nm" style="font-size:13px">'+esc(personName(mid))+tags+'</span><span class="ld">'+fnsel+' '+rm+'</span></div>';
+      return '<div class="frow" style="align-items:flex-start"><span class="mini" style="background:'+personColor(mid)+';width:24px;height:24px;font-size:10px;margin-top:2px">'+esc(personInit(mid))+'</span><span class="nm" style="font-size:13px;flex:1">'+esc(personName(mid))+tags+'</span><span class="mrow-ctl">'+fnsel+mgrsel+' '+rm+'</span></div>';
     }).join('') : '<div class="psub">'+(activeCid?'No members yet — add people below.':'Select or create a company first.')+'</div>';
   }
-  var amw=document.getElementById('addMemberWrap'); if(amw){ amw.style.display=(isAdmin&&activeCid)?'block':'none'; var nf=document.getElementById('nmFn'); if(nf)nf.innerHTML='<option value="">— function —</option>'+fnOptions(''); }
+  var amw=document.getElementById('addMemberWrap'); if(amw){ amw.style.display=(isAdmin&&activeCid)?'block':'none'; var nf=document.getElementById('nmFn'); if(nf)nf.innerHTML='<option value="">— department —</option>'+fnOptions(''); }
   // membership panel
   var mp=document.getElementById('admMembership');
   if(mp){ if(!activeCid){ mp.innerHTML='<div class="psub">No company selected.</div>'; }
@@ -1000,16 +1020,26 @@ function pcardHTML(mid,lead){
   var oc=openCountFor(mid); var chip=oc>0?'<div class="pc">'+oc+' open</div>':'';
   return '<div class="pcard'+(lead?' leader':'')+'" onclick="openProfile(\''+mid+'\')"><div class="av" style="background:'+personColor(mid)+'">'+esc(personInit(mid))+'</div><div class="pn">'+esc(personName(mid))+'</div><div class="pr">'+(lead?'Leader':'Team member')+'</div>'+chip+'</div>';
 }
+function fnsLeader(fid){ return fns[fid]?fns[fid].leaderMid:null; }
+function effMgr(mid,fid){ var m=members[mid]; var lead=fnsLeader(fid); if(!m)return lead; var mg=m.managerMid; if(mg && mg!==mid && members[mg] && members[mg].functionId===fid) return mg; return lead; }
+function childrenOf(parentMid,fid){ return Object.keys(members).filter(function(mid){ if(members[mid].functionId!==fid)return false; if(mid===fnsLeader(fid))return false; return effMgr(mid,fid)===parentMid; }).sort(function(a,b){return personName(a).localeCompare(personName(b));}); }
+function nodeLI(mid,fid,seen){ seen=seen||{}; if(seen[mid])return ''; seen[mid]=1;
+  var kids=childrenOf(mid,fid);
+  var html='<li>'+pcardHTML(mid,mid===fnsLeader(fid));
+  if(kids.length){ html+='<ul>'+kids.map(function(k){return nodeLI(k,fid,seen);}).join('')+'</ul>'; }
+  return html+'</li>';
+}
 function renderTeam(){
   var wrap=document.getElementById('orgWrap'); if(!wrap)return;
   if(!activeCid){ wrap.innerHTML='<div class="pf-empty">No company selected.</div>'; return; }
-  var fk=Object.keys(fns); if(!fk.length){ wrap.innerHTML='<div class="pf-empty">No departments yet — add functions in Admin &amp; Setup.</div>'; return; }
+  var fk=Object.keys(fns); if(!fk.length){ wrap.innerHTML='<div class="pf-empty">No departments yet — add one in Admin &amp; Setup.</div>'; return; }
   wrap.innerHTML=fk.map(function(fid){ var f=fns[fid];
-    var mem=Object.keys(members).filter(function(mid){ return members[mid].functionId===fid && mid!==f.leaderMid; });
-    var memberCards=mem.length?mem.map(function(mid){return pcardHTML(mid,false);}).join(''):pcardHTML(null,false);
-    var count=mem.length+(f.leaderMid?1:0);
-    return '<div class="dept"><div class="dept-h"><span class="fn-dot" style="background:'+f.color+'"></span><span class="dh-name">'+esc(f.name)+'</span><span class="dh-meta">'+count+(count===1?' person':' people')+'</span></div>'
-      +'<div class="org">'+pcardHTML(f.leaderMid,true)+'<div class="org-stem"></div><div class="org-members">'+memberCards+'</div></div></div>';
+    var count=Object.keys(members).filter(function(mid){return members[mid].functionId===fid;}).length;
+    var tree;
+    if(f.leaderMid){ tree='<div class="tree"><ul>'+nodeLI(f.leaderMid,fid,{})+'</ul></div>'; }
+    else { var orphans=Object.keys(members).filter(function(mid){return members[mid].functionId===fid;});
+      tree='<div class="tree"><ul><li>'+pcardHTML(null,true)+(orphans.length?'<ul>'+orphans.map(function(mid){return '<li>'+pcardHTML(mid,false)+'</li>';}).join('')+'</ul>':'')+'</li></ul></div>'; }
+    return '<div class="dept"><div class="dept-h"><span class="fn-dot" style="background:'+f.color+'"></span><span class="dh-name">'+esc(f.name)+'</span><span class="dh-meta">'+count+(count===1?' person':' people')+'</span></div>'+tree+'</div>';
   }).join('');
 }
 
