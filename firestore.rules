@@ -1,0 +1,126 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ---- helpers ----
+    function signedIn() { return request.auth != null; }
+    function uid() { return request.auth.uid; }
+
+    function teamDoc(teamId) {
+      return get(/databases/$(database)/documents/teams/$(teamId)).data;
+    }
+    function isMember(teamId) {
+      return signedIn() &&
+        exists(/databases/$(database)/documents/teams/$(teamId)/members/$(uid()));
+    }
+    function isAdmin(teamId) {
+      return signedIn() && teamDoc(teamId).adminUids.hasAny([uid()]);
+    }
+
+    // ---- per-user identity ----
+    match /users/{userId} {
+      allow read, write: if signedIn() && userId == uid();
+    }
+
+    // ---- team ----
+    match /teams/{teamId} {
+
+      // Read: any member of the team.
+      allow read: if isMember(teamId);
+
+      // Create (bootstrap): first user may create the team only if they
+      // list themselves as an admin. Functions/members are created after.
+      allow create: if signedIn()
+        && request.resource.data.adminUids.hasAny([uid()]);
+
+      // Update: only admins. The adminUids list itself is admin-managed.
+      allow update: if isAdmin(teamId);
+      allow delete: if false;
+
+      // ---- functions / departments ----
+      match /functions/{functionId} {
+        allow read: if isMember(teamId);
+        // Admins manage the function list and leader assignments.
+        // (also allow create during bootstrap by the team's admin)
+        allow create, update, delete: if isAdmin(teamId);
+      }
+
+      // ---- members / roles ----
+      match /members/{memberId} {
+        allow read: if isMember(teamId);
+
+        // A user may create / update ONLY their own membership record,
+        // and may not grant themselves a role here (admin lives on the
+        // team's adminUids, which only an admin can edit).
+        allow create, update: if signedIn() && memberId == uid()
+          && !('role' in request.resource.data);
+
+        // Admins may edit any member (e.g. assign a functionId).
+        allow create, update, delete: if isAdmin(teamId);
+      }
+
+      // ---- issues ----
+      match /issues/{issueId} {
+
+        function existing() { return resource.data; }
+        function incoming() { return request.resource.data; }
+        function isRaiser() { return signedIn() && existing().raiserUid == uid(); }
+        function isLeader() { return signedIn() && existing().leaderUid == uid(); }
+        function isParticipant() {
+          return signedIn() && existing().participants.hasAny([uid()]);
+        }
+
+        // V1 read floor: any team member can read issues. Finer per-issue
+        // visibility (participants-only / leader-scoped) is applied in the
+        // client for V1 and is scheduled to move into rules in Phase 1.1.
+        allow read: if isMember(teamId);
+
+        // Create: a member raises their own issue; status starts 'open'
+        // and the raiser must be a participant.
+        allow create: if isMember(teamId)
+          && incoming().raiserUid == uid()
+          && incoming().status == 'open'
+          && incoming().participants.hasAny([uid()]);
+
+        // Update rules:
+        //  - Marking 'done' (Resolved) is RAISER-ONLY.
+        //  - Any other change (status open/prog, adding participants, chat
+        //    bumps to updatedAt) is allowed for the raiser, the tagged
+        //    leader, a participant, or an admin.
+        //  - The raiserUid can never be changed.
+        allow update: if isMember(teamId)
+          && incoming().raiserUid == existing().raiserUid
+          && (
+            (incoming().status == 'done' && isRaiser())
+            ||
+            (incoming().status != 'done'
+              && (isRaiser() || isLeader() || isParticipant() || isAdmin(teamId)))
+          );
+
+        allow delete: if isAdmin(teamId);
+
+        // ---- chat messages ----
+        match /messages/{msgId} {
+          function parentIssue() {
+            return get(/databases/$(database)/documents/teams/$(teamId)/issues/$(issueId)).data;
+          }
+          allow read: if isMember(teamId);
+
+          // Author must be the sender; participants, leader, raiser or admin
+          // may post. System messages follow the same rule (written by the
+          // user whose action generated them).
+          allow create: if isMember(teamId)
+            && request.resource.data.authorUid == uid()
+            && (
+              parentIssue().raiserUid == uid()
+              || parentIssue().leaderUid == uid()
+              || parentIssue().participants.hasAny([uid()])
+              || isAdmin(teamId)
+            );
+
+          allow update, delete: if false; // chat history is immutable
+        }
+      }
+    }
+  }
+}
