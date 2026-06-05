@@ -255,6 +255,35 @@ tbody td{padding:14px 16px;vertical-align:middle}
 .co-row:first-child{border-top:none}
 .co-row .nm{font-weight:700;flex:1}
 .co-row .swatch{width:16px;height:16px;border-radius:5px;flex-shrink:0}
+#orgWrap{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:18px}
+.dept{background:var(--card);border:1px solid var(--b);border-radius:14px;padding:18px 18px 24px}
+.dept-h{display:flex;align-items:center;gap:9px;margin-bottom:18px}
+.dept-h .dh-name{font-family:var(--ui);font-weight:800;font-size:13px;letter-spacing:.3px;flex:1}
+.dept-h .dh-meta{font-size:11.5px;color:var(--t3);font-weight:600}
+.org{display:flex;flex-direction:column;align-items:center}
+.org-stem{width:2px;height:20px;background:var(--b)}
+.org-members{display:flex;gap:22px;position:relative;padding-top:20px}
+.org-members::before{content:"";position:absolute;top:0;left:25%;right:25%;height:2px;background:var(--b)}
+.org-members>.pcard{position:relative}
+.org-members>.pcard::before{content:"";position:absolute;top:-20px;left:50%;width:2px;height:20px;background:var(--b);transform:translateX(-50%)}
+.pcard{width:148px;border:1px solid var(--b);border-radius:12px;padding:13px 10px;text-align:center;background:#fff;cursor:pointer;transition:transform .12s,box-shadow .12s,border-color .12s}
+.pcard:hover{border-color:var(--strip);box-shadow:0 7px 18px rgba(0,0,0,.07);transform:translateY(-2px)}
+.pcard.leader{border-color:var(--strip-mid);background:var(--strip-soft)}
+.pcard .av{width:42px;height:42px;border-radius:50%;margin:0 auto 9px;display:grid;place-items:center;color:#fff;font-weight:700;font-size:15px}
+.pcard .pn{font-weight:700;font-size:13.5px;line-height:1.2}
+.pcard .pr{font-size:10.5px;color:var(--t3);margin-top:3px;text-transform:uppercase;letter-spacing:.4px;font-weight:700}
+.pcard .pc{margin-top:8px;font-size:11px;font-weight:700;color:var(--strip-ink);background:var(--card);border:1px solid var(--strip-mid);border-radius:20px;padding:2px 9px;display:inline-block}
+.pf-head{display:flex;align-items:center;gap:16px;margin:6px 0 22px}
+.pf-ava{width:62px;height:62px;border-radius:50%;display:grid;place-items:center;color:#fff;font-weight:700;font-size:22px;flex-shrink:0;background:var(--strip)}
+.pf-name{font-family:var(--display);font-size:30px;font-weight:600;margin:0}
+.pf-sub{font-size:13.5px;color:var(--t2);font-weight:600;margin-top:3px}
+.pf-email{font-size:12.5px;color:var(--t3);margin-top:2px}
+.pf-h3{font-family:var(--ui);font-size:11px;font-weight:800;letter-spacing:1.4px;text-transform:uppercase;color:var(--t3);margin:0 0 12px}
+.pf-issue{display:flex;align-items:center;gap:12px;padding:13px 15px;background:var(--card);border:1px solid var(--b);border-radius:11px;margin-bottom:9px;cursor:pointer;transition:border-color .12s}
+.pf-issue:hover{border-color:var(--strip)}
+.pf-issue .pfi-t{flex:1;font-weight:600;font-size:14px}
+.pf-issue .pfi-role{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--t3)}
+.pf-empty{color:var(--t3);font-size:13px;padding:8px 2px}
 .showdone{margin-left:auto;display:flex;align-items:center;gap:7px;font-size:12.5px;font-weight:600;color:var(--t2);cursor:pointer;user-select:none}
 .showdone input{width:15px;height:15px;accent-color:var(--strip);cursor:pointer;margin:0}
 tr.rowdone td{opacity:.5}
@@ -322,6 +351,7 @@ tr.rowdone:hover td{opacity:.78}
     <button class="tg active" data-s="dashboard" id="tabAll">All Issues <span class="ct" id="allCount">0</span></button>
     <button class="tg" data-s="dashboard" id="tabMine">Raised by me</button>
     <button class="tg" data-s="dashboard" id="tabDone">Completed <span class="ct" id="doneCount">0</span></button>
+    <button class="tg" data-s="team" id="tabTeam">Team</button>
     <button class="tg" data-s="admin" id="tabAdmin" style="display:none">Admin &amp; Setup</button>
     <span class="grow"></span>
     <button class="primary" onclick="openRaise()">
@@ -428,6 +458,28 @@ tr.rowdone:hover td{opacity:.78}
     </div>
   </section>
 
+  <!-- TEAM / ORG CHART -->
+  <section class="screen" id="team">
+    <div id="orgWrap"></div>
+  </section>
+
+  <!-- PROFILE -->
+  <section class="screen" id="profile">
+    <button class="back" onclick="goTeam()">
+      <svg viewBox="0 0 24 24" width="15" fill="none" stroke="currentColor" stroke-width="2"><path d="m15 18-6-6 6-6"/></svg> Team
+    </button>
+    <div class="pf-head">
+      <span class="pf-ava" id="pfAva">·</span>
+      <div>
+        <h1 class="pf-name" id="pfName">—</h1>
+        <div class="pf-sub"><span id="pfRole">—</span> · <span id="pfFn">—</span></div>
+        <div class="pf-email" id="pfEmail"></div>
+      </div>
+    </div>
+    <h3 class="pf-h3">Issues they're dealing with</h3>
+    <div id="pfIssues"></div>
+  </section>
+
   <!-- ADMIN -->
   <section class="screen" id="admin">
     <div class="adm-top"><span class="flag" id="admCoLabel">● Setup</span><span id="superFlag" class="superflag" style="display:none">SUPER ADMIN</span></div>
@@ -459,7 +511,7 @@ tr.rowdone:hover td{opacity:.78}
         <p class="psub">Set per team — flip this when setting up each team.</p>
         <div class="radio" data-v="team" onclick="setVisibility('team')"><div class="rd"></div><div><div class="rt">Whole team sees all issues</div><div class="rs">Everyone on this team views every issue in the table.</div></div></div>
         <div class="radio" data-v="participants" onclick="setVisibility('participants')"><div class="rd"></div><div><div class="rt">Participants only</div><div class="rs">Visible to the raiser, the tagged leader, and anyone added.</div></div></div>
-        <div class="radio" data-v="leader" onclick="setVisibility('leader')"><div class="rd"></div><div><div class="rt">Leader-scoped</div><div class="rs">Leaders see their function's issues; people see ones they raised.</div></div></div>
+        <div class="radio" data-v="leader" onclick="setVisibility('leader')"><div class="rd"></div><div><div class="rt">Leader-scoped</div><div class="rs">Leaders see every issue in the company; team members see only issues they're tagged in.</div></div></div>
       </div>
 
       <div class="panel">
@@ -713,7 +765,8 @@ function applyTheme(t){ if(!t)return; var r=document.documentElement; r.style.se
 /* ---------- NAV ---------- */
 function show(id){ document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active');}); var el=document.getElementById(id); if(el)el.classList.add('active'); window.scrollTo(0,0); }
 function clearTabs(){ document.querySelectorAll('.tg[data-s]').forEach(function(n){n.classList.remove('active');}); }
-document.querySelectorAll('.tg[data-s]').forEach(function(b){ b.addEventListener('click',function(){ clearTabs(); b.classList.add('active'); if(b.dataset.s==='admin'){ show('admin'); renderAdmin(); return; } boardMode=(b.id==='tabMine')?'mine':(b.id==='tabDone')?'done':'active'; updateSortbarUI(); show('dashboard'); render(); }); });
+document.querySelectorAll('.tg[data-s]').forEach(function(b){ b.addEventListener('click',function(){ clearTabs(); b.classList.add('active'); if(b.dataset.s==='admin'){ show('admin'); renderAdmin(); return; } if(b.dataset.s==='team'){ show('team'); renderTeam(); return; } boardMode=(b.id==='tabMine')?'mine':(b.id==='tabDone')?'done':'active'; updateSortbarUI(); show('dashboard'); render(); }); });
+window.goTeam=function(){ clearTabs(); var t=document.getElementById('tabTeam'); if(t)t.classList.add('active'); show('team'); renderTeam(); };
 window.goDash=function(){ clearTabs(); var t=document.getElementById('tabAll'); if(t)t.classList.add('active'); boardMode='active'; updateSortbarUI(); show('dashboard'); render(); };
 window.toggleShowDone=function(){ var c=document.getElementById('showDone'); showCompleted=!!(c&&c.checked); render(); };
 function updateSortbarUI(){ var w=document.getElementById('showDoneWrap'); if(w)w.style.display=(boardMode==='done')?'none':'flex'; }
@@ -723,7 +776,7 @@ window.openRaise=function(){ clearTabs(); renderFnSelect(); show('raise'); };
 function applyVisibility(list){
   var v=(company.visibility)||'team';
   if(v==='participants' && !isAdmin) return list.filter(function(i){ return i.raiserMid===ME.mid||i.leaderMid===ME.mid||(i.participants||[]).indexOf(ME.mid)>=0; });
-  if(v==='leader' && !isAdmin) return list.filter(function(i){ var leads=i.functionId&&fns[i.functionId]&&fns[i.functionId].leaderMid===ME.mid; return i.raiserMid===ME.mid||i.leaderMid===ME.mid||leads; });
+  if(v==='leader' && !isAdmin){ if(isLeaderUser()) return list; return list.filter(function(i){ return i.raiserMid===ME.mid||(i.participants||[]).indexOf(ME.mid)>=0; }); }
   return list;
 }
 function visibleIssues(){
@@ -746,6 +799,7 @@ function rowHTML(i){
 }
 function grpRow(label,color,count){ return '<tr class="grp"><td colspan="6"><span class="grp-lab"><span class="fn-dot" style="background:'+color+'"></span>'+esc(label)+'<span class="ct">· '+count+'</span></span></td></tr>'; }
 function render(){
+  refreshAux();
   var el=document.getElementById('rows'); if(!el)return;
   if(!activeCid){ el.innerHTML='<tr class="empty-row"><td colspan="6">'+(ME.isSuper?'No company yet — open Admin &amp; Setup to create one or seed the test data.':'You’re not a member of any company yet — ask an admin to add you.')+'</td></tr>'; return; }
   var list=visibleIssues();
@@ -936,12 +990,58 @@ function renderAdmin(){
 }
 document.querySelectorAll('#sws .sw').forEach(function(s){ s.addEventListener('click',function(){ if(!isAdmin||!activeCid)return; cRef().update({theme:{strip:s.dataset.c,ink:s.dataset.i,soft:s.dataset.s,mid:s.dataset.m}}); }); });
 
+/* ---------- TEAM / ORG CHART ---------- */
+function isLeaderUser(){ return isLeaderOfMid(ME.mid); }
+function isLeaderOfMid(mid){ if(!mid)return false; var ks=Object.keys(fns); for(var i=0;i<ks.length;i++){ if(fns[ks[i]].leaderMid===mid) return true; } return !!(members[mid]&&members[mid].isLeader); }
+function leadFnName(mid){ var ks=Object.keys(fns); for(var i=0;i<ks.length;i++){ if(fns[ks[i]].leaderMid===mid) return fns[ks[i]].name; } return ''; }
+function openCountFor(mid){ var vis=applyVisibility(issues.slice()); return vis.filter(function(i){ return i.status!=='done' && (i.raiserMid===mid||i.leaderMid===mid||(i.participants||[]).indexOf(mid)>=0); }).length; }
+function pcardHTML(mid,lead){
+  if(!mid) return '<div class="pcard" style="opacity:.55;cursor:default"><div class="av" style="background:var(--t3)">?</div><div class="pn">Unassigned</div><div class="pr">'+(lead?'no leader set':'open seat')+'</div></div>';
+  var oc=openCountFor(mid); var chip=oc>0?'<div class="pc">'+oc+' open</div>':'';
+  return '<div class="pcard'+(lead?' leader':'')+'" onclick="openProfile(\''+mid+'\')"><div class="av" style="background:'+personColor(mid)+'">'+esc(personInit(mid))+'</div><div class="pn">'+esc(personName(mid))+'</div><div class="pr">'+(lead?'Leader':'Team member')+'</div>'+chip+'</div>';
+}
+function renderTeam(){
+  var wrap=document.getElementById('orgWrap'); if(!wrap)return;
+  if(!activeCid){ wrap.innerHTML='<div class="pf-empty">No company selected.</div>'; return; }
+  var fk=Object.keys(fns); if(!fk.length){ wrap.innerHTML='<div class="pf-empty">No departments yet — add functions in Admin &amp; Setup.</div>'; return; }
+  wrap.innerHTML=fk.map(function(fid){ var f=fns[fid];
+    var mem=Object.keys(members).filter(function(mid){ return members[mid].functionId===fid && mid!==f.leaderMid; });
+    var memberCards=mem.length?mem.map(function(mid){return pcardHTML(mid,false);}).join(''):pcardHTML(null,false);
+    var count=mem.length+(f.leaderMid?1:0);
+    return '<div class="dept"><div class="dept-h"><span class="fn-dot" style="background:'+f.color+'"></span><span class="dh-name">'+esc(f.name)+'</span><span class="dh-meta">'+count+(count===1?' person':' people')+'</span></div>'
+      +'<div class="org">'+pcardHTML(f.leaderMid,true)+'<div class="org-stem"></div><div class="org-members">'+memberCards+'</div></div></div>';
+  }).join('');
+}
+
+/* ---------- PROFILE ---------- */
+var curProfile=null;
+window.openProfile=function(mid){ var m=members[mid]; if(!m)return; curProfile=mid;
+  var av=document.getElementById('pfAva'); av.textContent=personInit(mid); av.style.background=personColor(mid);
+  document.getElementById('pfName').textContent=m.name;
+  var leads=isLeaderOfMid(mid); document.getElementById('pfRole').textContent=leads?('Leader — '+(leadFnName(mid)||'')):'Team member';
+  document.getElementById('pfFn').textContent=(m.functionId&&fns[m.functionId])?fns[m.functionId].name:'No function';
+  document.getElementById('pfEmail').textContent=m.email||'';
+  renderProfileIssues(mid);
+  clearTabs(); var t=document.getElementById('tabTeam'); if(t)t.classList.add('active');
+  show('profile');
+};
+function renderProfileIssues(mid){
+  var vis=applyVisibility(issues.slice());
+  var list=vis.filter(function(i){ return i.raiserMid===mid||i.leaderMid===mid||(i.participants||[]).indexOf(mid)>=0; }).sort(function(a,b){return ms(b.createdAt)-ms(a.createdAt);});
+  var el=document.getElementById('pfIssues');
+  if(!list.length){ el.innerHTML='<div class="pf-empty">No issues visible to you for this person.</div>'; return; }
+  el.innerHTML=list.map(function(i){ var fc=i.color||(fns[i.functionId]&&fns[i.functionId].color)||'var(--strip)'; var role=(i.raiserMid===mid)?'raised':((i.leaderMid===mid)?'leading':'tagged');
+    return '<div class="pf-issue" onclick="openIssue(\''+i.id+'\')"><span class="fpill" style="background:'+fc+'">'+esc(i.functionName||'')+'</span><span class="pfi-t">'+esc(i.title)+'</span><span class="pfi-role">'+role+'</span><span class="st '+sm[i.status][0]+'"><span class="d"></span>'+sm[i.status][1]+'</span></div>';
+  }).join('');
+}
+function refreshAux(){ var tm=document.getElementById('team'); if(tm&&tm.classList.contains('active'))renderTeam(); var pf=document.getElementById('profile'); if(pf&&pf.classList.contains('active')&&curProfile)renderProfileIssues(curProfile); }
+
 /* ---------- SEED TEST DATA ---------- */
 function seedCompany(def){
   var ref=companiesCol.doc(def.id);
   return ref.get().then(function(s){
     if(s.exists) return;
-    return ref.set({name:def.name,code:def.code,visibility:'team',theme:def.theme,adminUids:[ME.uid],createdAt:FV.serverTimestamp()}).then(function(){
+    return ref.set({name:def.name,code:def.code,visibility:'leader',theme:def.theme,adminUids:[ME.uid],createdAt:FV.serverTimestamp()}).then(function(){
       var batch=db.batch();
       def.fns.forEach(function(fn){
         var fref=ref.collection('functions').doc();
