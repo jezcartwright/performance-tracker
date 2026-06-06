@@ -649,6 +649,18 @@ tr.rowdone:hover td{opacity:.78}
     <div id="ovBody"></div>
   </section>
 
+  <!-- NEW CLIENT -->
+  <div class="amodal" id="newClientModal">
+    <div class="amodal-card" style="max-width:420px">
+      <div class="amodal-h"><h2>Add a new client</h2><button class="amodal-x" onclick="closeNewClient()">✕</button></div>
+      <p class="amodal-sub">Just the essentials — we’ll pull their logo and brand colour from the website. You’ll build the org next.</p>
+      <input class="adm-input" id="ncName" placeholder="Company name" style="margin:0" oninput="ncChk()" autocomplete="off">
+      <input class="adm-input" id="ncWeb" placeholder="Website (optional) — e.g. acme.com" style="margin-top:9px" autocomplete="off">
+      <button class="tg" id="ncGo" onclick="createClient()" style="width:100%;justify-content:center;margin-top:12px" disabled>Create client →</button>
+      <div style="font-size:12px;color:var(--t3);margin-top:9px;line-height:1.45">Logo comes from their brand image, then favicon. No code needed — everything’s editable later.</div>
+    </div>
+  </div>
+
   <!-- ADD-PERSON SHEET -->
   <div class="amodal" id="addSheet">
     <div class="amodal-card" style="max-width:400px">
@@ -680,7 +692,7 @@ tr.rowdone:hover td{opacity:.78}
     </div>
     <div class="cohome-grid" id="cohomeGrid"></div>
     <div class="cohome-tools">
-      <button class="tg" onclick="addCompanyHome()">+ Add company</button>
+      <button class="tg" onclick="openNewClient()">+ New client</button>
       <span class="grow"></span>
       <button class="tg" onclick="seedTestData()">⚙ Seed demo clients</button>
     </div>
@@ -1155,6 +1167,42 @@ function renderCoHome(){
   }).join('') : '<div class="psub">No companies yet — add one below or seed the test data.</div>';
 }
 window.addCompanyHome=function(){ if(!ME.isSuper)return; var n=(prompt('New company name:')||'').trim(); if(!n)return; var ref=companiesCol.doc(); ref.set({name:n,visibility:'team',theme:DEFAULT_THEME,adminUids:[ME.uid],createdAt:FV.serverTimestamp()}).then(function(){ return loadCompanies(); }).then(function(){ renderCoHome(); renderCoSwitch(); }).catch(function(e){ alert('Could not add company: '+e.message); }); };
+
+/* ---------- new client: lean create + branding-from-website ---------- */
+var TEAM_COLORS=['#2563eb','#0e9f6e','#c0398f','#b5651d','#7d3c98','#0e8f8a','#c0392b','#334155'];
+window.openNewClient=function(){ if(!ME.isSuper)return; ['ncName','ncWeb'].forEach(function(id){var e=document.getElementById(id); if(e)e.value='';}); ncChk(); document.getElementById('newClientModal').classList.add('on'); setTimeout(function(){var e=document.getElementById('ncName'); if(e)e.focus();},40); };
+window.closeNewClient=function(){ document.getElementById('newClientModal').classList.remove('on'); };
+window.ncChk=function(){ var b=document.getElementById('ncGo'); if(b)b.disabled=!((document.getElementById('ncName')||{}).value||'').trim(); };
+window.createClient=function(){
+  if(!ME.isSuper)return; var n=((document.getElementById('ncName')||{}).value||'').trim(); if(!n)return;
+  var web=domainFrom((document.getElementById('ncWeb')||{}).value);
+  var go=document.getElementById('ncGo'); if(go){go.disabled=true;go.textContent='Creating…';}
+  var ref=companiesCol.doc();
+  ref.set({name:n, web:web||null, visibility:'team', theme:DEFAULT_THEME, adminUids:[ME.uid], createdAt:FV.serverTimestamp()})
+    .then(function(){ return loadCompanies(); })
+    .then(function(){ closeNewClient(); if(go){go.disabled=false;go.textContent='Create client \u2192';} MANAGING=true; switchCompany(ref.id); setTimeout(function(){ goTeam(); },80); if(web){ brandFromWeb(ref.id, web); } })
+    .catch(function(e){ alert('Could not create client: '+e.message); if(go){go.disabled=false;go.textContent='Create client \u2192';} });
+};
+function brandFromWeb(cid, domain){
+  fetchLogoUrl(domain, function(url){
+    if(!url) return; var up={logo:url, web:domain};
+    sampleColor(url, function(theme){ if(theme) up.theme=theme; companiesCol.doc(cid).update(up).then(function(){ if(activeCid===cid && theme) applyTheme(theme); }).catch(function(){}); });
+  });
+}
+function themeFromRGB(r,g,b){
+  function hx(x){ return ('0'+Math.max(0,Math.min(255,Math.round(x))).toString(16)).slice(-2); }
+  function mix(a,bb,t){ return a+(bb-a)*t; }
+  return { strip:'#'+hx(r)+hx(g)+hx(b), ink:'#'+hx(r*0.8)+hx(g*0.8)+hx(b*0.8), soft:'#'+hx(mix(r,255,.9))+hx(mix(g,255,.9))+hx(mix(b,255,.9)), mid:'#'+hx(mix(r,255,.72))+hx(mix(g,255,.72))+hx(mix(b,255,.72)) };
+}
+function sampleColor(url, cb){
+  try{ var im=new Image(); im.crossOrigin='anonymous';
+    im.onload=function(){ try{ var w=Math.min(64,im.naturalWidth||64), h=Math.min(64,im.naturalHeight||64); var cv=document.createElement('canvas'); cv.width=w; cv.height=h; var ctx=cv.getContext('2d'); ctx.drawImage(im,0,0,w,h); var d=ctx.getImageData(0,0,w,h).data; var r=0,g=0,b=0,cnt=0;
+      for(var i=0;i<d.length;i+=4){ if(d[i+3]<128)continue; var rr=d[i],gg=d[i+1],bb=d[i+2]; var mx=Math.max(rr,gg,bb),mn=Math.min(rr,gg,bb); if(mx>238&&mn>238)continue; if(mx<18)continue; if(mx-mn<18)continue; r+=rr;g+=gg;b+=bb;cnt++; }
+      if(!cnt){ cb(null); return; } cb(themeFromRGB(r/cnt,g/cnt,b/cnt)); }catch(e){ cb(null); } };
+    im.onerror=function(){ cb(null); }; im.src=url;
+  }catch(e){ cb(null); }
+}
+window.addTeam=function(){ if(!isAdmin)return; var n=(prompt('Team / department name:')||'').trim(); if(!n)return; var color=TEAM_COLORS[Object.keys(fns).length%TEAM_COLORS.length]; fnsRef().add({name:n,color:color,leaderMid:null,leaderName:''}).then(function(ref){ fns[ref.id]={id:ref.id,name:n,color:color,leaderMid:null,leaderName:''}; openAddSheet({type:'leader',fid:ref.id}); }).catch(function(e){ alert('Could not add team: '+e.message); }); };
 function landHome(){ if(ME.isSuper){ goCompaniesHome(); } else { setHome(false); goDash(); } }
 
 /* ---------- global people search (all companies) ---------- */
@@ -1485,14 +1533,23 @@ function leaderNode(fid,seen){
 function controlsBar(){
   if(!isAdmin) return '<div class="orgbar"><div class="orgcrumb">'+esc(company.name||'Organisation')+'</div></div>';
   var mg='<button class="orgbtn'+(MANAGING?' on':'')+'" onclick="toggleManageOrg()">✎ Manage Org</button>';
+  var addt='<button class="orgbtn" onclick="addTeam()">+ Add team</button>';
   var arch='<button class="orgbtn" onclick="openArchive()">🗄 Archive <span id="archCount">'+archiveCount+'</span></button>';
-  var banner=MANAGING?'<div class="mgbanner">✎ Manage Org on — hover a card\u2019s ⋯ to appoint a leader, add a report, or remove someone. Click a person to view them.</div>':'';
-  return '<div class="orgbar"><div class="orgcrumb">'+esc(company.name||'Organisation')+'</div><div class="orgctrls">'+mg+arch+'</div></div>'+banner;
+  var banner=MANAGING?'<div class="mgbanner">✎ Manage Org on — tap the CEO or a leader slot to set them, hover a card\u2019s ⋯ to add a report or remove someone, or “+ Add team”. Click a person to view them.</div>':'';
+  return '<div class="orgbar"><div class="orgcrumb">'+esc(company.name||'Organisation')+'</div><div class="orgctrls">'+mg+addt+arch+'</div></div>'+banner;
 }
 function renderTeam(){
   var wrap=document.getElementById('orgWrap'); if(!wrap)return;
   if(!activeCid){ wrap.innerHTML='<div class="pf-empty">No company selected.</div>'; return; }
-  if(!Object.keys(fns).length){ wrap.innerHTML=controlsBar()+'<div class="pf-empty">No departments yet — add one in Admin &amp; Setup.</div>'; return; }
+  if(!Object.keys(fns).length){
+    var ceo0=company.ceoMemberId;
+    var rootCard0=(ceo0&&members[ceo0])?orgCard(ceo0,'ceo'):emptyCeoSlot();
+    var addTile='<li><div class="pcard empty" style="cursor:pointer" onclick="addTeam()"><div class="av" style="background:var(--strip);opacity:.9;color:#fff">+</div><div class="pn">Add the first team</div><div class="pr">name it &amp; pick a leader</div></div></li>';
+    var tree0='<div class="tree"><ul><li>'+rootCard0+'<ul>'+addTile+'</ul></li></ul></div>';
+    wrap.innerHTML=controlsBar()+'<div class="dept orgchart">'+tree0+'</div>';
+    var sc0=wrap.querySelector('.orgchart'); if(sc0){ sc0.scrollLeft=Math.max(0,(sc0.scrollWidth-sc0.clientWidth)/2); }
+    return;
+  }
   var seen={};
   var senior='<ul>'+deptList().map(function(fid){return leaderNode(fid,seen);}).join('')+'</ul>';
   var ceo=company.ceoMemberId;
