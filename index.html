@@ -911,7 +911,11 @@ function loadCompanies(){
   }
   var cids={};
   return db.collectionGroup('members').where('uid','==',ME.uid).get().then(function(msnap){
-    msnap.forEach(function(m){ var p=m.ref.parent.parent; if(p)cids[p.id]=1; });
+    var aw=[];
+    msnap.forEach(function(m){ var p=m.ref.parent.parent; if(p){ cids[p.id]=1; var md=m.data();
+      aw.push(p.collection('access').doc(ME.uid).set({mid:m.id, role:(md.isLeader?'leader':'member'), functionId:md.functionId||null, email:ME.email||null},{merge:true}).then(function(){ accessEnsured[p.id]=true; }).catch(function(){}));
+    }});
+    return Promise.all(aw);
   }).catch(function(e){ console.warn('membership lookup (index may be needed):',e); }).then(function(){
     return companiesCol.where('adminUids','array-contains',ME.uid).get().catch(function(){return {forEach:function(){}};});
   }).then(function(asnap){
@@ -1098,14 +1102,24 @@ function startApp(){
   var aq = ME.isSuper ? db.collection('archive') : db.collection('archive').where('fromCid','==',activeCid);
   subA = aq.onSnapshot(function(qs){ archive=[]; qs.forEach(function(d){ archive.push(Object.assign({id:d.id},d.data())); }); archive.sort(function(a,b){return ms(b.removedAt)-ms(a.removedAt);}); archiveCount=archive.length; var ac=document.getElementById('archCount'); if(ac)ac.textContent=archiveCount; if(archiveOpen)renderArchive(); },function(e){console.warn('archive',e);});
 }
+var accessEnsured={};
+function ensureAccess(mid){
+  if(ME.isSuper || !activeCid || !mid || accessEnsured[activeCid]) return;
+  var m=members[mid]||{}; accessEnsured[activeCid]=true;
+  try{
+    companiesCol.doc(activeCid).collection('access').doc(ME.uid)
+      .set({mid:mid, role:(m.isLeader?'leader':'member'), functionId:m.functionId||null, email:ME.email||null},{merge:true})
+      .catch(function(e){ accessEnsured[activeCid]=false; console.warn('access',e); });
+  }catch(e){ accessEnsured[activeCid]=false; }
+}
 function resolveMyMid(){
   ME.mid=null; var keys=Object.keys(members);
-  for(var i=0;i<keys.length;i++){ if(members[keys[i]].uid===ME.uid){ ME.mid=keys[i]; return; } }
-  for(var j=0;j<keys.length;j++){ var m=members[keys[j]]; if(!m.uid && m.email && m.email.toLowerCase()===(ME.email||'').toLowerCase()){ membersRef().doc(keys[j]).update({uid:ME.uid}).catch(function(e){console.warn('claim',e);}); ME.mid=keys[j]; return; } }
+  for(var i=0;i<keys.length;i++){ if(members[keys[i]].uid===ME.uid){ ME.mid=keys[i]; ensureAccess(ME.mid); return; } }
+  for(var j=0;j<keys.length;j++){ var m=members[keys[j]]; if(!m.uid && m.email && m.email.toLowerCase()===(ME.email||'').toLowerCase()){ var k=keys[j]; ME.mid=k; membersRef().doc(k).update({uid:ME.uid}).then(function(){ ensureAccess(k); }).catch(function(e){console.warn('claim',e);}); return; } }
 }
 function joinCompany(){
   var ref=membersRef().doc();
-  return ref.set({first:ME.first,last:ME.last,name:ME.name,initials:ME.initials,email:ME.email,functionId:null,isLeader:false,uid:ME.uid}).then(function(){ ME.mid=ref.id; });
+  return ref.set({first:ME.first,last:ME.last,name:ME.name,initials:ME.initials,email:ME.email,functionId:null,isLeader:false,uid:ME.uid}).then(function(){ ME.mid=ref.id; ensureAccess(ref.id); });
 }
 window.joinCompanyBtn=function(){ joinCompany().then(function(){ renderAdmin(); render(); }); };
 
@@ -1570,6 +1584,7 @@ window.removeFromOrg=function(mid){ if(!isAdmin)return; var m=members[mid]; if(!
   var aref=db.collection('archive').doc();
   batch.set(aref,{first:m.first||'',last:m.last||'',name:m.name,initials:m.initials||initials(m.name),email:m.email||'',role:(isLead?('Leader · '+(fns[fid]?fns[fid].name:'')):'Team member'),fromCid:activeCid,fromCompany:company.name||activeCid,fromFunction:(fns[fid]?fns[fid].name:''),removedAt:FV.serverTimestamp(),removedBy:ME.uid});
   batch.delete(membersRef().doc(mid));
+  if(m.uid){ batch.delete(companiesCol.doc(activeCid).collection('access').doc(m.uid)); }
   batch.commit().then(refreshAux).catch(function(e){alert('Remove failed: '+e.message);});
 };
 
