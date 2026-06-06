@@ -63,11 +63,14 @@ input,textarea,select{font-family:inherit;font-size:inherit}
 .cohome-nm{font-family:var(--serif);font-weight:600;font-size:17px;color:var(--t);line-height:1.2}
 .cohome-code{font-size:11px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--t3);margin-top:4px}
 .cohome-chev{color:var(--t3);font-size:24px;flex-shrink:0;line-height:1}
+.cohome-cnt{font-family:var(--ui);font-size:11.5px;font-weight:700;color:var(--t3);white-space:nowrap;margin-right:6px}
 .cohome-tools{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:22px;padding-top:18px;border-top:1px solid var(--b)}
-.gps{position:relative;margin:0 0 22px;max-width:580px}
+.gps{position:relative;margin:26px 0 0;padding-top:20px;border-top:1px solid var(--b);max-width:580px}
+.gps-head{font-family:var(--display);font-size:22px;font-weight:600;letter-spacing:.01em;color:var(--t)}
+.gps-sub{color:var(--t2);font-size:13.5px;margin:4px 0 12px;line-height:1.5}
 .gps-input{width:100%;border:1.5px solid var(--b);border-radius:7px;padding:12px 14px;font-size:14px;font-family:var(--ui);outline:none;background:var(--card);transition:.14s}
 .gps-input:focus{border-color:var(--strip);box-shadow:0 0 0 3px color-mix(in srgb,var(--strip) 14%,transparent)}
-.gps-results{position:absolute;left:0;right:0;top:50px;background:#fff;border:1px solid var(--b);border-radius:8px;box-shadow:0 16px 42px rgba(0,0,0,.15);z-index:30;max-height:360px;overflow-y:auto;display:none;padding:6px}
+.gps-results{margin-top:8px;background:#fff;border:1px solid var(--b);border-radius:8px;box-shadow:0 10px 30px rgba(0,0,0,.08);max-height:380px;overflow-y:auto;display:none;padding:6px}
 .gps-row{display:flex;align-items:center;gap:11px;width:100%;border:none;background:none;border-radius:6px;padding:9px 10px;cursor:pointer;text-align:left}
 .gps-row:hover{background:var(--strip-soft)}
 .gps-av{width:32px;height:32px;border-radius:6px;display:grid;place-items:center;color:#fff;font-size:11px;font-weight:800;flex-shrink:0}
@@ -676,16 +679,18 @@ tr.rowdone:hover td{opacity:.78}
       <h1 class="cohome-h1">Companies</h1>
       <p class="cohome-sub">Choose a company to open, or add a new one. Each has its own branding, departments, people and issues.</p>
     </div>
-    <div class="gps">
-      <input id="gpsInput" class="gps-input" placeholder="🔍  Search people across all companies…" oninput="gpsRender()" autocomplete="off">
-      <div id="gpsResults" class="gps-results"></div>
-    </div>
     <div class="cohome-grid" id="cohomeGrid"></div>
     <div class="cohome-tools">
       <input class="adm-input" id="newCoNameHome" placeholder="New company name" style="margin:0;max-width:240px">
       <button class="tg" onclick="addCompanyHome()">+ Add company</button>
       <span class="grow"></span>
       <button class="tg" onclick="seedTestData()">⚙ Seed test data (123 &amp; ABC)</button>
+    </div>
+    <div class="gps">
+      <div class="gps-head">Find a person</div>
+      <p class="gps-sub">Search across every company and jump straight to anyone — by name or email.</p>
+      <input id="gpsInput" class="gps-input" placeholder="🔍  Search people across all companies…" oninput="gpsRender()" autocomplete="off">
+      <div id="gpsResults" class="gps-results"></div>
     </div>
   </section>
 
@@ -936,7 +941,10 @@ function clientMonogram(){ return String((activeCid?(company.code||initials(comp
 function renderClientLogo(){
   var el=document.getElementById('clientLogo'); if(!el)return;
   el.style.background='#fff';
-  if(activeCid && company && company.logo){
+  if(!activeCid){
+    var bm=document.querySelector('.poweredby img'); var src=bm?bm.src:'';
+    el.innerHTML=src?('<img src="'+src+'" alt="Performance Intelligence" style="width:100%;height:100%;object-fit:contain;padding:7px">'):('<span style="font-family:var(--display);font-weight:700;color:var(--strip);font-size:20px">PI</span>');
+  } else if(company && company.logo){
     el.innerHTML='<img src="'+company.logo+'" alt="'+esc(company.name||'')+'" style="width:100%;height:100%;object-fit:contain;padding:5px">';
   } else {
     var t=clientMonogram();
@@ -1120,7 +1128,9 @@ function renderCoHome(){
   box.innerHTML = cids.length ? cids.map(function(id){ var c=companies[id]; var th=(c.theme&&c.theme.strip)||'#ff6600';
     var mono=String((c.code||initials(c.name||'')||'•')).toUpperCase().slice(0,3);
     var logo=c.logo?('<img src="'+c.logo+'" alt="" style="width:100%;height:100%;object-fit:contain;padding:6px">'):('<span style="font-family:var(--display);font-weight:700;color:'+th+';font-size:'+(mono.length>=3?'16px':'21px')+'">'+esc(mono)+'</span>');
-    return '<button class="cohome-card" style="--ac:'+th+'" onclick="openCompanyOverview(\''+id+'\')"><span class="cohome-logo">'+logo+'</span><span class="cohome-body"><span class="cohome-nm">'+esc(c.name||id)+'</span><span class="cohome-code">'+(esc((c.code||'').toUpperCase())||esc(id))+'</span></span><span class="cohome-chev">›</span></button>';
+    var cnt=peopleIndex?peopleIndex.filter(function(p){return p.cid===id;}).length:null;
+    var cntH=(cnt!=null)?'<span class="cohome-cnt">'+cnt+(cnt===1?' person':' people')+'</span>':'';
+    return '<button class="cohome-card" style="--ac:'+th+'" onclick="openCompanyOverview(\''+id+'\')"><span class="cohome-logo">'+logo+'</span><span class="cohome-body"><span class="cohome-nm">'+esc(c.name||id)+'</span><span class="cohome-code">'+(esc((c.code||'').toUpperCase())||esc(id))+'</span></span>'+cntH+'<span class="cohome-chev">›</span></button>';
   }).join('') : '<div class="psub">No companies yet — add one below or seed the test data.</div>';
 }
 window.addCompanyHome=function(){ if(!ME.isSuper)return; var el=document.getElementById('newCoNameHome'); var n=(el.value||'').trim(); if(!n)return; var ref=companiesCol.doc(); ref.set({name:n,visibility:'team',theme:DEFAULT_THEME,adminUids:[ME.uid],createdAt:FV.serverTimestamp()}).then(function(){ el.value=''; return loadCompanies(); }).then(function(){ renderCoHome(); renderCoSwitch(); }).catch(function(e){ alert('Could not add company: '+e.message); }); };
@@ -1144,7 +1154,7 @@ function buildPeopleIndex(){
       return rows;
     }).catch(function(){ return []; });
   });
-  return Promise.all(jobs).then(function(all){ peopleIndex=[].concat.apply([],all); peopleIndexLoading=false; gpsRender(); return peopleIndex; });
+  return Promise.all(jobs).then(function(all){ peopleIndex=[].concat.apply([],all); peopleIndexLoading=false; renderCoHome(); gpsRender(); return peopleIndex; });
 }
 window.gpsRender=function(){
   var inp=document.getElementById('gpsInput'), box=document.getElementById('gpsResults'); if(!inp||!box)return;
