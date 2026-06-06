@@ -1004,7 +1004,7 @@ function renderOverview(){
   var webLine=c.web?('<span class="web" onclick="ovOpenWeb()">'+esc(c.web)+'</span>'):'<span style="color:var(--t3)">no website set</span>';
   var canEdit=ME.isSuper||(c.adminUids||[]).indexOf(ME.uid)>=0;
   var head='<div class="ov-head"><div class="ov-clogo" style="background:'+(c.logo?'#fff':th)+'">'+ovLogoHTML()+'</div>'
-    +'<div class="ov-htext"><h2>'+esc(c.name||c.id)+'</h2><div class="ov-row2"><span class="ov-code" style="background:'+ths+';color:'+thi+'">'+(esc((c.code||'').toUpperCase())||'—')+'</span><span>·</span>'+webLine+'<span>·</span><span>'+visLabel+'</span></div></div>'
+    +'<div class="ov-htext"><h2>'+esc(c.name||c.id)+'</h2><div class="ov-row2">'+(c.code?('<span class="ov-code" style="background:'+ths+';color:'+thi+'">'+esc(String(c.code).toUpperCase())+'</span><span>·</span>'):'')+webLine+'<span>·</span><span>'+visLabel+'</span></div></div>'
     +'<button class="tg" style="white-space:nowrap" onclick="openFullCompany(\''+c.id+'\')">Open this company →</button></div>';
   var stats='<div class="ov-panel"><h3>At a glance</h3><div class="ov-stats">'
     +'<div class="ov-stat" onclick="openFullChart(\''+c.id+'\')"><div class="n">'+deps+'</div><div class="l">Departments</div></div>'
@@ -1163,7 +1163,7 @@ function renderCoHome(){
     var logo=c.logo?('<img src="'+c.logo+'" alt="" style="width:100%;height:100%;object-fit:contain;padding:6px">'):('<span style="font-family:var(--display);font-weight:700;color:'+th+';font-size:'+(mono.length>=3?'16px':'21px')+'">'+esc(mono)+'</span>');
     var cnt=peopleIndex?peopleIndex.filter(function(p){return p.cid===id;}).length:null;
     var cntH=(cnt!=null)?'<span class="cohome-cnt">'+cnt+(cnt===1?' person':' people')+'</span>':'';
-    return '<button class="cohome-card" style="--ac:'+th+'" onclick="openCompanyOverview(\''+id+'\')"><span class="cohome-logo">'+logo+'</span><span class="cohome-body"><span class="cohome-nm">'+esc(c.name||id)+'</span><span class="cohome-code">'+(esc((c.code||'').toUpperCase())||esc(id))+'</span></span>'+cntH+'<span class="cohome-chev">›</span></button>';
+    return '<button class="cohome-card" style="--ac:'+th+'" onclick="openCompanyOverview(\''+id+'\')"><span class="cohome-logo">'+logo+'</span><span class="cohome-body"><span class="cohome-nm">'+esc(c.name||id)+'</span><span class="cohome-code">'+(c.web?esc(c.web):(c.code?esc(String(c.code).toUpperCase()):''))+'</span></span>'+cntH+'<span class="cohome-chev">›</span></button>';
   }).join('') : '<div class="psub">No companies yet — add one below or seed the test data.</div>';
 }
 window.addCompanyHome=function(){ if(!ME.isSuper)return; var n=(prompt('New company name:')||'').trim(); if(!n)return; var ref=companiesCol.doc(); ref.set({name:n,visibility:'team',theme:DEFAULT_THEME,adminUids:[ME.uid],createdAt:FV.serverTimestamp()}).then(function(){ return loadCompanies(); }).then(function(){ renderCoHome(); renderCoSwitch(); }).catch(function(e){ alert('Could not add company: '+e.message); }); };
