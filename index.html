@@ -349,7 +349,7 @@ tbody td{padding:14px 16px;vertical-align:middle}
 .pcard .pc{margin-top:8px;font-size:11px;font-weight:700;color:var(--strip-ink);background:var(--card);border:1px solid var(--strip-mid);border-radius:20px;padding:2px 9px;display:inline-block}
 .pcard .chips{display:flex;gap:5px;justify-content:center;flex-wrap:wrap;margin-top:8px}
 .pcard .chips .pc{margin-top:0}
-.pcard .pcount{font-size:11px;font-weight:700;color:var(--t2);background:var(--bg);border:1px solid var(--b);border-radius:20px;padding:2px 9px;display:inline-block}
+.pcard .pcount{font-size:11px;font-weight:700;color:var(--t2);background:var(--bg);border:1px solid var(--b);border-radius:6px;padding:2px 9px;display:inline-block}
 /* whole-org chart */
 .orgchart{padding-top:8px}
 .orgbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:0 2px 4px;padding-bottom:14px}
@@ -1007,17 +1007,26 @@ function renderOverview(){
   document.getElementById('ovBody').innerHTML='<div class="crumb2"><a onclick="goCompaniesHome()">Companies</a> › <span style="color:var(--t)">'+esc(c.name||c.id)+'</span></div>'+head+'<div class="ov-grid">'+stats+weblogo+chart+'</div>';
 }
 function ovMiniChart(){
-  var c=ovCompany;
-  var top=(c.ceoMemberId&&ovMembers[c.ceoMemberId])?('<div class="pcard ceoc" style="cursor:default"><div class="av" style="background:#1a1a1a">'+esc(ovIni(ovMembers[c.ceoMemberId]))+'</div><div class="pn">'+esc(ovMembers[c.ceoMemberId].name)+'</div><div class="pr">CEO</div></div>'):'<div class="pcard empty ceoc" style="cursor:default"><div class="av" style="background:var(--t3)">♛</div><div class="pn">No CEO yet</div><div class="pr">not set</div></div>';
+  var c=ovCompany; var total=Object.keys(ovMembers).length;
+  function chip(n){ return n>0?'<div class="chips"><span class="pcount">'+n+(n===1?' person':' people')+'</span></div>':''; }
+  function deptReports(fid,leaderId){ var n=0; Object.keys(ovMembers).forEach(function(m){ if(ovMembers[m].functionId===fid && m!==leaderId)n++; }); return n; }
+  var top;
+  if(c.ceoMemberId&&ovMembers[c.ceoMemberId]){ var ceo=ovMembers[c.ceoMemberId];
+    top='<div class="pcard ceoc" style="cursor:pointer" onclick="ovOpenPerson(\''+c.ceoMemberId+'\')"><div class="av" style="background:#1a1a1a">'+esc(ovIni(ceo))+'</div><div class="pn">'+esc(ceo.name)+'</div><div class="pr">CEO</div>'+chip(Math.max(0,total-1))+'</div>';
+  } else {
+    top='<div class="pcard empty ceoc" style="cursor:pointer" onclick="openFullCompany(\''+c.id+'\')"><div class="av" style="background:var(--t3)">♛</div><div class="pn">No CEO yet</div><div class="pr">tap to open</div></div>';
+  }
   var leaders=Object.keys(ovFns).sort(function(a,b){return (ovFns[a].name||'').localeCompare(ovFns[b].name||'');});
   if(!leaders.length) return '<div class="tree"><ul><li>'+top+'</li></ul></div>';
   var lis=leaders.map(function(fid){ var f=ovFns[fid]; var lid=f.leaderMid;
-    if(lid&&ovMembers[lid]){ var p=ovMembers[lid]; return '<li><div class="pcard leader" style="cursor:default"><div class="av" style="background:'+(f.color||'var(--strip)')+'">'+esc(ovIni(p))+'</div><div class="pn">'+esc(p.name)+'</div><div class="pr">'+esc(f.name)+'</div></div></li>'; }
-    return '<li><div class="pcard empty" style="cursor:default"><div class="av" style="background:'+(f.color||'var(--t3)')+';opacity:.45">?</div><div class="pn">'+esc(f.name)+'</div><div class="pr">no leader</div></div></li>'; }).join('');
+    if(lid&&ovMembers[lid]){ var p=ovMembers[lid];
+      return '<li><div class="pcard leader" style="cursor:pointer" onclick="ovOpenPerson(\''+lid+'\')"><div class="av" style="background:'+(f.color||'var(--strip)')+'">'+esc(ovIni(p))+'</div><div class="pn">'+esc(p.name)+'</div><div class="pr">'+esc(f.name)+'</div>'+chip(deptReports(fid,lid))+'</div></li>'; }
+    return '<li><div class="pcard empty" style="cursor:pointer" onclick="openFullCompany(\''+c.id+'\')"><div class="av" style="background:'+(f.color||'var(--t3)')+';opacity:.45">?</div><div class="pn">'+esc(f.name)+'</div><div class="pr">no leader</div></div></li>'; }).join('');
   return '<div class="tree"><ul><li>'+top+'<ul>'+lis+'</ul></li></ul></div>';
 }
+window.ovOpenPerson=function(mid){ window.pendingProfileMid=mid; openFullCompany(ovCid); };
 window.ovOpenWeb=function(){ var w=ovCompany.web; if(w) window.open(/^https?:/.test(w)?w:('https://'+w),'_blank'); };
-window.backToAdmin=function(){ clearTabs(); var t=document.getElementById('tabAdmin'); if(t)t.classList.add('active'); show('admin'); renderAdmin(); };
+window.backToAdmin=function(){ goCompaniesHome(); };
 window.openFullCompany=function(cid){ switchCompany(cid); };
 window.openFullChart=function(cid){ switchCompany(cid); window.goTeam(); };
 function domainFrom(raw){ return (raw||'').replace(/^https?:\/\//,'').replace(/\/.*/,'').trim(); }
