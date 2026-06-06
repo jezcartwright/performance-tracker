@@ -1633,8 +1633,8 @@ function refreshAux(){ var tm=document.getElementById('team'); if(tm&&tm.classLi
 function seedCompany(def){
   var ref=companiesCol.doc(def.id);
   return ref.get().then(function(s){
-    if(s.exists) return;
-    return ref.set({name:def.name,code:def.code,visibility:'leader',theme:def.theme,adminUids:[ME.uid],createdAt:FV.serverTimestamp()}).then(function(){
+    if(s.exists){ return ref.update({name:def.name,code:def.code,theme:def.theme,logo:def.logo||null}); }
+    return ref.set({name:def.name,code:def.code,visibility:'leader',theme:def.theme,logo:def.logo||null,adminUids:[ME.uid],createdAt:FV.serverTimestamp()}).then(function(){
       var batch=db.batch();
       def.fns.forEach(function(fn){
         var fref=ref.collection('functions').doc();
@@ -1653,22 +1653,22 @@ function seedCompany(def){
 }
 window.seedTestData=function(){
   if(!ME.isSuper)return;
-  if(!confirm('Create test companies 123 and ABC, each with 5 departments, a leader and 2 members per department?'))return;
-  var c123={ id:'co123', name:'Company 123', code:'123', theme:{strip:'#2563eb',ink:'#1d4ed8',soft:'#eef3fe',mid:'#cfddfb'}, fns:[
+  if(!confirm('Create / refresh two demo clients — Northwind and Lumen Health — each with its own logo, brand colour, 5 departments, a leader and 2 members per department?'))return;
+  var c123={ id:'co123', name:'Northwind', code:'NW', logo:'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZD0iTTEyIDEgTDEzLjggMTAuMiBMMjMgMTIgTDEzLjggMTMuOCBMMTIgMjMgTDEwLjIgMTMuOCBMMSAxMiBMMTAuMiAxMC4yIFoiIGZpbGw9IiMwZTJhNDciLz48Y2lyY2xlIGN4PSIxMiIgY3k9IjEyIiByPSIyLjMiIGZpbGw9IiNmMmE5M2IiLz48L3N2Zz4=', theme:{strip:'#0e2a47',ink:'#1c4a78',soft:'#eef2f7',mid:'#cdd9e8'}, fns:[
     {name:'Operations',color:'#1d4ed8',people:[['Priya','Nair','priya.nair@123.test'],['Liam','Frost','liam.frost@123.test'],['Hannah','Reed','hannah.reed@123.test']]},
     {name:'Finance',color:'#0d9488',people:[['Tom','Becker','tom.becker@123.test'],['Grace','Lim','grace.lim@123.test'],['Owen','Hart','owen.hart@123.test']]},
     {name:'People & Culture',color:'#db2777',people:[['Sadé','Okoro','sade.okoro@123.test'],['Maya','Singh','maya.singh@123.test'],['Daniel','Cole','daniel.cole@123.test']]},
     {name:'Technology',color:'#7c3aed',people:[['Marcus','Lin','marcus.lin@123.test'],['Ava','Romano','ava.romano@123.test'],['Noah','Pierce','noah.pierce@123.test']]},
     {name:'Sales',color:'#c2410c',people:[['Elena','Vos','elena.vos@123.test'],['Jack','Mercer','jack.mercer@123.test'],['Zoe','Adler','zoe.adler@123.test']]}
   ]};
-  var cABC={ id:'coABC', name:'Company ABC', code:'ABC', theme:{strip:'#0e9f6e',ink:'#0a7d57',soft:'#e8f6f0',mid:'#c4e9da'}, fns:[
+  var cABC={ id:'coABC', name:'Lumen Health', code:'LMN', logo:'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PGNpcmNsZSBjeD0iMTIiIGN5PSIxMiIgcj0iOSIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMGU4ZjhhIiBzdHJva2Utd2lkdGg9IjIuNiIvPjxjaXJjbGUgY3g9IjEyIiBjeT0iMTIiIHI9IjMuNCIgZmlsbD0iI2ZmYzk0ZCIvPjwvc3ZnPg==', theme:{strip:'#0e8f8a',ink:'#0b6b67',soft:'#e6f4f3',mid:'#bfe4e1'}, fns:[
     {name:'Operations',color:'#1d4ed8',people:[['Raj','Patel','raj.patel@abc.test'],['Chloe','Dunn','chloe.dunn@abc.test'],['Felix','Wong','felix.wong@abc.test']]},
     {name:'Finance',color:'#0d9488',people:[['Sara','Klein','sara.klein@abc.test'],['Ben','Ortiz','ben.ortiz@abc.test'],['Iris','Lund','iris.lund@abc.test']]},
     {name:'People & Culture',color:'#db2777',people:[['Nadia','Haqq','nadia.haqq@abc.test'],['Leo','Marsh','leo.marsh@abc.test'],['Tara','Bose','tara.bose@abc.test']]},
     {name:'Technology',color:'#7c3aed',people:[['Ivan','Petrov','ivan.petrov@abc.test'],['Mia','Chen','mia.chen@abc.test'],['Sam','Doyle','sam.doyle@abc.test']]},
     {name:'Sales',color:'#c2410c',people:[['George','Hale','george.hale@abc.test'],['Ruby','Shaw','ruby.shaw@abc.test'],['Theo','Park','theo.park@abc.test']]}
   ]};
-  Promise.all([seedCompany(c123),seedCompany(cABC)]).then(function(){ return loadCompanies(); }).then(function(){ renderCoSwitch(); if(ME.isSuper){ goCompaniesHome(); } else { activeCid='co123'; startApp(); goDash(); } alert('Seeded Company 123 and Company ABC. Pick one to open it.'); }).catch(function(e){ alert('Seed error: '+e.message); });
+  Promise.all([seedCompany(c123),seedCompany(cABC)]).then(function(){ return loadCompanies(); }).then(function(){ renderCoSwitch(); if(ME.isSuper){ goCompaniesHome(); } else { activeCid='co123'; startApp(); goDash(); } alert('Seeded Northwind and Lumen Health — each with its own logo and brand colour. Open one to see it in the banner.'); }).catch(function(e){ alert('Seed error: '+e.message); });
 };
 </script>
 </body>
