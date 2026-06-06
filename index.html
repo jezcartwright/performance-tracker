@@ -252,7 +252,33 @@ tbody td{padding:14px 16px;vertical-align:middle}
 .co-switch:hover{border-color:var(--strip)}
 .adm-top{display:flex;align-items:center;gap:12px;margin-bottom:14px}
 .superflag{display:inline-block;background:#1a1a1a;color:#fff;font-size:10px;font-weight:800;letter-spacing:1.2px;padding:3px 8px;border-radius:6px;vertical-align:middle}
+.adminflag{display:inline-block;background:#ececea;color:#5a5550;border:1px solid #ddd8d2;font-size:10px;font-weight:800;letter-spacing:1.2px;padding:2px 8px;border-radius:6px;vertical-align:middle}
+.adminpill{display:inline-block;background:#ececea;color:#5a5550;border:1px solid #ddd8d2;font-size:9.5px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;padding:1px 7px;border-radius:20px;margin-left:6px;vertical-align:middle}
 .co-row{display:flex;align-items:center;gap:10px;padding:9px 0;border-top:1px solid var(--b2)}
+.co-row.clickrow{cursor:pointer;padding:11px 8px;border-radius:10px}
+.co-row.clickrow:hover{background:var(--strip-soft)}
+.co-row .co-rmeta{font-size:11px;font-weight:800;letter-spacing:.5px;color:var(--t3)}
+.co-row .co-chev{color:var(--t3);font-size:18px;font-weight:700}
+.crumb2{display:flex;gap:7px;flex-wrap:wrap;font-size:12.5px;color:var(--t3);font-weight:700;margin:2px 0 16px}
+.crumb2 a{color:var(--strip-ink);cursor:pointer}.crumb2 a:hover{text-decoration:underline}
+.ov-head{display:flex;align-items:center;gap:16px;background:var(--card);border:1px solid var(--b);border-radius:16px;padding:18px 20px;flex-wrap:wrap}
+.ov-clogo{width:64px;height:64px;border-radius:14px;flex-shrink:0;display:grid;place-items:center;color:#fff;font-family:var(--display);font-weight:700;font-size:23px;overflow:hidden;box-shadow:inset 0 -3px 8px rgba(0,0,0,.16)}
+.ov-clogo img{width:100%;height:100%;object-fit:contain;background:#fff;padding:6px}
+.ov-htext{flex:1;min-width:160px}
+.ov-htext h2{font-family:var(--display);font-weight:600;font-size:26px;margin:0}
+.ov-row2{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-top:5px;font-size:12px;color:var(--t3);font-weight:600}
+.ov-code{border-radius:6px;padding:2px 8px;font-weight:800;letter-spacing:.5px}
+.ov-row2 .web{color:var(--strip-ink);font-weight:700;cursor:pointer}
+.ov-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px}
+.ov-panel{background:var(--card);border:1px solid var(--b);border-radius:14px;padding:18px}
+.ov-panel h3{font-family:'IBM Plex Serif',serif;font-weight:600;font-size:15px;margin:0 0 12px}
+.ov-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.ov-stat{background:var(--bg);border:1px solid var(--b);border-radius:11px;padding:12px;cursor:pointer}
+.ov-stat:hover{border-color:var(--strip)}
+.ov-stat .n{font-family:var(--display);font-weight:700;font-size:23px;line-height:1}
+.ov-stat .l{font-size:10px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--t3);margin-top:5px}
+.ov-full{grid-column:1/-1}
+@media(max-width:680px){.ov-grid{grid-template-columns:1fr}}
 .co-row:first-child{border-top:none}
 .co-row .nm{font-weight:700;flex:1}
 .co-row .swatch{width:16px;height:16px;border-radius:5px;flex-shrink:0}
@@ -572,6 +598,14 @@ tr.rowdone:hover td{opacity:.78}
     <div id="pfIssues"></div>
   </section>
 
+  <!-- COMPANY OVERVIEW (drill-down) -->
+  <section class="screen" id="overview">
+    <button class="back" onclick="backToAdmin()">
+      <svg viewBox="0 0 24 24" width="15" fill="none" stroke="currentColor" stroke-width="2"><path d="m15 18-6-6 6-6"/></svg> Companies
+    </button>
+    <div id="ovBody"></div>
+  </section>
+
   <!-- ARCHIVE MODAL -->
   <div class="amodal" id="archModal">
     <div class="amodal-card">
@@ -583,7 +617,7 @@ tr.rowdone:hover td{opacity:.78}
 
   <!-- ADMIN -->
   <section class="screen" id="admin">
-    <div class="adm-top"><span class="flag" id="admCoLabel">● Setup</span><span id="superFlag" class="superflag" style="display:none">SUPER ADMIN</span></div>
+    <div class="adm-top"><span class="flag" id="admCoLabel">● Setup</span><span id="superFlag" class="superflag" style="display:none">SUPER ADMIN</span><span id="adminFlag" class="adminflag" style="display:none">ADMIN</span></div>
     <div class="agrid">
       <div class="panel" id="coPanel" style="display:none;grid-column:1/-1">
         <h3>Companies <span class="superflag">SUPER ADMIN</span></h3>
@@ -627,15 +661,17 @@ tr.rowdone:hover td{opacity:.78}
 
       <div class="panel">
         <h3>Who can see issues</h3>
-        <p class="psub">Set per team — flip this when setting up each team.</p>
-        <div class="radio" data-v="team" onclick="setVisibility('team')"><div class="rd"></div><div><div class="rt">Whole team sees all issues</div><div class="rs">Everyone on this team views every issue in the table.</div></div></div>
-        <div class="radio" data-v="participants" onclick="setVisibility('participants')"><div class="rd"></div><div><div class="rt">Participants only</div><div class="rs">Visible to the raiser, the tagged leader, and anyone added.</div></div></div>
-        <div class="radio" data-v="leader" onclick="setVisibility('leader')"><div class="rd"></div><div><div class="rt">Leader-scoped</div><div class="rs">Leaders see every issue in the company; team members see only issues they're tagged in.</div></div></div>
+        <p class="psub">Set per company. Leaders &amp; admins always see everything; this controls what ordinary members see.</p>
+        <div class="radio" data-v="team" onclick="setVisibility('team')"><div class="rd"></div><div><div class="rt">Fully open</div><div class="rs">Everyone in the company sees every issue.</div></div></div>
+        <div class="radio" data-v="leader" onclick="setVisibility('leader')"><div class="rd"></div><div><div class="rt">Leaders only</div><div class="rs">Leaders, the CEO and admins see all issues; members see only issues they raised or were tagged into.</div></div></div>
+        <div class="radio" data-v="dept" onclick="setVisibility('dept')"><div class="rd"></div><div><div class="rt">Team only</div><div class="rs">Members see all issues within their own department; leaders and admins still see everything.</div></div></div>
+        <div class="radio" data-v="participants" onclick="setVisibility('participants')"><div class="rd"></div><div><div class="rt">Individuals only</div><div class="rs">Each person sees only issues they raised or are a named participant in.</div></div></div>
       </div>
 
       <div class="panel">
         <h3>Branding</h3>
         <p class="psub">Live preview — click a colour to theme the whole app.</p>
+        <div style="display:flex;gap:8px;margin-bottom:10px"><input class="adm-input" id="brandWebIn" style="margin:0" placeholder="companyname.com" autocomplete="off"><button class="tinybtn" onclick="brandPullLogo()">Pull logo</button></div>
         <div class="logo-up">
           <div class="logo-prev" id="logoPrev"></div>
           <div>
@@ -643,7 +679,7 @@ tr.rowdone:hover td{opacity:.78}
             <button class="tinybtn" id="logoRm" onclick="removeLogo()" style="display:none;margin-left:6px">Remove</button>
           </div>
         </div>
-        <p class="psub" style="margin:9px 0 14px">Shown top-left for this client. PNG with a transparent background works best; falls back to the company code when none is set.</p>
+        <p class="psub" style="margin:9px 0 14px">Pull it from the client's website above, or upload one. Shown top-left for this client; falls back to the company code when none is set.</p>
         <div class="sw-lbl">Accent (strip) colour</div>
         <div class="sws" id="sws">
           <div class="sw" style="background:#ff6600" data-c="#ff6600" data-i="#d95800" data-s="#fff4ee" data-m="#ffe0cc"></div>
@@ -838,9 +874,76 @@ function renderClientLogo(){
 function renderLogoPrev(){ var p=document.getElementById('logoPrev'); var rm=document.getElementById('logoRm'); if(!p)return;
   if(activeCid && company && company.logo){ p.style.background='#fff'; p.innerHTML='<img src="'+company.logo+'" style="width:100%;height:100%;object-fit:contain;padding:5px">'; if(rm)rm.style.display=''; }
   else { var t=clientMonogram(); p.style.background='var(--strip)'; p.innerHTML='<span style="font-family:var(--display);font-weight:700;color:#fff;font-size:'+(t.length>=3?'15px':'20px')+'">'+esc(t)+'</span>'; if(rm)rm.style.display='none'; }
+  var bw=document.getElementById('brandWebIn'); if(bw && document.activeElement!==bw) bw.value=(activeCid&&company&&company.web)||'';
 }
 window.uploadLogo=function(file){ if(!isAdmin||!activeCid||!file)return; var rd=new FileReader(); rd.onload=function(){ var img=new Image(); img.onload=function(){ var max=128, sc=Math.min(max/img.width,max/img.height,1); var w=Math.max(1,Math.round(img.width*sc)),h=Math.max(1,Math.round(img.height*sc)); var cv=document.createElement('canvas'); cv.width=w; cv.height=h; cv.getContext('2d').drawImage(img,0,0,w,h); var url; try{url=cv.toDataURL('image/png');}catch(e){url=rd.result;} if(url.length>900000){ alert('That logo is large after processing — try a smaller or simpler image.'); return; } cRef().update({logo:url}).catch(function(e){alert('Could not save logo: '+e.message);}); }; img.onerror=function(){alert('Could not read that image file.');}; img.src=rd.result; }; rd.readAsDataURL(file); };
 window.removeLogo=function(){ if(!isAdmin||!activeCid)return; if(!confirm('Remove this client logo? The top-left mark will fall back to the company code.'))return; cRef().update({logo:FV.delete()}).catch(function(e){alert('Could not remove: '+e.message);}); };
+
+/* ---------- company overview (drill-down) ---------- */
+var ovCid=null, ovCompany={}, ovFns={}, ovMembers={}, ovIssues=[];
+function ovIni(p){return p.initials||initials(p.name);}
+function ovMono(){ var t=(ovCompany.code||initials(ovCompany.name||'')||'•').toUpperCase().slice(0,3); return '<span style="font-size:'+(t.length>=3?'15px':'22px')+'">'+esc(t)+'</span>'; }
+function ovLogoHTML(){ return ovCompany.logo?('<img src="'+ovCompany.logo+'" alt="">'):ovMono(); }
+window.openCompanyOverview=function(cid){
+  if(!ME.isSuper && !(companies[cid]&&(companies[cid].adminUids||[]).indexOf(ME.uid)>=0)) return;
+  ovCid=cid;
+  clearTabs(); var ta=document.getElementById('tabAdmin'); if(ta)ta.classList.add('active');
+  document.getElementById('ovBody').innerHTML='<div class="psub">Loading…</div>'; show('overview');
+  var base=companiesCol.doc(cid);
+  Promise.all([ base.get(), base.collection('functions').get(), base.collection('members').get(), base.collection('issues').get() ]).then(function(r){
+    ovCompany=r[0].exists?Object.assign({id:cid},r[0].data()):{id:cid};
+    ovFns={}; r[1].forEach(function(d){ ovFns[d.id]=Object.assign({id:d.id},d.data()); });
+    ovMembers={}; r[2].forEach(function(d){ var m=d.data(); m.mid=d.id; m.name=m.name||((m.first||'')+' '+(m.last||'')).trim(); ovMembers[d.id]=m; });
+    ovIssues=[]; r[3].forEach(function(d){ ovIssues.push(d.data()); });
+    renderOverview();
+  }).catch(function(e){ document.getElementById('ovBody').innerHTML='<div class="psub">Could not load this company: '+esc(e.message)+'</div>'; });
+};
+function renderOverview(){
+  var c=ovCompany; var th=(c.theme&&c.theme.strip)||'#ff6600'; var thi=(c.theme&&c.theme.ink)||'#d95800'; var ths=(c.theme&&c.theme.soft)||'#fff4ee';
+  var deps=Object.keys(ovFns).length, ppl=Object.keys(ovMembers).length;
+  var leaders=Object.keys(ovFns).filter(function(f){return ovFns[f].leaderMid;}).length;
+  var ceoName=(c.ceoMemberId&&ovMembers[c.ceoMemberId])?ovMembers[c.ceoMemberId].name:'—';
+  var openN=ovIssues.filter(function(i){return i.status!=='done';}).length;
+  var admN=(c.adminUids||[]).length;
+  var visLabel=({team:'Fully open',leader:'Leaders only',dept:'Team only',participants:'Individuals only'})[c.visibility||'team'];
+  var webLine=c.web?('<span class="web" onclick="ovOpenWeb()">'+esc(c.web)+'</span>'):'<span style="color:var(--t3)">no website set</span>';
+  var canEdit=ME.isSuper||(c.adminUids||[]).indexOf(ME.uid)>=0;
+  var head='<div class="ov-head"><div class="ov-clogo" style="background:'+(c.logo?'#fff':th)+'">'+ovLogoHTML()+'</div>'
+    +'<div class="ov-htext"><h2>'+esc(c.name||c.id)+'</h2><div class="ov-row2"><span class="ov-code" style="background:'+ths+';color:'+thi+'">'+(esc((c.code||'').toUpperCase())||'—')+'</span><span>·</span>'+webLine+'<span>·</span><span>'+visLabel+'</span></div></div>'
+    +'<button class="tg" style="white-space:nowrap" onclick="openFullCompany(\''+c.id+'\')">Open this company →</button></div>';
+  var stats='<div class="ov-panel"><h3>At a glance</h3><div class="ov-stats">'
+    +'<div class="ov-stat" onclick="openFullChart(\''+c.id+'\')"><div class="n">'+deps+'</div><div class="l">Departments</div></div>'
+    +'<div class="ov-stat" onclick="openFullChart(\''+c.id+'\')"><div class="n">'+ppl+'</div><div class="l">People</div></div>'
+    +'<div class="ov-stat" onclick="openFullChart(\''+c.id+'\')"><div class="n">'+leaders+'</div><div class="l">Leaders</div></div>'
+    +'<div class="ov-stat" onclick="openFullChart(\''+c.id+'\')"><div class="n" style="font-size:14px;padding-top:5px">'+esc(ceoName)+'</div><div class="l">CEO</div></div>'
+    +'<div class="ov-stat" onclick="openFullCompany(\''+c.id+'\')"><div class="n">'+openN+'</div><div class="l">Open issues</div></div>'
+    +'<div class="ov-stat"><div class="n">'+admN+'</div><div class="l">Admins</div></div></div></div>';
+  var weblogo='<div class="ov-panel"><h3>Website &amp; logo</h3>'
+    +(canEdit?'<div style="display:flex;gap:8px"><input class="adm-input" id="ovWebIn" style="margin:0" placeholder="companyname.com" value="'+esc(c.web||'')+'"><button class="tinybtn" onclick="ovPullLogo()">Pull logo</button></div>':'')
+    +'<div style="display:flex;align-items:center;gap:12px;margin-top:13px"><div class="ov-clogo" style="width:46px;height:46px;font-size:15px;background:'+(c.logo?'#fff':th)+'">'+ovLogoHTML()+'</div><div class="psub" style="margin:0">'+(c.logo?('Logo set'+(c.web?(' · from '+esc(c.web)):'')):'Monogram (no logo set)')+'</div></div>'
+    +'<p class="psub" style="margin-top:10px">Enter the client website and we fetch their logo automatically (brand logo, then favicon, then the code monogram). You can also upload one in Branding.</p></div>';
+  var chart='<div class="ov-panel ov-full"><h3>Org chart</h3><div class="dept orgchart" style="padding:16px 8px">'+ovMiniChart()+'</div><span style="display:inline-block;margin-top:6px;color:'+thi+';font-weight:700;cursor:pointer;font-size:13px" onclick="openFullChart(\''+c.id+'\')">Open full org chart →</span></div>';
+  document.getElementById('ovBody').innerHTML='<div class="crumb2"><a onclick="backToAdmin()">Admin</a> › <a onclick="backToAdmin()">Companies</a> › <span style="color:var(--ink)">'+esc(c.name||c.id)+'</span></div>'+head+'<div class="ov-grid">'+stats+weblogo+chart+'</div>';
+}
+function ovMiniChart(){
+  var c=ovCompany;
+  var top=(c.ceoMemberId&&ovMembers[c.ceoMemberId])?('<div class="pcard ceoc" style="cursor:default"><div class="av" style="background:#1a1a1a">'+esc(ovIni(ovMembers[c.ceoMemberId]))+'</div><div class="pn">'+esc(ovMembers[c.ceoMemberId].name)+'</div><div class="pr">CEO</div></div>'):'<div class="pcard empty ceoc" style="cursor:default"><div class="av" style="background:var(--t3)">♛</div><div class="pn">No CEO yet</div><div class="pr">not set</div></div>';
+  var leaders=Object.keys(ovFns).sort(function(a,b){return (ovFns[a].name||'').localeCompare(ovFns[b].name||'');});
+  if(!leaders.length) return '<div class="tree"><ul><li>'+top+'</li></ul></div>';
+  var lis=leaders.map(function(fid){ var f=ovFns[fid]; var lid=f.leaderMid;
+    if(lid&&ovMembers[lid]){ var p=ovMembers[lid]; return '<li><div class="pcard leader" style="cursor:default"><div class="av" style="background:'+(f.color||'var(--strip)')+'">'+esc(ovIni(p))+'</div><div class="pn">'+esc(p.name)+'</div><div class="pr">'+esc(f.name)+'</div></div></li>'; }
+    return '<li><div class="pcard empty" style="cursor:default"><div class="av" style="background:'+(f.color||'var(--t3)')+';opacity:.45">?</div><div class="pn">'+esc(f.name)+'</div><div class="pr">no leader</div></div></li>'; }).join('');
+  return '<div class="tree"><ul><li>'+top+'<ul>'+lis+'</ul></li></ul></div>';
+}
+window.ovOpenWeb=function(){ var w=ovCompany.web; if(w) window.open(/^https?:/.test(w)?w:('https://'+w),'_blank'); };
+window.backToAdmin=function(){ clearTabs(); var t=document.getElementById('tabAdmin'); if(t)t.classList.add('active'); show('admin'); renderAdmin(); };
+window.openFullCompany=function(cid){ switchCompany(cid); };
+window.openFullChart=function(cid){ switchCompany(cid); window.goTeam(); };
+function domainFrom(raw){ return (raw||'').replace(/^https?:\/\//,'').replace(/\/.*/,'').trim(); }
+function fetchLogoUrl(domain,cb){ var cands=['https://logo.clearbit.com/'+domain,'https://www.google.com/s2/favicons?domain='+domain+'&sz=128']; var i=0; (function n(){ if(i>=cands.length){ cb(null); return; } var u=cands[i++]; var im=new Image(); im.onload=function(){ if(im.naturalWidth<8){ n(); return; } cb(u); }; im.onerror=function(){ n(); }; im.src=u; })(); }
+window.ovPullLogo=function(){ var domain=domainFrom((document.getElementById('ovWebIn')||{}).value); if(!domain){ alert('Enter a website first.'); return; } fetchLogoUrl(domain,function(url){ if(!url){ alert('Couldn\u2019t find a logo for that site — you can upload one in Branding instead.'); return; } ovSaveLogo(domain,url); }); };
+window.brandPullLogo=function(){ if(!isAdmin||!activeCid){ return; } var domain=domainFrom((document.getElementById('brandWebIn')||{}).value); if(!domain){ alert('Enter a website first.'); return; } fetchLogoUrl(domain,function(url){ if(!url){ alert('Couldn\u2019t find a logo for that site — try uploading one instead.'); return; } cRef().update({web:domain,logo:url}).catch(function(e){ alert('Save failed: '+e.message); }); }); };
+function ovSaveLogo(domain,url){ companiesCol.doc(ovCid).update({web:domain,logo:url}).then(function(){ ovCompany.web=domain; ovCompany.logo=url; if(ovCid===activeCid){ company.web=domain; company.logo=url; renderClientLogo(); } renderOverview(); }).catch(function(e){ alert('Save failed: '+e.message); }); }
 function renderCoSwitch(){
   var wrap=document.getElementById('coWrap'); if(!wrap)return;
   var ids=Object.keys(companies);
@@ -890,6 +993,7 @@ function startApp(){
     renderClientLogo();
     setVisibilityUI(company.visibility||'team');
     document.getElementById('tabAdmin').style.display=isAdmin?'':'none';
+    var af=document.getElementById('adminFlag'); if(af)af.style.display=(isAdmin&&!ME.isSuper)?'inline-block':'none';
     renderAdmin();
   },function(e){console.error('company',e);});
   subF=fnsRef().onSnapshot(function(qs){ fns={}; qs.forEach(function(d){fns[d.id]=Object.assign({id:d.id},d.data());}); renderFnSelect(); renderAdmin(); render(); refreshAux(); },function(e){console.error('fns',e);});
@@ -931,8 +1035,10 @@ window.openRaise=function(){ clearTabs(); renderFnSelect(); show('raise'); };
 /* ---------- DASHBOARD ---------- */
 function applyVisibility(list){
   var v=(company.visibility)||'team';
-  if(v==='participants' && !isAdmin) return list.filter(function(i){ return i.raiserMid===ME.mid||i.leaderMid===ME.mid||(i.participants||[]).indexOf(ME.mid)>=0; });
-  if(v==='leader' && !isAdmin){ if(isLeaderUser()) return list; return list.filter(function(i){ return i.raiserMid===ME.mid||(i.participants||[]).indexOf(ME.mid)>=0; }); }
+  if(isAdmin) return list;
+  if(v==='participants') return list.filter(function(i){ return i.raiserMid===ME.mid||i.leaderMid===ME.mid||(i.participants||[]).indexOf(ME.mid)>=0; });
+  if(v==='leader'){ if(isLeaderUser()) return list; return list.filter(function(i){ return i.raiserMid===ME.mid||(i.participants||[]).indexOf(ME.mid)>=0; }); }
+  if(v==='dept'){ if(isLeaderUser()) return list; var myFn=(members[ME.mid]||{}).functionId; return list.filter(function(i){ return (myFn&&i.functionId===myFn)||i.raiserMid===ME.mid||(i.participants||[]).indexOf(ME.mid)>=0; }); }
   return list;
 }
 function visibleIssues(){
@@ -1084,6 +1190,8 @@ document.addEventListener('click',function(){ hideMenus(); });
 /* ---------- ADMIN ---------- */
 function setVisibilityUI(v){ document.querySelectorAll('#admin .radio[data-v]').forEach(function(r){ r.classList.toggle('sel',r.dataset.v===v); r.style.pointerEvents=isAdmin?'':'none'; r.style.opacity=isAdmin?'':'.65'; }); }
 window.setVisibility=function(v){ if(!isAdmin||!activeCid)return; cRef().update({visibility:v}); };
+window.makeAdmin=function(mid){ if(!isAdmin)return; var m=members[mid]; if(!m||!m.uid){ alert('They need to sign in once before they can be made an admin.'); return; } cRef().update({adminUids:FV.arrayUnion(m.uid)}).catch(function(e){ alert('Could not grant admin: '+e.message); }); };
+window.revokeAdmin=function(mid){ if(!isAdmin)return; var m=members[mid]; if(!m||!m.uid)return; if(m.uid===ME.uid && !ME.isSuper && !confirm('Remove your own admin access to this company?'))return; cRef().update({adminUids:FV.arrayRemove(m.uid)}).catch(function(e){ alert('Could not revoke admin: '+e.message); }); };
 window.setLeader=function(fid,mid){ if(!isAdmin)return; fnsRef().doc(fid).update({leaderMid:mid||null,leaderName: mid?personName(mid):''}); };
 window.setMemberFn=function(mid,fid){ if(!isAdmin)return; membersRef().doc(mid).update({functionId:fid||null,managerMid:null}); };
 window.setManager=function(mid,mgr){ if(!isAdmin)return; if(mgr===mid)return; membersRef().doc(mid).update({managerMid:mgr||null}); };
@@ -1114,7 +1222,7 @@ function renderAdmin(){
   var ce=document.getElementById('admCompanies');
   if(ce && ME.isSuper){ var cids=Object.keys(companies).sort(function(a,b){return (companies[a].name||'').localeCompare(companies[b].name||'');});
     ce.innerHTML = cids.length ? cids.map(function(id){ var c=companies[id]; var theme=(c.theme&&c.theme.strip)||'#ccc'; var active=(id===activeCid);
-      return '<div class="co-row"><span class="swatch" style="background:'+theme+'"></span><span class="nm">'+esc(c.name||id)+(active?' <span class="ld">· viewing</span>':'')+'</span>'+(active?'':'<button class="tinybtn" onclick="switchCompany(\''+id+'\')">Open</button>')+'</div>';
+      return '<div class="co-row clickrow" onclick="openCompanyOverview(\''+id+'\')"><span class="swatch" style="background:'+theme+'"></span><span class="nm">'+esc(c.name||id)+(active?' <span class="ld">· viewing</span>':'')+'</span><span class="co-rmeta">'+esc((c.code||'').toUpperCase())+'</span><button class="tinybtn" onclick="event.stopPropagation();switchCompany(\''+id+'\')">Open</button><span class="co-chev">›</span></div>';
     }).join('') : '<div class="psub">No companies yet. Add one below, or seed the test data.</div>';
   }
   // functions
@@ -1137,9 +1245,10 @@ function renderAdmin(){
         var opts=Object.keys(members).filter(function(o){return o!==mid && members[o].functionId===m.functionId;}).map(function(o){ var sel=(m.managerMid===o)?' selected':''; var lead=(o===fnsLeader(m.functionId))?' (leader)':''; return '<option value="'+o+'"'+sel+'>'+esc(personName(o))+lead+'</option>'; }).join('');
         mgrsel=' <select class="fn-sel" title="Reports to" onchange="setManager(\''+mid+'\',this.value)"><option value="">↳ reports to leader</option>'+opts+'</select>';
       }
-      var tags=''; if(isLead)tags+=' <span class="ld" style="color:var(--strip-ink)">leader</span>'; if(adm)tags+=' <span class="ld" style="color:var(--strip-ink)">admin</span>'; if(!m.uid)tags+=' <span class="ld" style="opacity:.6">invited</span>';
+      var tags=''; if(isLead)tags+=' <span class="ld" style="color:var(--strip-ink)">leader</span>'; if(adm)tags+=' <span class="adminpill">Admin</span>'; if(!m.uid)tags+=' <span class="ld" style="opacity:.6">invited</span>';
+      var admBtn = (isAdmin && m.uid) ? (adm ? '<button class="tinybtn" onclick="revokeAdmin(\''+mid+'\')">Revoke admin</button>' : '<button class="tinybtn" onclick="makeAdmin(\''+mid+'\')">Make admin</button>') : '';
       var rm = isAdmin ? '<button class="tinybtn" onclick="removeMember(\''+mid+'\')" style="background:#fbeaea;color:#b42318;border-color:#f3c9c4">Remove</button>' : '';
-      return '<div class="frow" style="align-items:flex-start"><span class="mini" style="background:'+personColor(mid)+';width:24px;height:24px;font-size:10px;margin-top:2px">'+esc(personInit(mid))+'</span><span class="nm" style="font-size:13px;flex:1">'+esc(personName(mid))+tags+'</span><span class="mrow-ctl">'+fnsel+mgrsel+' '+rm+'</span></div>';
+      return '<div class="frow" style="align-items:flex-start"><span class="mini" style="background:'+personColor(mid)+';width:24px;height:24px;font-size:10px;margin-top:2px">'+esc(personInit(mid))+'</span><span class="nm" style="font-size:13px;flex:1">'+esc(personName(mid))+tags+'</span><span class="mrow-ctl">'+fnsel+mgrsel+' '+admBtn+' '+rm+'</span></div>';
     }).join('') : '<div class="psub">'+(activeCid?'No members yet — add people below.':'Select or create a company first.')+'</div>';
   }
   var amw=document.getElementById('addMemberWrap'); if(amw){ amw.style.display=(isAdmin&&activeCid)?'block':'none'; var nf=document.getElementById('nmFn'); if(nf)nf.innerHTML='<option value="">— department —</option>'+fnOptions(''); }
