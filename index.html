@@ -64,6 +64,19 @@ input,textarea,select{font-family:inherit;font-size:inherit}
 .cohome-code{font-size:11px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--t3);margin-top:4px}
 .cohome-chev{color:var(--t3);font-size:24px;flex-shrink:0;line-height:1}
 .cohome-tools{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:22px;padding-top:18px;border-top:1px solid var(--b)}
+.gps{position:relative;margin:0 0 22px;max-width:580px}
+.gps-input{width:100%;border:1.5px solid var(--b);border-radius:7px;padding:12px 14px;font-size:14px;font-family:var(--ui);outline:none;background:var(--card);transition:.14s}
+.gps-input:focus{border-color:var(--strip);box-shadow:0 0 0 3px color-mix(in srgb,var(--strip) 14%,transparent)}
+.gps-results{position:absolute;left:0;right:0;top:50px;background:#fff;border:1px solid var(--b);border-radius:8px;box-shadow:0 16px 42px rgba(0,0,0,.15);z-index:30;max-height:360px;overflow-y:auto;display:none;padding:6px}
+.gps-row{display:flex;align-items:center;gap:11px;width:100%;border:none;background:none;border-radius:6px;padding:9px 10px;cursor:pointer;text-align:left}
+.gps-row:hover{background:var(--strip-soft)}
+.gps-av{width:32px;height:32px;border-radius:6px;display:grid;place-items:center;color:#fff;font-size:11px;font-weight:800;flex-shrink:0}
+.gps-rtext{display:flex;flex-direction:column;flex:1;min-width:0}
+.gps-nm{font-weight:700;font-size:13.5px;color:var(--t)}
+.gps-meta{font-size:11.5px;color:var(--t3);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gps-co{display:flex;align-items:center;gap:6px;font-size:11.5px;font-weight:700;color:var(--t2);white-space:nowrap;flex-shrink:0}
+.gps-dot{width:8px;height:8px;border-radius:2px;flex-shrink:0}
+.gps-note{padding:12px;color:var(--t3);font-size:13px}
 .mast .co-switch{background:rgba(255,255,255,.16);color:#fff;border-color:rgba(255,255,255,.34)}
 .mast .iconbtn{background:rgba(255,255,255,.16);color:#fff;border-color:rgba(255,255,255,.3)}
 .mast .userpill{background:rgba(255,255,255,.16);color:#fff;border-color:rgba(255,255,255,.34)}
@@ -663,6 +676,10 @@ tr.rowdone:hover td{opacity:.78}
       <h1 class="cohome-h1">Companies</h1>
       <p class="cohome-sub">Choose a company to open, or add a new one. Each has its own branding, departments, people and issues.</p>
     </div>
+    <div class="gps">
+      <input id="gpsInput" class="gps-input" placeholder="🔍  Search people across all companies…" oninput="gpsRender()" autocomplete="off">
+      <div id="gpsResults" class="gps-results"></div>
+    </div>
     <div class="cohome-grid" id="cohomeGrid"></div>
     <div class="cohome-tools">
       <input class="adm-input" id="newCoNameHome" placeholder="New company name" style="margin:0;max-width:240px">
@@ -1053,8 +1070,8 @@ function startApp(){
     var af=document.getElementById('adminFlag'); if(af)af.style.display=(isAdmin&&!ME.isSuper)?'inline-block':'none';
     renderAdmin();
   },function(e){console.error('company',e);});
-  subF=fnsRef().onSnapshot(function(qs){ fns={}; qs.forEach(function(d){fns[d.id]=Object.assign({id:d.id},d.data());}); renderFnSelect(); renderAdmin(); render(); refreshAux(); },function(e){console.error('fns',e);});
-  subM=membersRef().onSnapshot(function(qs){ members={}; qs.forEach(function(d){ var m=d.data(); m.mid=d.id; m.name=m.name||((m.first||'')+' '+(m.last||'')).trim(); m.initials=m.initials||initials(m.name); members[d.id]=m; }); resolveMyMid(); renderAdmin(); render(); refreshAux(); if(curIssue)fillDetail(curIssue); },function(e){console.error('members',e);});
+  subF=fnsRef().onSnapshot(function(qs){ fns={}; qs.forEach(function(d){fns[d.id]=Object.assign({id:d.id},d.data());}); renderFnSelect(); renderAdmin(); render(); refreshAux(); if(curProfile){ var _pe=document.getElementById('profile'); if(_pe&&_pe.classList.contains('active'))openProfile(curProfile); } },function(e){console.error('fns',e);});
+  subM=membersRef().onSnapshot(function(qs){ members={}; qs.forEach(function(d){ var m=d.data(); m.mid=d.id; m.name=m.name||((m.first||'')+' '+(m.last||'')).trim(); m.initials=m.initials||initials(m.name); members[d.id]=m; }); resolveMyMid(); renderAdmin(); render(); refreshAux(); if(curIssue)fillDetail(curIssue); if(window.pendingProfileMid && members[window.pendingProfileMid]){ var _pm=window.pendingProfileMid; window.pendingProfileMid=null; openProfile(_pm); } },function(e){console.error('members',e);});
   subI=issuesRef().orderBy('createdAt','desc').onSnapshot(function(qs){
     issues=[]; qs.forEach(function(d){var i=d.data(); i.id=d.id; issues.push(i);});
     render(); updateBadge();
@@ -1094,6 +1111,8 @@ window.goCompaniesHome=function(){
   company={}; fns={}; members={}; issues=[]; ME.mid=null; isAdmin=ME.isSuper;
   applyTheme(DEFAULT_THEME); renderClientLogo(); setHeader();
   clearTabs(); setHome(true); renderCoHome(); show('cohome');
+  var gi=document.getElementById('gpsInput'); if(gi)gi.value=''; var gr=document.getElementById('gpsResults'); if(gr){ gr.innerHTML=''; gr.style.display='none'; }
+  peopleIndex=null; if(ME.isSuper) buildPeopleIndex();
 };
 function renderCoHome(){
   var box=document.getElementById('cohomeGrid'); if(!box)return;
@@ -1106,6 +1125,40 @@ function renderCoHome(){
 }
 window.addCompanyHome=function(){ if(!ME.isSuper)return; var el=document.getElementById('newCoNameHome'); var n=(el.value||'').trim(); if(!n)return; var ref=companiesCol.doc(); ref.set({name:n,visibility:'team',theme:DEFAULT_THEME,adminUids:[ME.uid],createdAt:FV.serverTimestamp()}).then(function(){ el.value=''; return loadCompanies(); }).then(function(){ renderCoHome(); renderCoSwitch(); }).catch(function(e){ alert('Could not add company: '+e.message); }); };
 function landHome(){ if(ME.isSuper){ goCompaniesHome(); } else { setHome(false); goDash(); } }
+
+/* ---------- global people search (all companies) ---------- */
+var peopleIndex=null, peopleIndexLoading=false;
+function buildPeopleIndex(){
+  if(!ME.isSuper){ peopleIndex=[]; return Promise.resolve([]); }
+  peopleIndexLoading=true;
+  var cids=Object.keys(companies);
+  var jobs=cids.map(function(cid){ var base=companiesCol.doc(cid);
+    return Promise.all([ base.collection('functions').get(), base.collection('members').get() ]).then(function(r){
+      var fnMap={}; r[0].forEach(function(d){ fnMap[d.id]=d.data(); });
+      var co=companies[cid]||{}; var th=(co.theme&&co.theme.strip)||'#ff6600'; var rows=[];
+      r[1].forEach(function(d){ var m=d.data(); var nm=m.name||((m.first||'')+' '+(m.last||'')).trim();
+        rows.push({cid:cid,mid:d.id,name:nm,initials:m.initials||initials(nm),email:m.email||'',
+          coName:co.name||cid,coTheme:th,fnName:(m.functionId&&fnMap[m.functionId])?fnMap[m.functionId].name:'',
+          isLeader:!!m.isLeader,isCEO:(co.ceoMemberId===d.id)});
+      });
+      return rows;
+    }).catch(function(){ return []; });
+  });
+  return Promise.all(jobs).then(function(all){ peopleIndex=[].concat.apply([],all); peopleIndexLoading=false; gpsRender(); return peopleIndex; });
+}
+window.gpsRender=function(){
+  var inp=document.getElementById('gpsInput'), box=document.getElementById('gpsResults'); if(!inp||!box)return;
+  var q=(inp.value||'').trim().toLowerCase();
+  if(!q){ box.innerHTML=''; box.style.display='none'; return; }
+  box.style.display='block';
+  if(peopleIndex===null){ box.innerHTML='<div class="gps-note">'+(peopleIndexLoading?'Searching all companies…':'Preparing search…')+'</div>'; if(!peopleIndexLoading)buildPeopleIndex(); return; }
+  var res=peopleIndex.filter(function(p){ return p.name.toLowerCase().indexOf(q)>=0 || (p.email&&p.email.toLowerCase().indexOf(q)>=0); })
+    .sort(function(a,b){ return a.name.localeCompare(b.name); }).slice(0,25);
+  box.innerHTML = res.length ? res.map(function(p){ var role=p.isCEO?'CEO':(p.isLeader?('Leader'+(p.fnName?' · '+esc(p.fnName):'')):(p.fnName?esc(p.fnName):'Team member'));
+    return '<button class="gps-row" onclick="gpsOpen(\''+p.cid+'\',\''+p.mid+'\')"><span class="gps-av" style="background:'+p.coTheme+'">'+esc(p.initials)+'</span><span class="gps-rtext"><span class="gps-nm">'+esc(p.name)+'</span><span class="gps-meta">'+role+'</span></span><span class="gps-co"><span class="gps-dot" style="background:'+p.coTheme+'"></span>'+esc(p.coName)+'</span></button>';
+  }).join('') : '<div class="gps-note">No one matches "'+esc(q)+'".</div>';
+};
+window.gpsOpen=function(cid,mid){ window.pendingProfileMid=mid; var inp=document.getElementById('gpsInput'); if(inp)inp.value=''; var box=document.getElementById('gpsResults'); if(box){ box.innerHTML=''; box.style.display='none'; } switchCompany(cid); };
 window.toggleShowDone=function(){ var c=document.getElementById('showDone'); showCompleted=!!(c&&c.checked); render(); };
 function updateSortbarUI(){ var w=document.getElementById('showDoneWrap'); if(w)w.style.display=(boardMode==='done')?'none':'flex'; }
 window.openRaise=function(){ clearTabs(); renderFnSelect(); show('raise'); };
