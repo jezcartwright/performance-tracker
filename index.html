@@ -52,6 +52,7 @@ input,textarea,select{font-family:inherit;font-size:inherit}
 .mast .iconbtn{background:rgba(255,255,255,.16);color:#fff;border-color:rgba(255,255,255,.3)}
 .mast .userpill{background:rgba(255,255,255,.16);color:#fff;border-color:rgba(255,255,255,.34)}
 .mast .userpill .ava{background:#fff;color:var(--strip)}
+.mast .co-menu,.mast .notif,.mast .menu{color:var(--t)}
 .date{font-size:12.5px;color:var(--t2);font-weight:500}
 .userpill{display:flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--b);border-radius:30px;padding:4px 11px 4px 4px;font-weight:600;font-size:13px}
 .ava{width:27px;height:27px;border-radius:50%;background:var(--strip);color:#fff;display:grid;place-items:center;font-size:12px;font-weight:700}
@@ -826,7 +827,7 @@ var stOrder=['open','prog','done'];
 auth.onAuthStateChanged(function(user){
   if(!user){ document.getElementById('app').style.display='none'; document.getElementById('login-screen').style.display='flex'; return; }
   ME.uid=user.uid; ME.email=(user.email||'');
-  loadProfile(user).then(ensureSuperBootstrap).then(loadCompanies).then(startApp).catch(function(e){ console.error('init',e); startApp(); });
+  loadProfile(user).then(ensureSuperBootstrap).then(loadCompanies).then(startApp).then(landHome).catch(function(e){ console.error('init',e); startApp(); landHome(); });
 });
 
 function loadProfile(user){
@@ -1051,6 +1052,8 @@ function clearTabs(){ document.querySelectorAll('.tg[data-s]').forEach(function(
 document.querySelectorAll('.tg[data-s]').forEach(function(b){ b.addEventListener('click',function(){ clearTabs(); b.classList.add('active'); if(b.dataset.s==='admin'){ show('admin'); renderAdmin(); return; } if(b.dataset.s==='team'){ show('team'); renderTeam(); return; } boardMode=(b.id==='tabMine')?'mine':(b.id==='tabDone')?'done':'active'; updateSortbarUI(); show('dashboard'); render(); }); });
 window.goTeam=function(){ clearTabs(); var t=document.getElementById('tabTeam'); if(t)t.classList.add('active'); show('team'); renderTeam(); };
 window.goDash=function(){ clearTabs(); var t=document.getElementById('tabAll'); if(t)t.classList.add('active'); boardMode='active'; updateSortbarUI(); show('dashboard'); render(); };
+window.goAdmin=function(){ clearTabs(); var t=document.getElementById('tabAdmin'); if(t)t.classList.add('active'); show('admin'); renderAdmin(); };
+function landHome(){ if(ME.isSuper){ goAdmin(); } else { goDash(); } }
 window.toggleShowDone=function(){ var c=document.getElementById('showDone'); showCompleted=!!(c&&c.checked); render(); };
 function updateSortbarUI(){ var w=document.getElementById('showDoneWrap'); if(w)w.style.display=(boardMode==='done')?'none':'flex'; }
 window.openRaise=function(){ clearTabs(); renderFnSelect(); show('raise'); };
