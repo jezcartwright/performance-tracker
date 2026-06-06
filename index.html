@@ -47,25 +47,41 @@ input,textarea,select{font-family:inherit;font-size:inherit}
 .eyebrow{font-family:var(--display);font-weight:700;text-transform:uppercase;letter-spacing:.2em;font-size:13px;color:rgba(255,255,255,.82);line-height:1.2;padding-left:.1em}
 .wordmark{font-family:var(--display);font-weight:600;text-transform:uppercase;letter-spacing:.13em;font-size:27px;line-height:1.02;color:#fff;margin-top:1px}
 .mast-right{margin-left:auto;display:flex;align-items:center;gap:10px}
-.date{font-size:12px;color:rgba(255,255,255,.85);font-weight:600;white-space:nowrap}
+.mast .date{font-size:12px;color:#fff;font-weight:600;white-space:nowrap}
+.mast-id{cursor:default}
+#app.cansuper .logo,#app.cansuper .mast-id{cursor:pointer}
+#app.home .navbar{display:none}
+#app.home #coWrap{display:none!important}
+.cohome-head{margin:4px 0 22px}
+.cohome-h1{font-family:var(--display);font-size:34px;font-weight:600;letter-spacing:.005em;margin:10px 0 7px;color:var(--t)}
+.cohome-sub{color:var(--t2);font-size:14px;max-width:580px;margin:0;line-height:1.5}
+.cohome-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:14px}
+.cohome-card{display:flex;align-items:center;gap:14px;text-align:left;background:var(--card);border:1px solid var(--b);border-left:4px solid var(--ac);border-radius:7px;padding:15px 16px;cursor:pointer;transition:.14s;width:100%;font-family:var(--ui)}
+.cohome-card:hover{box-shadow:0 7px 20px rgba(0,0,0,.09);transform:translateY(-1px);border-color:var(--ac)}
+.cohome-logo{width:46px;height:46px;border-radius:7px;background:#fff;border:1px solid var(--b);display:grid;place-items:center;flex-shrink:0;overflow:hidden}
+.cohome-body{display:flex;flex-direction:column;flex:1;min-width:0}
+.cohome-nm{font-family:var(--serif);font-weight:600;font-size:17px;color:var(--t);line-height:1.2}
+.cohome-code{font-size:11px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--t3);margin-top:4px}
+.cohome-chev{color:var(--t3);font-size:24px;flex-shrink:0;line-height:1}
+.cohome-tools{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:22px;padding-top:18px;border-top:1px solid var(--b)}
 .mast .co-switch{background:rgba(255,255,255,.16);color:#fff;border-color:rgba(255,255,255,.34)}
 .mast .iconbtn{background:rgba(255,255,255,.16);color:#fff;border-color:rgba(255,255,255,.3)}
 .mast .userpill{background:rgba(255,255,255,.16);color:#fff;border-color:rgba(255,255,255,.34)}
 .mast .userpill .ava{background:#fff;color:var(--strip)}
 .mast .co-menu,.mast .notif,.mast .menu{color:var(--t)}
 .date{font-size:12.5px;color:var(--t2);font-weight:500}
-.userpill{display:flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--b);border-radius:30px;padding:4px 11px 4px 4px;font-weight:600;font-size:13px}
+.userpill{display:flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--b);border-radius:7px;padding:4px 11px 4px 4px;font-weight:600;font-size:13px}
 .ava{width:27px;height:27px;border-radius:50%;background:var(--strip);color:#fff;display:grid;place-items:center;font-size:12px;font-weight:700}
 
 /* Button row */
 .navbar{display:flex;align-items:center;gap:9px;margin:18px 0 22px;flex-wrap:wrap}
-.tg{font-family:var(--ui);font-weight:700;font-size:13px;display:inline-flex;align-items:center;gap:7px;background:var(--strip-soft);border:1px solid var(--strip-mid);color:var(--strip-ink);border-radius:7px;padding:9px 14px;transition:.14s}
+.tg{font-family:var(--ui);font-weight:700;font-size:13px;display:inline-flex;align-items:center;gap:7px;background:var(--strip-soft);border:1px solid var(--strip-mid);color:var(--strip-ink);border-radius:5px;padding:9px 14px;transition:.14s}
 .tg:hover{border-color:var(--strip)}
 .tg.active{background:var(--strip);border-color:var(--strip);color:#fff}
 .tg .ct{background:rgba(255,255,255,.28);font-size:11px;font-weight:700;padding:0 7px;border-radius:20px;line-height:1.6}
 .tg:not(.active) .ct{background:var(--strip);color:#fff}
 .grow{flex:1}
-.primary{font-family:var(--ui);font-weight:700;font-size:13.5px;display:inline-flex;align-items:center;gap:8px;background:var(--strip);color:#fff;border-radius:7px;padding:10px 16px;box-shadow:0 2px 9px color-mix(in srgb,var(--strip) 32%,transparent);transition:.14s}
+.primary{font-family:var(--ui);font-weight:700;font-size:13.5px;display:inline-flex;align-items:center;gap:8px;background:var(--strip);color:#fff;border-radius:5px;padding:10px 16px;box-shadow:0 2px 9px color-mix(in srgb,var(--strip) 32%,transparent);transition:.14s}
 .primary:hover{background:var(--strip-ink)}
 .primary svg,.tg svg{width:16px;height:16px}
 
@@ -88,7 +104,7 @@ tr.grp td{padding:9px 16px;border-bottom:1px solid var(--b)}
 .grp-lab .ct{color:var(--t3);font-weight:600;letter-spacing:0;font-size:11px}
 
 /* Card / table */
-.card{background:var(--card);border:1px solid var(--b);border-radius:10px;overflow:hidden}
+.card{background:var(--card);border:1px solid var(--b);border-radius:7px;overflow:hidden}
 table{width:100%;border-collapse:collapse}
 thead th{text-align:left;font-family:var(--ui);font-size:10.5px;text-transform:uppercase;letter-spacing:1.3px;color:var(--t3);font-weight:700;padding:13px 16px;border-bottom:1px solid var(--b);white-space:nowrap;cursor:pointer;user-select:none}
 thead th:hover{color:var(--t2)}
@@ -180,9 +196,9 @@ tbody td{padding:14px 16px;vertical-align:middle}
 .ghost:hover{border-color:var(--t3)}
 
 /* Admin */
-.flag{display:inline-flex;align-items:center;gap:6px;font-family:var(--ui);font-size:10.5px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:var(--strip-ink);background:var(--strip-soft);padding:5px 11px;border-radius:20px;margin-bottom:16px}
+.flag{display:inline-flex;align-items:center;gap:6px;font-family:var(--ui);font-size:10.5px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:var(--strip-ink);background:var(--strip-soft);padding:5px 11px;border-radius:6px;margin-bottom:16px}
 .agrid{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:start}
-.panel{background:var(--card);border:1px solid var(--b);border-radius:10px;padding:19px}
+.panel{background:var(--card);border:1px solid var(--b);border-radius:7px;padding:19px}
 .panel h3{font-family:var(--display);font-size:21px;font-weight:600;letter-spacing:.01em}
 .panel .psub{font-size:12.5px;color:var(--t2);margin:3px 0 15px}
 .frow{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--b2)}
@@ -229,7 +245,7 @@ tbody td{padding:14px 16px;vertical-align:middle}
 .gbtn:hover{border-color:var(--t3)}
 .login-msg{font-size:12.5px;color:var(--t2);margin-top:12px;min-height:16px}
 .hp{position:absolute;left:-9999px;width:1px;height:1px;opacity:0}
-.iconbtn{position:relative;width:38px;height:38px;border-radius:9px;border:1px solid var(--b);background:var(--card);display:grid;place-items:center;color:var(--t2)}
+.iconbtn{position:relative;width:38px;height:38px;border-radius:6px;border:1px solid var(--b);background:var(--card);display:grid;place-items:center;color:var(--t2)}
 .iconbtn:hover{border-color:var(--t3);color:var(--t)}
 .iconbtn .bdg{position:absolute;top:-5px;right:-5px;background:var(--strip);color:#fff;font-size:10px;font-weight:700;min-width:17px;height:17px;border-radius:9px;display:none;place-items:center;padding:0 4px;border:2px solid var(--bg)}
 .iconbtn .bdg.on{display:grid}
@@ -248,14 +264,14 @@ tbody td{padding:14px 16px;vertical-align:middle}
 .notif .ni .t{font-weight:600;line-height:1.3}.notif .ni .s{font-size:11px;color:var(--t3);margin-top:2px}
 .notif .empty{padding:18px 14px;text-align:center;color:var(--t3);font-size:12.5px}
 .empty-row td{padding:30px 16px;text-align:center;color:var(--t3);font-size:13px}
-.adm-input{width:100%;border:1.5px solid var(--b);border-radius:7px;padding:8px 10px;outline:none;font-size:13px;margin-bottom:8px}
+.adm-input{width:100%;border:1.5px solid var(--b);border-radius:6px;padding:8px 10px;outline:none;font-size:13px;margin-bottom:8px}
 .adm-input:focus{border-color:var(--strip)}
 .lead-sel,.fn-sel{border:1px solid var(--b);border-radius:6px;padding:5px 8px;font-size:12px;font-family:var(--ui);font-weight:600;background:#fff;outline:none;max-width:140px}
 .tinybtn{font-size:11px;font-weight:700;color:var(--strip-ink);background:var(--strip-soft);border:1px solid var(--strip-mid);border-radius:6px;padding:4px 9px}
 .tinybtn.on{background:var(--strip);color:#fff;border-color:var(--strip)}
 .cpick{display:inline-block;width:22px;height:22px;border-radius:6px;cursor:pointer;border:2px solid transparent}
 .cpick.sel{border-color:var(--t)}
-.co-switch{border:1px solid var(--b);border-radius:9px;padding:8px 11px;font-family:var(--ui);font-size:13px;font-weight:700;color:var(--t);background:var(--card);outline:none;cursor:pointer;max-width:180px}
+.co-switch{border:1px solid var(--b);border-radius:6px;padding:8px 11px;font-family:var(--ui);font-size:13px;font-weight:700;color:var(--t);background:var(--card);outline:none;cursor:pointer;max-width:180px}
 .co-switch:hover{border-color:var(--strip)}
 .adm-top{display:flex;align-items:center;gap:12px;margin-bottom:14px}
 .superflag{display:inline-block;background:#1a1a1a;color:#fff;font-size:10px;font-weight:800;letter-spacing:1.2px;padding:3px 8px;border-radius:6px;vertical-align:middle}
@@ -340,16 +356,16 @@ tbody td{padding:14px 16px;vertical-align:middle}
 .ocmenu div:hover{background:var(--strip-soft)}
 .ocmenu .dz{color:#b42318}.ocmenu .dz:hover{background:#fbeaea}
 /* searchable company switcher */
-.co-switch{display:flex;align-items:center;border:1px solid var(--b);border-radius:9px;padding:8px 11px;font-family:var(--ui);font-size:13px;font-weight:700;color:var(--t2);background:var(--card);cursor:pointer;max-width:200px}
+.co-switch{display:flex;align-items:center;border:1px solid var(--b);border-radius:6px;padding:8px 11px;font-family:var(--ui);font-size:13px;font-weight:700;color:var(--t2);background:var(--card);cursor:pointer;max-width:200px}
 .co-switch:hover{border-color:var(--strip)}
 .co-switch #coBtnLabel{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.co-menu{position:absolute;top:46px;right:0;width:280px;background:#fff;border:1px solid var(--b);border-radius:13px;box-shadow:0 18px 44px rgba(0,0,0,.17);z-index:60;padding:10px;display:none}
+.co-menu{position:absolute;top:46px;right:0;width:280px;background:#fff;border:1px solid var(--b);border-radius:10px;box-shadow:0 18px 44px rgba(0,0,0,.17);z-index:60;padding:10px;display:none}
 .co-menu.on{display:block}
 .co-search{width:100%;border:1px solid var(--b);border-radius:9px;padding:9px 11px;font-size:13px;font-family:var(--ui);outline:none;margin-bottom:8px}
 .co-search:focus{border-color:var(--strip)}
 .co-list{max-height:320px;overflow-y:auto}
 .co-grp{font-size:10px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--t3);padding:8px 8px 5px}
-.co-item{display:flex;align-items:center;gap:10px;width:100%;border:none;background:none;border-radius:9px;padding:9px 9px;font-size:13.5px;font-weight:600;color:var(--ink);cursor:pointer;text-align:left}
+.co-item{display:flex;align-items:center;gap:10px;width:100%;border:none;background:none;border-radius:6px;padding:9px 9px;font-size:13.5px;font-weight:600;color:var(--ink);cursor:pointer;text-align:left}
 .co-item:hover{background:var(--strip-soft)}
 .co-item.on{background:var(--strip-soft)}
 .co-item .cswatch{width:11px;height:11px;border-radius:50%;flex-shrink:0}
@@ -445,8 +461,8 @@ tr.rowdone:hover td{opacity:.78}
 
 <div id="app" style="display:none">
 <header class="mast"><div class="mast-inner">
-    <div class="logo" id="clientLogo"></div>
-    <div class="mast-id">
+    <div class="logo" id="clientLogo" onclick="homeClick()"></div>
+    <div class="mast-id" onclick="homeClick()">
       <div class="eyebrow">Performance Intelligence</div>
       <div class="wordmark">Progress Tracker</div>
     </div>
@@ -639,6 +655,22 @@ tr.rowdone:hover td{opacity:.78}
       <div id="archBody"></div>
     </div>
   </div>
+
+  <!-- COMPANIES DASHBOARD (super admin home) -->
+  <section class="screen" id="cohome">
+    <div class="cohome-head">
+      <span class="flag">● All companies <span class="superflag" style="margin-left:6px">SUPER ADMIN</span></span>
+      <h1 class="cohome-h1">Companies</h1>
+      <p class="cohome-sub">Choose a company to open, or add a new one. Each has its own branding, departments, people and issues.</p>
+    </div>
+    <div class="cohome-grid" id="cohomeGrid"></div>
+    <div class="cohome-tools">
+      <input class="adm-input" id="newCoNameHome" placeholder="New company name" style="margin:0;max-width:240px">
+      <button class="tg" onclick="addCompanyHome()">+ Add company</button>
+      <span class="grow"></span>
+      <button class="tg" onclick="seedTestData()">⚙ Seed test data (123 &amp; ABC)</button>
+    </div>
+  </section>
 
   <!-- ADMIN -->
   <section class="screen" id="admin">
@@ -947,7 +979,7 @@ function renderOverview(){
     +'<div style="display:flex;align-items:center;gap:12px;margin-top:13px"><div class="ov-clogo" style="width:46px;height:46px;font-size:15px;background:'+(c.logo?'#fff':th)+'">'+ovLogoHTML()+'</div><div class="psub" style="margin:0">'+(c.logo?('Logo set'+(c.web?(' · from '+esc(c.web)):'')):'Monogram (no logo set)')+'</div></div>'
     +'<p class="psub" style="margin-top:10px">Enter the client website and we fetch their logo automatically (brand logo, then favicon, then the code monogram). You can also upload one in Branding.</p></div>';
   var chart='<div class="ov-panel ov-full"><h3>Org chart</h3><div class="dept orgchart" style="padding:16px 8px">'+ovMiniChart()+'</div><span style="display:inline-block;margin-top:6px;color:'+thi+';font-weight:700;cursor:pointer;font-size:13px" onclick="openFullChart(\''+c.id+'\')">Open full org chart →</span></div>';
-  document.getElementById('ovBody').innerHTML='<div class="crumb2"><a onclick="backToAdmin()">Admin</a> › <a onclick="backToAdmin()">Companies</a> › <span style="color:var(--ink)">'+esc(c.name||c.id)+'</span></div>'+head+'<div class="ov-grid">'+stats+weblogo+chart+'</div>';
+  document.getElementById('ovBody').innerHTML='<div class="crumb2"><a onclick="goCompaniesHome()">Companies</a> › <span style="color:var(--t)">'+esc(c.name||c.id)+'</span></div>'+head+'<div class="ov-grid">'+stats+weblogo+chart+'</div>';
 }
 function ovMiniChart(){
   var c=ovCompany;
@@ -995,14 +1027,15 @@ window.pickCo=function(cid){ pushRecent(cid); closeCoMenu(); switchCompany(cid);
 window.toggleCoMenu=function(e){ if(e)e.stopPropagation(); var m=document.getElementById('coMenu'); var open=m.classList.toggle('on'); if(open){ var s=document.getElementById('coSearch'); s.value=''; renderCoList(); setTimeout(function(){try{s.focus();}catch(_){}}, 30); } };
 function closeCoMenu(){ var m=document.getElementById('coMenu'); if(m)m.classList.remove('on'); }
 document.addEventListener('click',function(e){ var w=document.getElementById('coWrap'); if(w && !w.contains(e.target)) closeCoMenu(); });
-window.switchCompany=function(cid){ if(!cid||cid===activeCid)return; try{pushRecent(cid);}catch(e){} activeCid=cid; curId=null; curIssue=null; if(msgsUnsub){msgsUnsub();msgsUnsub=null;} boardMode='active'; clearTabs(); var t=document.getElementById('tabAll'); if(t)t.classList.add('active'); updateSortbarUI(); startApp(); show('dashboard'); };
+window.switchCompany=function(cid){ if(!cid)return; if(cid===activeCid&&!document.getElementById('app').classList.contains('home'))return; setHome(false); try{pushRecent(cid);}catch(e){} activeCid=cid; curId=null; curIssue=null; if(msgsUnsub){msgsUnsub();msgsUnsub=null;} boardMode='active'; clearTabs(); var t=document.getElementById('tabAll'); if(t)t.classList.add('active'); updateSortbarUI(); startApp(); show('dashboard'); };
 
 function startApp(){
   document.getElementById('login-screen').style.display='none';
   document.getElementById('app').style.display='block';
   setHeader(); renderCoSwitch();
   document.getElementById('superFlag').style.display=ME.isSuper?'inline-block':'none';
-  document.getElementById('coPanel').style.display=ME.isSuper?'block':'none';
+  document.getElementById('coPanel').style.display='none';
+  var appEl=document.getElementById('app'); if(appEl)appEl.classList.toggle('cansuper',!!ME.isSuper);
   [subC,subF,subM,subI,subA].forEach(function(u){ if(u)u(); }); subC=subF=subM=subI=subA=null;
   if(!activeCid){
     isAdmin=ME.isSuper; company={}; fns={}; members={}; issues=[]; ME.mid=null;
@@ -1050,10 +1083,29 @@ function applyTheme(t){ if(!t)return; var r=document.documentElement; r.style.se
 function show(id){ document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active');}); var el=document.getElementById(id); if(el)el.classList.add('active'); window.scrollTo(0,0); }
 function clearTabs(){ document.querySelectorAll('.tg[data-s]').forEach(function(n){n.classList.remove('active');}); }
 document.querySelectorAll('.tg[data-s]').forEach(function(b){ b.addEventListener('click',function(){ clearTabs(); b.classList.add('active'); if(b.dataset.s==='admin'){ show('admin'); renderAdmin(); return; } if(b.dataset.s==='team'){ show('team'); renderTeam(); return; } boardMode=(b.id==='tabMine')?'mine':(b.id==='tabDone')?'done':'active'; updateSortbarUI(); show('dashboard'); render(); }); });
-window.goTeam=function(){ clearTabs(); var t=document.getElementById('tabTeam'); if(t)t.classList.add('active'); show('team'); renderTeam(); };
-window.goDash=function(){ clearTabs(); var t=document.getElementById('tabAll'); if(t)t.classList.add('active'); boardMode='active'; updateSortbarUI(); show('dashboard'); render(); };
-window.goAdmin=function(){ clearTabs(); var t=document.getElementById('tabAdmin'); if(t)t.classList.add('active'); show('admin'); renderAdmin(); };
-function landHome(){ if(ME.isSuper){ goAdmin(); } else { goDash(); } }
+window.goTeam=function(){ setHome(false); clearTabs(); var t=document.getElementById('tabTeam'); if(t)t.classList.add('active'); show('team'); renderTeam(); };
+window.goDash=function(){ setHome(false); clearTabs(); var t=document.getElementById('tabAll'); if(t)t.classList.add('active'); boardMode='active'; updateSortbarUI(); show('dashboard'); render(); };
+window.goAdmin=function(){ setHome(false); clearTabs(); var t=document.getElementById('tabAdmin'); if(t)t.classList.add('active'); show('admin'); renderAdmin(); };
+function setHome(on){ var a=document.getElementById('app'); if(a)a.classList.toggle('home',!!on); }
+window.homeClick=function(){ if(ME.isSuper) goCompaniesHome(); };
+window.goCompaniesHome=function(){
+  [subC,subF,subM,subI].forEach(function(u){ if(u)u(); }); subC=subF=subM=subI=null;
+  activeCid=null; curId=null; curIssue=null; if(msgsUnsub){msgsUnsub();msgsUnsub=null;}
+  company={}; fns={}; members={}; issues=[]; ME.mid=null; isAdmin=ME.isSuper;
+  applyTheme(DEFAULT_THEME); renderClientLogo(); setHeader();
+  clearTabs(); setHome(true); renderCoHome(); show('cohome');
+};
+function renderCoHome(){
+  var box=document.getElementById('cohomeGrid'); if(!box)return;
+  var cids=Object.keys(companies).sort(function(a,b){return (companies[a].name||'').localeCompare(companies[b].name||'');});
+  box.innerHTML = cids.length ? cids.map(function(id){ var c=companies[id]; var th=(c.theme&&c.theme.strip)||'#ff6600';
+    var mono=String((c.code||initials(c.name||'')||'•')).toUpperCase().slice(0,3);
+    var logo=c.logo?('<img src="'+c.logo+'" alt="" style="width:100%;height:100%;object-fit:contain;padding:6px">'):('<span style="font-family:var(--display);font-weight:700;color:'+th+';font-size:'+(mono.length>=3?'16px':'21px')+'">'+esc(mono)+'</span>');
+    return '<button class="cohome-card" style="--ac:'+th+'" onclick="openCompanyOverview(\''+id+'\')"><span class="cohome-logo">'+logo+'</span><span class="cohome-body"><span class="cohome-nm">'+esc(c.name||id)+'</span><span class="cohome-code">'+(esc((c.code||'').toUpperCase())||esc(id))+'</span></span><span class="cohome-chev">›</span></button>';
+  }).join('') : '<div class="psub">No companies yet — add one below or seed the test data.</div>';
+}
+window.addCompanyHome=function(){ if(!ME.isSuper)return; var el=document.getElementById('newCoNameHome'); var n=(el.value||'').trim(); if(!n)return; var ref=companiesCol.doc(); ref.set({name:n,visibility:'team',theme:DEFAULT_THEME,adminUids:[ME.uid],createdAt:FV.serverTimestamp()}).then(function(){ el.value=''; return loadCompanies(); }).then(function(){ renderCoHome(); renderCoSwitch(); }).catch(function(e){ alert('Could not add company: '+e.message); }); };
+function landHome(){ if(ME.isSuper){ goCompaniesHome(); } else { setHome(false); goDash(); } }
 window.toggleShowDone=function(){ var c=document.getElementById('showDone'); showCompleted=!!(c&&c.checked); render(); };
 function updateSortbarUI(){ var w=document.getElementById('showDoneWrap'); if(w)w.style.display=(boardMode==='done')?'none':'flex'; }
 window.openRaise=function(){ clearTabs(); renderFnSelect(); show('raise'); };
@@ -1544,7 +1596,7 @@ window.seedTestData=function(){
     {name:'Technology',color:'#7c3aed',people:[['Ivan','Petrov','ivan.petrov@abc.test'],['Mia','Chen','mia.chen@abc.test'],['Sam','Doyle','sam.doyle@abc.test']]},
     {name:'Sales',color:'#c2410c',people:[['George','Hale','george.hale@abc.test'],['Ruby','Shaw','ruby.shaw@abc.test'],['Theo','Park','theo.park@abc.test']]}
   ]};
-  Promise.all([seedCompany(c123),seedCompany(cABC)]).then(function(){ return loadCompanies(); }).then(function(){ activeCid='co123'; startApp(); show('admin'); renderAdmin(); alert('Seeded Company 123 and Company ABC. Switch between them from the dropdown in the header.'); }).catch(function(e){ alert('Seed error: '+e.message); });
+  Promise.all([seedCompany(c123),seedCompany(cABC)]).then(function(){ return loadCompanies(); }).then(function(){ renderCoSwitch(); if(ME.isSuper){ goCompaniesHome(); } else { activeCid='co123'; startApp(); goDash(); } alert('Seeded Company 123 and Company ABC. Pick one to open it.'); }).catch(function(e){ alert('Seed error: '+e.message); });
 };
 </script>
 </body>
