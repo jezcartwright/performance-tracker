@@ -680,7 +680,6 @@ tr.rowdone:hover td{opacity:.78}
     </div>
     <div class="cohome-grid" id="cohomeGrid"></div>
     <div class="cohome-tools">
-      <input class="adm-input" id="newCoNameHome" placeholder="New company name" style="margin:0;max-width:240px">
       <button class="tg" onclick="addCompanyHome()">+ Add company</button>
       <span class="grow"></span>
       <button class="tg" onclick="seedTestData()">⚙ Seed demo clients</button>
@@ -1141,7 +1140,7 @@ function renderCoHome(){
     return '<button class="cohome-card" style="--ac:'+th+'" onclick="openCompanyOverview(\''+id+'\')"><span class="cohome-logo">'+logo+'</span><span class="cohome-body"><span class="cohome-nm">'+esc(c.name||id)+'</span><span class="cohome-code">'+(esc((c.code||'').toUpperCase())||esc(id))+'</span></span>'+cntH+'<span class="cohome-chev">›</span></button>';
   }).join('') : '<div class="psub">No companies yet — add one below or seed the test data.</div>';
 }
-window.addCompanyHome=function(){ if(!ME.isSuper)return; var el=document.getElementById('newCoNameHome'); var n=(el.value||'').trim(); if(!n)return; var ref=companiesCol.doc(); ref.set({name:n,visibility:'team',theme:DEFAULT_THEME,adminUids:[ME.uid],createdAt:FV.serverTimestamp()}).then(function(){ el.value=''; return loadCompanies(); }).then(function(){ renderCoHome(); renderCoSwitch(); }).catch(function(e){ alert('Could not add company: '+e.message); }); };
+window.addCompanyHome=function(){ if(!ME.isSuper)return; var n=(prompt('New company name:')||'').trim(); if(!n)return; var ref=companiesCol.doc(); ref.set({name:n,visibility:'team',theme:DEFAULT_THEME,adminUids:[ME.uid],createdAt:FV.serverTimestamp()}).then(function(){ return loadCompanies(); }).then(function(){ renderCoHome(); renderCoSwitch(); }).catch(function(e){ alert('Could not add company: '+e.message); }); };
 function landHome(){ if(ME.isSuper){ goCompaniesHome(); } else { setHome(false); goDash(); } }
 
 /* ---------- global people search (all companies) ---------- */
