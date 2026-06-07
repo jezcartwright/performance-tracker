@@ -1215,7 +1215,7 @@ function sampleColor(url, cb){
     im.onerror=function(){ cb(null); }; im.src=url;
   }catch(e){ cb(null); }
 }
-window.addTeam=function(){ if(!isAdmin)return; var n=(prompt('Team / department name:')||'').trim(); if(!n)return; var color=TEAM_COLORS[Object.keys(fns).length%TEAM_COLORS.length]; fnsRef().add({name:n,color:color,leaderMid:null,leaderName:''}).then(function(ref){ fns[ref.id]={id:ref.id,name:n,color:color,leaderMid:null,leaderName:''}; openAddSheet({type:'leader',fid:ref.id}); }).catch(function(e){ alert('Could not add team: '+e.message); }); };
+window.addTeam=function(){ if(!isAdmin)return; var n=(prompt('Name this team — whatever this company calls it (e.g. Executive Committee, Leadership Team, Sales, Operations):')||'').trim(); if(!n)return; var color=TEAM_COLORS[Object.keys(fns).length%TEAM_COLORS.length]; fnsRef().add({name:n,color:color,leaderMid:null,leaderName:''}).then(function(ref){ fns[ref.id]={id:ref.id,name:n,color:color,leaderMid:null,leaderName:''}; openAddSheet({type:'leader',fid:ref.id}); }).catch(function(e){ alert('Could not add team: '+e.message); }); };
 function landHome(){ if(ME.isSuper){ goCompaniesHome(); } else { setHome(false); goDash(); } }
 
 /* ---------- global people search (all companies) ---------- */
@@ -1541,8 +1541,8 @@ function cardMenu(mid,kind){
   if(kind!=='ceo') items+='<div class="dz" onclick="event.stopPropagation();removeFromOrg(\''+mid+'\')">Remove from org</div>';
   return '<div class="ocmenu" id="ocm_'+mid+'">'+items+'</div>';
 }
-function emptyCeoSlot(){ var n=Object.keys(members).length; return '<div class="pcard empty ceoc" onclick="appointCEOPick()"><div class="av" style="background:var(--t3)">♛</div><div class="pn">No CEO yet</div><div class="pr">'+(MANAGING?'tap to appoint':'not set')+'</div>'+(n?'<div class="chips"><div class="pcount">'+n+(n===1?' person':' people')+'</div></div>':'')+'</div>'; }
-function emptyLeaderSlot(fid){ var f=fns[fid]; var n=Object.keys(members).filter(function(x){return members[x].functionId===fid;}).length; return '<div class="pcard empty" onclick="appointLeaderPick(\''+fid+'\')"><div class="av" style="background:'+(f?f.color:'var(--t3)')+';opacity:.45">?</div><div class="pn">'+esc(f?f.name:'')+'</div><div class="pr">'+(MANAGING?'tap to set leader':'no leader')+'</div>'+(n?'<div class="chips"><div class="pcount">'+n+(n===1?' person':' people')+'</div></div>':'')+'</div>'; }
+function emptyCeoSlot(){ var n=Object.keys(members).length; return '<div class="pcard empty ceoc"'+(isAdmin?' style="cursor:pointer"':'')+' onclick="appointCEOPick()"><div class="av" style="background:var(--t3)">♛</div><div class="pn">No CEO yet</div><div class="pr">'+(isAdmin?'tap to appoint':'not set')+'</div>'+(n?'<div class="chips"><div class="pcount">'+n+(n===1?' person':' people')+'</div></div>':'')+'</div>'; }
+function emptyLeaderSlot(fid){ var f=fns[fid]; var n=Object.keys(members).filter(function(x){return members[x].functionId===fid;}).length; return '<div class="pcard empty"'+(isAdmin?' style="cursor:pointer"':'')+' onclick="appointLeaderPick(\''+fid+'\')"><div class="av" style="background:'+(f?f.color:'var(--t3)')+';opacity:.45">?</div><div class="pn">'+esc(f?f.name:'')+'</div><div class="pr">'+(isAdmin?'tap to set leader':'no leader')+'</div>'+(n?'<div class="chips"><div class="pcount">'+n+(n===1?' person':' people')+'</div></div>':'')+'</div>'; }
 function leaderNode(fid,seen){
   var lid=fnsLeader(fid);
   if(lid && members[lid]){
@@ -1597,7 +1597,7 @@ window.appointLeader=function(mid){ if(!isAdmin)return; var m=members[mid]; if(!
   batch.update(fnsRef().doc(fid),{leaderMid:mid,leaderName:m.name});
   batch.commit().then(refreshAux).catch(function(e){alert('Could not set leader: '+e.message);});
 };
-window.appointLeaderPick=function(fid){ if(!MANAGING||!isAdmin)return; openAddSheet({type:'leader',fid:fid}); };
+window.appointLeaderPick=function(fid){ if(!isAdmin)return; openAddSheet({type:'leader',fid:fid}); };
 window.appointCEO=function(mid){ if(!isAdmin)return; var m=members[mid]; if(!m)return; if(!confirm('Appoint '+m.name+' as CEO? They\u2019ll sit at the top of the org, and any existing CEO is replaced.'))return;
   var batch=db.batch(); var fid=m.functionId;
   if(fid && fnsLeader(fid)===mid) batch.update(fnsRef().doc(fid),{leaderMid:null,leaderName:null});
@@ -1606,7 +1606,7 @@ window.appointCEO=function(mid){ if(!isAdmin)return; var m=members[mid]; if(!m)r
   batch.update(cRef(),{ceoMemberId:mid});
   batch.commit().then(refreshAux).catch(function(e){alert('Could not appoint CEO: '+e.message);});
 };
-window.appointCEOPick=function(){ if(!MANAGING||!isAdmin)return; openAddSheet({type:'ceo'}); };
+window.appointCEOPick=function(){ if(!isAdmin)return; openAddSheet({type:'ceo'}); };
 window.addReport=function(mid){ if(!isAdmin)return; openAddSheet({type:'report',mid:mid}); };
 
 /* ---------- unified add-person sheet ---------- */
