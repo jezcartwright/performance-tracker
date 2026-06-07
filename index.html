@@ -1042,14 +1042,14 @@ function ovMiniChart(){
   if(c.ceoMemberId&&ovMembers[c.ceoMemberId]){ var ceo=ovMembers[c.ceoMemberId];
     top='<div class="pcard ceoc" style="cursor:pointer" onclick="ovOpenPerson(\''+c.ceoMemberId+'\')"><div class="av" style="background:#1a1a1a">'+esc(ovIni(ceo))+'</div><div class="pn">'+esc(ceo.name)+'</div><div class="pr">CEO</div>'+chip(Math.max(0,total-1))+'</div>';
   } else {
-    top='<div class="pcard empty ceoc" style="cursor:pointer" onclick="openFullCompany(\''+c.id+'\')"><div class="av" style="background:var(--t3)">♛</div><div class="pn">No CEO yet</div><div class="pr">tap to open</div></div>';
+    top='<div class="pcard empty ceoc" style="cursor:pointer" onclick="ovAddCEO(\''+c.id+'\')"><div class="av" style="background:var(--t3)">♛</div><div class="pn">No CEO yet</div><div class="pr">tap to appoint</div></div>';
   }
   var leaders=Object.keys(ovFns).sort(function(a,b){return (ovFns[a].name||'').localeCompare(ovFns[b].name||'');});
   if(!leaders.length) return '<div class="tree"><ul><li>'+top+'</li></ul></div>';
   var lis=leaders.map(function(fid){ var f=ovFns[fid]; var lid=f.leaderMid;
     if(lid&&ovMembers[lid]){ var p=ovMembers[lid];
       return '<li><div class="pcard leader" style="cursor:pointer" onclick="ovOpenPerson(\''+lid+'\')"><div class="av" style="background:'+(f.color||'var(--strip)')+'">'+esc(ovIni(p))+'</div><div class="pn">'+esc(p.name)+'</div><div class="pr">'+esc(f.name)+'</div>'+chip(deptReports(fid,lid))+'</div></li>'; }
-    return '<li><div class="pcard empty" style="cursor:pointer" onclick="openFullCompany(\''+c.id+'\')"><div class="av" style="background:'+(f.color||'var(--t3)')+';opacity:.45">?</div><div class="pn">'+esc(f.name)+'</div><div class="pr">no leader</div></div></li>'; }).join('');
+    return '<li><div class="pcard empty" style="cursor:pointer" onclick="ovAddLeader(\''+c.id+'\',\''+fid+'\')"><div class="av" style="background:'+(f.color||'var(--t3)')+';opacity:.45">?</div><div class="pn">'+esc(f.name)+'</div><div class="pr">tap to set leader</div></div></li>'; }).join('');
   return '<div class="tree"><ul><li>'+top+'<ul>'+lis+'</ul></li></ul></div>';
 }
 window.ovOpenPerson=function(mid){ window.pendingProfileMid=mid; openFullCompany(ovCid); };
@@ -1057,6 +1057,12 @@ window.ovOpenWeb=function(){ var w=ovCompany.web; if(w) window.open(/^https?:/.t
 window.backToAdmin=function(){ goCompaniesHome(); };
 window.openFullCompany=function(cid){ switchCompany(cid); };
 window.openFullChart=function(cid){ switchCompany(cid); window.goTeam(); };
+window.ovAddCEO=function(cid){ window.pendingAppoint={type:'ceo'}; switchCompany(cid); };
+window.ovAddLeader=function(cid,fid){ window.pendingAppoint={type:'leader',fid:fid}; switchCompany(cid); };
+function tryPendingAppoint(){ var p=window.pendingAppoint; if(!p||!isAdmin)return;
+  if(p.type==='ceo'){ window.pendingAppoint=null; goTeam(); openAddSheet({type:'ceo'}); }
+  else if(p.type==='leader'){ if(!fns[p.fid])return; window.pendingAppoint=null; goTeam(); openAddSheet({type:'leader',fid:p.fid}); }
+}
 function domainFrom(raw){ return (raw||'').replace(/^https?:\/\//,'').replace(/\/.*/,'').trim(); }
 function fetchLogoUrl(domain,cb){ var cands=['https://logo.clearbit.com/'+domain,'https://www.google.com/s2/favicons?domain='+domain+'&sz=128']; var i=0; (function n(){ if(i>=cands.length){ cb(null); return; } var u=cands[i++]; var im=new Image(); im.onload=function(){ if(im.naturalWidth<8){ n(); return; } cb(u); }; im.onerror=function(){ n(); }; im.src=u; })(); }
 window.ovPullLogo=function(){ var domain=domainFrom((document.getElementById('ovWebIn')||{}).value); if(!domain){ alert('Enter a website first.'); return; } fetchLogoUrl(domain,function(url){ if(!url){ alert('Couldn\u2019t find a logo for that site — you can upload one in Branding instead.'); return; } ovSaveLogo(domain,url); }); };
@@ -1114,8 +1120,8 @@ function startApp(){
     var af=document.getElementById('adminFlag'); if(af)af.style.display=(isAdmin&&!ME.isSuper)?'inline-block':'none';
     renderAdmin();
   },function(e){console.error('company',e);});
-  subF=fnsRef().onSnapshot(function(qs){ fns={}; qs.forEach(function(d){fns[d.id]=Object.assign({id:d.id},d.data());}); renderFnSelect(); renderAdmin(); render(); refreshAux(); if(curProfile){ var _pe=document.getElementById('profile'); if(_pe&&_pe.classList.contains('active'))openProfile(curProfile); } },function(e){console.error('fns',e);});
-  subM=membersRef().onSnapshot(function(qs){ members={}; qs.forEach(function(d){ var m=d.data(); m.mid=d.id; m.name=m.name||((m.first||'')+' '+(m.last||'')).trim(); m.initials=m.initials||initials(m.name); members[d.id]=m; }); resolveMyMid(); renderAdmin(); render(); refreshAux(); if(curIssue)fillDetail(curIssue); if(window.pendingProfileMid && members[window.pendingProfileMid]){ var _pm=window.pendingProfileMid; window.pendingProfileMid=null; openProfile(_pm); } },function(e){console.error('members',e);});
+  subF=fnsRef().onSnapshot(function(qs){ fns={}; qs.forEach(function(d){fns[d.id]=Object.assign({id:d.id},d.data());}); renderFnSelect(); renderAdmin(); render(); refreshAux(); if(curProfile){ var _pe=document.getElementById('profile'); if(_pe&&_pe.classList.contains('active'))openProfile(curProfile); } tryPendingAppoint(); },function(e){console.error('fns',e);});
+  subM=membersRef().onSnapshot(function(qs){ members={}; qs.forEach(function(d){ var m=d.data(); m.mid=d.id; m.name=m.name||((m.first||'')+' '+(m.last||'')).trim(); m.initials=m.initials||initials(m.name); members[d.id]=m; }); resolveMyMid(); renderAdmin(); render(); refreshAux(); if(curIssue)fillDetail(curIssue); if(window.pendingProfileMid && members[window.pendingProfileMid]){ var _pm=window.pendingProfileMid; window.pendingProfileMid=null; openProfile(_pm); } tryPendingAppoint(); },function(e){console.error('members',e);});
   subI=issuesRef().orderBy('createdAt','desc').onSnapshot(function(qs){
     issues=[]; qs.forEach(function(d){var i=d.data(); i.id=d.id; issues.push(i);});
     render(); updateBadge();
