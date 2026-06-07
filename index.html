@@ -565,6 +565,16 @@ tr.rowdone:hover td{opacity:.78}
           Will tag <strong id="tn"></strong>
         </div>
       </div>
+      <div class="fld">
+        <label>Who can see this issue?</label>
+        <select id="ri-vis" onchange="visChange(this)">
+          <option value="leader">Leaders only — leaders, the CEO &amp; you</option>
+          <option value="dept">Team only — the tagged department</option>
+          <option value="participants">Just those involved — you &amp; anyone tagged in</option>
+          <option value="team">Whole org — everyone in the company</option>
+        </select>
+        <p class="note">The leader you tag and anyone added always sees it — this sets who <em>else</em> can.</p>
+      </div>
       <div class="fld" style="margin-bottom:0">
         <label>Spoken to that function already?</label>
         <div class="yn"><button onclick="pickYN(this)">Yes</button><button onclick="pickYN(this)">No</button></div>
@@ -650,6 +660,18 @@ tr.rowdone:hover td{opacity:.78}
     </button>
     <div id="ovBody"></div>
   </section>
+
+  <!-- WHOLE-ORG VISIBILITY WARNING -->
+  <div class="amodal" id="visWarn">
+    <div class="amodal-card" style="max-width:400px">
+      <div class="amodal-h"><h2>Visible to the whole org?</h2></div>
+      <p class="amodal-sub">Everyone in <b id="visWarnCo">this company</b> will be able to see this issue — not just the people involved. Use this only when it’s genuinely meant for all.</p>
+      <div style="display:flex;gap:9px;margin-top:16px">
+        <button class="ghost" style="flex:1;justify-content:center" onclick="visWarnCancel()">Keep it narrower</button>
+        <button class="primary" style="flex:1;justify-content:center" onclick="visWarnConfirm()">Yes, whole org</button>
+      </div>
+    </div>
+  </div>
 
   <!-- NEW CLIENT -->
   <div class="amodal" id="newClientModal">
@@ -748,15 +770,6 @@ tr.rowdone:hover td{opacity:.78}
             </div>
           </div>
         </div>
-      </div>
-
-      <div class="panel">
-        <h3>Who can see issues</h3>
-        <p class="psub">Set per company. Leaders &amp; admins always see everything; this controls what ordinary members see.</p>
-        <div class="radio" data-v="team" onclick="setVisibility('team')"><div class="rd"></div><div><div class="rt">Fully open</div><div class="rs">Everyone in the company sees every issue.</div></div></div>
-        <div class="radio" data-v="leader" onclick="setVisibility('leader')"><div class="rd"></div><div><div class="rt">Leaders only</div><div class="rs">Leaders, the CEO and admins see all issues; members see only issues they raised or were tagged into.</div></div></div>
-        <div class="radio" data-v="dept" onclick="setVisibility('dept')"><div class="rd"></div><div><div class="rt">Team only</div><div class="rs">Members see all issues within their own department; leaders and admins still see everything.</div></div></div>
-        <div class="radio" data-v="participants" onclick="setVisibility('participants')"><div class="rd"></div><div><div class="rt">Individuals only</div><div class="rs">Each person sees only issues they raised or are a named participant in.</div></div></div>
       </div>
 
       <div class="panel">
@@ -1002,11 +1015,10 @@ function renderOverview(){
   var ceoName=(c.ceoMemberId&&ovMembers[c.ceoMemberId])?ovMembers[c.ceoMemberId].name:'—';
   var openN=ovIssues.filter(function(i){return i.status!=='done';}).length;
   var admN=(c.adminUids||[]).length;
-  var visLabel=({team:'Fully open',leader:'Leaders only',dept:'Team only',participants:'Individuals only'})[c.visibility||'team'];
   var webLine=c.web?('<span class="web" onclick="ovOpenWeb()">'+esc(c.web)+'</span>'):'<span style="color:var(--t3)">no website set</span>';
   var canEdit=ME.isSuper||(c.adminUids||[]).indexOf(ME.uid)>=0;
   var head='<div class="ov-head"><div class="ov-clogo" style="background:'+(c.logo?'#fff':th)+'">'+ovLogoHTML()+'</div>'
-    +'<div class="ov-htext"><h2>'+esc(c.name||c.id)+'</h2><div class="ov-row2">'+(c.code?('<span class="ov-code" style="background:'+ths+';color:'+thi+'">'+esc(String(c.code).toUpperCase())+'</span><span>·</span>'):'')+webLine+'<span>·</span><span>'+visLabel+'</span></div></div>'
+    +'<div class="ov-htext"><h2>'+esc(c.name||c.id)+'</h2><div class="ov-row2">'+(c.code?('<span class="ov-code" style="background:'+ths+';color:'+thi+'">'+esc(String(c.code).toUpperCase())+'</span><span>·</span>'):'')+webLine+'</div></div>'
     +'<button class="tg" style="white-space:nowrap" onclick="openFullCompany(\''+c.id+'\')">Open this company →</button></div>';
   var stats='<div class="ov-panel"><h3>At a glance</h3><div class="ov-stats">'
     +'<div class="ov-stat" onclick="openFullChart(\''+c.id+'\')"><div class="n">'+deps+'</div><div class="l">Departments</div></div>'
@@ -1098,7 +1110,6 @@ function startApp(){
     isAdmin=ME.isSuper;
     applyTheme(company.theme||DEFAULT_THEME);
     renderClientLogo();
-    setVisibilityUI(company.visibility||'team');
     document.getElementById('tabAdmin').style.display=isAdmin?'':'none';
     var af=document.getElementById('adminFlag'); if(af)af.style.display=(isAdmin&&!ME.isSuper)?'inline-block':'none';
     renderAdmin();
@@ -1245,13 +1256,20 @@ function updateSortbarUI(){ var w=document.getElementById('showDoneWrap'); if(w)
 window.openRaise=function(){ clearTabs(); renderFnSelect(); show('raise'); };
 
 /* ---------- DASHBOARD ---------- */
+function canSeeIssue(i){
+  if(isAdmin) return true;
+  if(i.raiserMid===ME.mid) return true;
+  if(i.leaderMid===ME.mid) return true;
+  if((i.participants||[]).indexOf(ME.mid)>=0) return true;
+  var v=i.visibility||'team';
+  if(v==='team') return true;
+  if(v==='leader') return isLeaderUser();
+  if(v==='dept'){ var myFn=(members[ME.mid]||{}).functionId; return !!(myFn&&i.functionId===myFn); }
+  return false; /* participants-only: handled by checks above */
+}
 function applyVisibility(list){
-  var v=(company.visibility)||'team';
   if(isAdmin) return list;
-  if(v==='participants') return list.filter(function(i){ return i.raiserMid===ME.mid||i.leaderMid===ME.mid||(i.participants||[]).indexOf(ME.mid)>=0; });
-  if(v==='leader'){ if(isLeaderUser()) return list; return list.filter(function(i){ return i.raiserMid===ME.mid||(i.participants||[]).indexOf(ME.mid)>=0; }); }
-  if(v==='dept'){ if(isLeaderUser()) return list; var myFn=(members[ME.mid]||{}).functionId; return list.filter(function(i){ return (myFn&&i.functionId===myFn)||i.raiserMid===ME.mid||(i.participants||[]).indexOf(ME.mid)>=0; }); }
-  return list;
+  return list.filter(canSeeIssue);
 }
 function visibleIssues(){
   var list=applyVisibility(issues.slice());
@@ -1296,7 +1314,12 @@ function renderFnSelect(){
   var p=document.getElementById('tp'); if(p)p.classList.remove('show');
   document.querySelectorAll('#raise .yn button').forEach(function(b){b.classList.remove('sel');});
   raiseConv=null;
+  var vs=document.getElementById('ri-vis'); if(vs){ vs.value='leader'; } visPrev='leader';
 }
+var visPrev='leader', visEl=null;
+window.visChange=function(sel){ visEl=sel; if(sel.value==='team'){ document.getElementById('visWarnCo').textContent=(company&&company.name)||'this company'; document.getElementById('visWarn').classList.add('on'); } else { visPrev=sel.value; } };
+window.visWarnCancel=function(){ if(visEl)visEl.value=visPrev; document.getElementById('visWarn').classList.remove('on'); };
+window.visWarnConfirm=function(){ visPrev='team'; document.getElementById('visWarn').classList.remove('on'); };
 window.showTag=function(){ var fid=document.getElementById('fs').value; var p=document.getElementById('tp'); var f=fns[fid]; if(f){ document.getElementById('tn').textContent=f.leaderMid?(f.leaderName||personName(f.leaderMid)):'no leader set yet'; p.classList.add('show'); } else p.classList.remove('show'); };
 window.pickYN=function(b){ b.parentElement.querySelectorAll('button').forEach(function(x){x.classList.remove('sel');}); b.classList.add('sel'); raiseConv=(b.textContent.trim().toLowerCase()==='yes'); };
 window.raiseIssue=function(){
@@ -1308,8 +1331,9 @@ window.raiseIssue=function(){
   if(!title){ alert('Please add a title.'); return; }
   if(!fid){ alert('Please choose a function.'); return; }
   var f=fns[fid]; var parts=[ME.mid]; if(f.leaderMid&&f.leaderMid!==ME.mid)parts.push(f.leaderMid);
+  var vis=((document.getElementById('ri-vis')||{}).value)||'leader';
   var leaderUid=(f.leaderMid&&members[f.leaderMid]&&members[f.leaderMid].uid)||null;
-  issuesRef().add({ title:title, description:desc, functionId:fid, functionName:f.name, color:f.color, leaderMid:f.leaderMid||null, leaderName:f.leaderName||'', leaderUid:leaderUid, raiserMid:ME.mid, raiserUid:ME.uid, raiserName:ME.name, raiserInitials:ME.initials, conversationHad:!!raiseConv, status:'open', participants:parts, createdAt:FV.serverTimestamp(), updatedAt:FV.serverTimestamp() })
+  issuesRef().add({ title:title, description:desc, functionId:fid, functionName:f.name, color:f.color, leaderMid:f.leaderMid||null, leaderName:f.leaderName||'', leaderUid:leaderUid, raiserMid:ME.mid, raiserUid:ME.uid, raiserName:ME.name, raiserInitials:ME.initials, conversationHad:!!raiseConv, visibility:vis, status:'open', participants:parts, createdAt:FV.serverTimestamp(), updatedAt:FV.serverTimestamp() })
   .then(function(ref){
     var who=f.leaderMid?('tagged '+(f.leaderName||personName(f.leaderMid))):'no leader is set for this function yet';
     ref.collection('messages').add({type:'system',text:ME.first+' raised this and '+who+'.',authorMid:ME.mid,authorUid:ME.uid,authorName:ME.name,createdAt:FV.serverTimestamp()});
