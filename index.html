@@ -1093,7 +1093,7 @@ function startApp(){
   }
   subC=cRef().onSnapshot(function(s){
     company=s.exists?s.data():{}; company.adminUids=company.adminUids||[];
-    isAdmin=ME.isSuper||company.adminUids.indexOf(ME.uid)>=0;
+    isAdmin=ME.isSuper;
     applyTheme(company.theme||DEFAULT_THEME);
     renderClientLogo();
     setVisibilityUI(company.visibility||'team');
@@ -1455,8 +1455,8 @@ function renderAdmin(){
         var opts=Object.keys(members).filter(function(o){return o!==mid && members[o].functionId===m.functionId;}).map(function(o){ var sel=(m.managerMid===o)?' selected':''; var lead=(o===fnsLeader(m.functionId))?' (leader)':''; return '<option value="'+o+'"'+sel+'>'+esc(personName(o))+lead+'</option>'; }).join('');
         mgrsel=' <select class="fn-sel" title="Reports to" onchange="setManager(\''+mid+'\',this.value)"><option value="">↳ reports to leader</option>'+opts+'</select>';
       }
-      var tags=''; if(isLead)tags+=' <span class="ld" style="color:var(--strip-ink)">leader</span>'; if(adm)tags+=' <span class="adminpill">Admin</span>'; if(!m.uid)tags+=' <span class="ld" style="opacity:.6">invited</span>';
-      var admBtn = (isAdmin && m.uid) ? (adm ? '<button class="tinybtn" onclick="revokeAdmin(\''+mid+'\')">Revoke admin</button>' : '<button class="tinybtn" onclick="makeAdmin(\''+mid+'\')">Make admin</button>') : '';
+      var tags=''; if(isLead)tags+=' <span class="ld" style="color:var(--strip-ink)">leader</span>'; if(!m.uid)tags+=' <span class="ld" style="opacity:.6">invited</span>';
+      var admBtn = '';
       var rm = isAdmin ? '<button class="tinybtn" onclick="removeMember(\''+mid+'\')" style="background:#fbeaea;color:#b42318;border-color:#f3c9c4">Remove</button>' : '';
       return '<div class="frow" style="align-items:flex-start"><span class="mini" style="background:'+personColor(mid)+';width:24px;height:24px;font-size:10px;margin-top:2px">'+esc(personInit(mid))+'</span><span class="nm" style="font-size:13px;flex:1">'+esc(personName(mid))+tags+'</span><span class="mrow-ctl">'+fnsel+mgrsel+' '+admBtn+' '+rm+'</span></div>';
     }).join('') : '<div class="psub">'+(activeCid?'No members yet — add people below.':'Select or create a company first.')+'</div>';
