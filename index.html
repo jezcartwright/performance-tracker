@@ -307,6 +307,15 @@ tbody td{padding:14px 16px;vertical-align:middle}
 .login-consent input{margin:1px 0 0;flex:none;width:16px;height:16px}
 .login-consent span{flex:1;min-width:0}
 .login-consent a{color:var(--strip-ink);font-weight:600}
+.auth-tabs{display:flex;gap:4px;background:rgba(0,0,0,.055);border-radius:11px;padding:4px;margin-bottom:16px}
+.auth-tab{flex:1;border:none;background:none;padding:10px 8px;border-radius:8px;font-weight:700;font-size:14px;color:var(--t2);cursor:pointer}
+.auth-tab.active{background:var(--card);color:var(--strip-ink);box-shadow:0 1px 3px rgba(26,26,26,.14)}
+.pw-wrap{position:relative;margin-bottom:10px}
+.pw-wrap input{margin-bottom:0;padding-right:58px}
+.pw-show{position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--strip-ink);font-weight:600;font-size:12.5px;cursor:pointer;padding:4px 6px}
+.pw-hint{font-size:11.5px;color:var(--t3);margin:-2px 2px 10px}
+.auth-forgot{display:block;margin:0 2px 14px auto;background:none;border:none;color:var(--strip-ink);font-weight:600;font-size:12.5px;cursor:pointer}
+.login-btn:disabled{opacity:.45;cursor:not-allowed}
 .hp{position:absolute;left:-9999px;width:1px;height:1px;opacity:0}
 .iconbtn{position:relative;width:38px;height:38px;border-radius:6px;border:1px solid var(--b);background:var(--card);display:grid;place-items:center;color:var(--t2)}
 .iconbtn:hover{border-color:var(--t3);color:var(--t)}
@@ -502,21 +511,29 @@ tr.rowdone:hover td{opacity:.78}
     <div class="login-wm">Progress Tracker</div>
     <div id="login-box">
       <p class="login-sub">Sign in to raise and track issues with your team.</p>
-      <div class="login-row">
+      <div class="auth-tabs">
+        <button id="tabSignin" class="auth-tab active" onclick="authMode('signin')">Sign in</button>
+        <button id="tabCreate" class="auth-tab" onclick="authMode('create')">Create account</button>
+      </div>
+      <div class="login-row" id="auth-names" style="display:none">
         <input id="login-fname" placeholder="First name" autocomplete="given-name">
         <input id="login-lname" placeholder="Last name" autocomplete="family-name">
       </div>
-      <input id="login-email" type="email" placeholder="you@company.com" autocomplete="email">
-      <input id="login-pw" type="password" placeholder="Password (6+ characters)" autocomplete="current-password">
+      <input id="login-email" type="email" placeholder="your@email.com" autocomplete="email">
+      <div class="pw-wrap">
+        <input id="login-pw" type="password" placeholder="Password" autocomplete="current-password">
+        <button type="button" class="pw-show" onclick="togglePw()">Show</button>
+      </div>
+      <div id="pw-hint" class="pw-hint" style="display:none">At least 6 characters</div>
+      <button id="auth-forgot" class="auth-forgot" onclick="forgotPw()">Forgot password?</button>
+      <label class="login-consent" id="auth-consent" style="display:none"><input type="checkbox" id="login-consent" onchange="authConsentChk()"><span>I agree to the <a href="terms.html" target="_blank" rel="noopener">Terms</a> &amp; <a href="privacy.html" target="_blank" rel="noopener">Privacy&nbsp;Policy</a>.</span></label>
       <input id="login-hp" class="hp" tabindex="-1" autocomplete="off" placeholder="Leave blank">
-      <label class="login-consent"><input type="checkbox" id="login-consent"><span>I agree to the <a href="terms.html" target="_blank" rel="noopener">Terms</a> &amp; <a href="privacy.html" target="_blank" rel="noopener">Privacy&nbsp;Policy</a>.</span></label>
-      <button class="login-btn" onclick="passwordContinue()">Sign in or create account</button>
+      <button class="login-btn" id="auth-go" onclick="authSubmit()">Sign in</button>
       <div class="login-or">or</div>
       <button class="gbtn" onclick="signInGoogle()">
         <svg width="17" height="17" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3c-1.6 4.7-6.1 8-11.3 8-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.6 4.1 29.6 2 24 2 11.8 2 2 11.8 2 24s9.8 22 22 22 22-9.8 22-22c0-1.5-.2-2.6-.4-3.5z"/><path fill="#FF3D00" d="M3.3 7.3l6.6 4.8C11.7 8.1 17.4 5 24 5c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.6 4.1 29.6 2 24 2 16 2 9 6.5 5.3 13.1z"/><path fill="#4CAF50" d="M24 46c5.5 0 10.4-2.1 14.1-5.5l-6.5-5.5C29.6 36.5 26.9 37.5 24 37.5c-5.2 0-9.6-3.3-11.2-7.9l-6.6 5.1C9.7 41.4 16.3 46 24 46z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.1 4.1-3.9 5.5l6.5 5.5C41.9 36 44 30.5 44 24c0-1.5-.2-2.6-.4-3.5z"/></svg>
         Sign in with Google
       </button>
-      <button onclick="sendMagicLink()" style="background:none;border:none;color:var(--strip-ink);font-weight:600;font-size:12.5px;cursor:pointer;margin-top:11px;padding:4px">Email me a one-time sign-in link instead</button>
     </div>
     <div id="login-sent" style="display:none">
       <p class="login-sub">We sent a sign-in link to <strong id="sent-email"></strong>. Tap the link in your email on this device to continue.</p>
@@ -977,38 +994,66 @@ if(auth.isSignInWithEmailLink(window.location.href)){
   var em=localStorage.getItem('emailForSignIn')||window.prompt('Please confirm your email to sign in:');
   if(em){ auth.signInWithEmailLink(em,window.location.href).then(function(){ localStorage.removeItem('emailForSignIn'); history.replaceState(null,'',ACTION_URL); }).catch(function(e){ var m=document.getElementById('login-msg'); if(m)m.textContent='Sign-in error: '+e.message; }); }
 }
-window.passwordContinue=function(){
-  var fn=(document.getElementById('login-fname').value||'').trim();
-  var ln=(document.getElementById('login-lname').value||'').trim();
+var authModeCur='signin';
+window.authMode=function(mode){ authModeCur=(mode==='create')?'create':'signin'; var create=(authModeCur==='create');
+  document.getElementById('tabSignin').classList.toggle('active',!create);
+  document.getElementById('tabCreate').classList.toggle('active',create);
+  document.getElementById('auth-names').style.display=create?'flex':'none';
+  document.getElementById('auth-consent').style.display=create?'flex':'none';
+  document.getElementById('pw-hint').style.display=create?'block':'none';
+  document.getElementById('auth-forgot').style.display=create?'none':'block';
+  var pw=document.getElementById('login-pw'); if(pw)pw.setAttribute('autocomplete',create?'new-password':'current-password');
+  document.getElementById('auth-go').textContent=create?'Create account':'Sign in';
+  document.getElementById('login-msg').textContent='';
+  authConsentChk();
+};
+window.authConsentChk=function(){ var go=document.getElementById('auth-go'); if(!go)return; go.disabled=(authModeCur==='create') && !document.getElementById('login-consent').checked; };
+window.togglePw=function(){ var pw=document.getElementById('login-pw'); var b=document.querySelector('.pw-show'); if(!pw)return; if(pw.type==='password'){ pw.type='text'; if(b)b.textContent='Hide'; } else { pw.type='password'; if(b)b.textContent='Show'; } };
+window.authSubmit=function(){
+  var m=document.getElementById('login-msg');
   var email=(document.getElementById('login-email').value||'').trim();
   var pw=(document.getElementById('login-pw').value||'');
   var hp=(document.getElementById('login-hp')||{}).value||'';
-  var m=document.getElementById('login-msg');
   if(hp){ m.textContent='Something went wrong. Please reload and try again.'; return; }
   if(!email||email.indexOf('@')<0){ m.textContent='Please enter a valid email.'; return; }
   if((pw||'').length<6){ m.textContent='Password must be at least 6 characters.'; return; }
-  if(!document.getElementById('login-consent').checked){ m.textContent='Please agree to the Terms & Privacy Policy to continue.'; return; }
-  try{ localStorage.setItem('ptConsent', JSON.stringify({at:new Date().toISOString(), terms:POLICY_VERSION, privacy:POLICY_VERSION, method:'password'})); }catch(e){}
-  m.textContent='Signing in…';
-  function doCreate(){
+  if(authModeCur==='create'){
+    if(!document.getElementById('login-consent').checked){ m.textContent='Please agree to the Terms & Privacy Policy to continue.'; return; }
+    var fn=(document.getElementById('login-fname').value||'').trim();
+    var ln=(document.getElementById('login-lname').value||'').trim();
+    try{ localStorage.setItem('ptConsent', JSON.stringify({at:new Date().toISOString(), terms:POLICY_VERSION, privacy:POLICY_VERSION, method:'password'})); }catch(e){}
     if(fn){ try{ localStorage.setItem('nameForSignIn',JSON.stringify({first:fn,last:ln})); }catch(_){} }
     m.textContent='Creating your account…';
-    return auth.createUserWithEmailAndPassword(email,pw).then(function(){ m.textContent=''; }).catch(function(e2){
-      var c=e2.code||'';
-      if(c==='auth/email-already-in-use'){ m.textContent='That email already has an account — check your password.'; }
-      else if(c==='auth/operation-not-allowed'){ m.textContent='Email/password sign-in isn’t switched on yet — use Google or a one-time link for now.'; }
+    auth.createUserWithEmailAndPassword(email,pw).then(function(){ m.textContent=''; }).catch(function(e){
+      var c=e.code||'';
+      if(c==='auth/email-already-in-use'){ m.textContent='That email already has an account — switch to Sign in.'; }
+      else if(c==='auth/operation-not-allowed'){ m.textContent='Email/password sign-in isn’t switched on yet — use Google for now.'; }
       else if(c==='auth/weak-password'){ m.textContent='Please pick a stronger password (6+ characters).'; }
-      else { m.textContent='Error: '+(e2.message||c); }
+      else if(c==='auth/invalid-email'){ m.textContent='That email looks invalid.'; }
+      else { m.textContent='Error: '+(e.message||c); }
+    });
+  } else {
+    m.textContent='Signing in…';
+    auth.signInWithEmailAndPassword(email,pw).then(function(){ m.textContent=''; }).catch(function(e){
+      var c=e.code||'';
+      if(c==='auth/user-not-found'||c==='auth/invalid-credential'||c==='auth/invalid-login-credentials'){ m.textContent='No account found, or the details don’t match. New here? Tap “Create account”.'; }
+      else if(c==='auth/wrong-password'){ m.textContent='Incorrect password. Try again, or use “Forgot password?”.'; }
+      else if(c==='auth/invalid-email'){ m.textContent='That email looks invalid.'; }
+      else if(c==='auth/too-many-requests'){ m.textContent='Too many attempts — please wait a moment and try again.'; }
+      else if(c==='auth/operation-not-allowed'){ m.textContent='Email/password sign-in isn’t switched on yet — use Google for now.'; }
+      else { m.textContent='Error: '+(e.message||c); }
     });
   }
-  auth.signInWithEmailAndPassword(email,pw).then(function(){ m.textContent=''; }).catch(function(e){
+};
+window.forgotPw=function(){
+  var m=document.getElementById('login-msg');
+  var email=(document.getElementById('login-email').value||'').trim();
+  if(!email||email.indexOf('@')<0){ m.textContent='Enter your email above, then tap “Forgot password?” again.'; return; }
+  m.textContent='Sending reset link…';
+  auth.sendPasswordResetEmail(email).then(function(){ m.textContent='Password reset email sent to '+email+'. Check your inbox.'; }).catch(function(e){
     var c=e.code||'';
-    if(c==='auth/user-not-found'){ doCreate(); }
-    else if(c==='auth/invalid-credential'||c==='auth/invalid-login-credentials'){ if(fn) doCreate(); else m.textContent='Email or password not recognised. New here? Add your first name, then tap again to create your account.'; }
-    else if(c==='auth/wrong-password'){ m.textContent='Incorrect password. Try again, or use a one-time link below.'; }
+    if(c==='auth/user-not-found'){ m.textContent='No account with that email — try “Create account”.'; }
     else if(c==='auth/invalid-email'){ m.textContent='That email looks invalid.'; }
-    else if(c==='auth/operation-not-allowed'){ m.textContent='Email/password sign-in isn’t switched on yet — use Google or a one-time link for now.'; }
-    else if(c==='auth/too-many-requests'){ m.textContent='Too many attempts — please wait a moment and try again.'; }
     else { m.textContent='Error: '+(e.message||c); }
   });
 };
@@ -1045,8 +1090,8 @@ window.sendMagicLink=function(){
 };
 window.signInGoogle=function(){
   var m=document.getElementById('login-msg');
-  if(!document.getElementById('login-consent').checked){ m.textContent='Please agree to the Terms & Privacy Policy to continue.'; return; }
-  try{ localStorage.setItem('ptConsent', JSON.stringify({at:new Date().toISOString(), terms:POLICY_VERSION, privacy:POLICY_VERSION, method:'google'})); }catch(e){}
+  if(authModeCur==='create' && !document.getElementById('login-consent').checked){ m.textContent='Please agree to the Terms & Privacy Policy to continue.'; return; }
+  try{ if(document.getElementById('login-consent').checked) localStorage.setItem('ptConsent', JSON.stringify({at:new Date().toISOString(), terms:POLICY_VERSION, privacy:POLICY_VERSION, method:'google'})); }catch(e){}
   try{
     var provider=new firebase.auth.GoogleAuthProvider();
     var standalone=(window.matchMedia&&window.matchMedia('(display-mode: standalone)').matches)||window.navigator.standalone===true;
