@@ -295,7 +295,8 @@ tbody td{padding:14px 16px;vertical-align:middle}
 .gbtn:hover{border-color:var(--t3)}
 .login-msg{font-size:12.5px;color:var(--t2);margin-top:12px;min-height:16px}
 .login-consent{display:flex;gap:8px;align-items:flex-start;text-align:left;font-size:12.5px;color:var(--t2);line-height:1.45;margin:4px 2px 14px}
-.login-consent input{margin-top:2px;flex:none}
+.login-consent input{margin:1px 0 0;flex:none;width:16px;height:16px}
+.login-consent span{flex:1;min-width:0}
 .login-consent a{color:var(--strip-ink);font-weight:600}
 .hp{position:absolute;left:-9999px;width:1px;height:1px;opacity:0}
 .iconbtn{position:relative;width:38px;height:38px;border-radius:6px;border:1px solid var(--b);background:var(--card);display:grid;place-items:center;color:var(--t2)}
@@ -498,7 +499,7 @@ tr.rowdone:hover td{opacity:.78}
       </div>
       <input id="login-email" type="email" placeholder="you@company.com" autocomplete="email">
       <input id="login-hp" class="hp" tabindex="-1" autocomplete="off" placeholder="Leave blank">
-      <label class="login-consent"><input type="checkbox" id="login-consent"> I agree to the <a href="terms.html" target="_blank" rel="noopener">Terms</a> &amp; <a href="privacy.html" target="_blank" rel="noopener">Privacy&nbsp;Policy</a>.</label>
+      <label class="login-consent"><input type="checkbox" id="login-consent"><span>I agree to the <a href="terms.html" target="_blank" rel="noopener">Terms</a> &amp; <a href="privacy.html" target="_blank" rel="noopener">Privacy&nbsp;Policy</a>.</span></label>
       <button class="login-btn" onclick="sendMagicLink()">Send sign-in link</button>
       <div class="login-or">or</div>
       <button class="gbtn" onclick="signInGoogle()">
