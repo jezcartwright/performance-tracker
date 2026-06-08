@@ -1013,11 +1013,12 @@ window.passwordContinue=function(){
   });
 };
 window.inviteCopy=function(mid){ var m=members[mid]; if(!m)return;
-  var email=m.email||''; var url=location.href.split('#')[0].split('?')[0]; var co=(company&&company.name)||'your team';
-  var msg='Hi '+((m.first||m.name||'').split(' ')[0])+',\n\nYou\u2019ve been added to '+co+' on Progress Tracker. To get started:\n\n1. Go to '+url+'\n2. Enter your email ('+(email||'your work email')+') and choose a password, then tap \u201cSign in or create account\u201d.\n3. You\u2019ll go straight into '+co+'.\n\nSee you there.';
-  function done(){ alert('Invite copied — paste it into an email to '+(m.name||'them')+'.'); }
-  if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(msg).then(done,function(){ window.prompt('Copy this invite:',msg); }); }
-  else { window.prompt('Copy this invite:',msg); }
+  var email=m.email||''; if(!email){ alert('Add an email for '+(m.name||'this person')+' first, then you can invite them.'); return; }
+  var url=location.href.split('#')[0].split('?')[0]; var co=(company&&company.name)||'your team'; var first=(m.first||m.name||'').split(' ')[0];
+  var subject='You’re invited to '+co+' on Progress Tracker';
+  var body='Hi '+first+',\n\nYou’ve been added to '+co+' on Progress Tracker. To get started:\n\n1. Go to '+url+'\n2. Enter your email ('+email+') and choose a password, then tap “Sign in or create account”.\n3. You’ll go straight into '+co+'.\n\nSee you there.';
+  try{ if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(body); }catch(e){}
+  window.location.href='mailto:'+encodeURIComponent(email)+'?subject='+encodeURIComponent(subject)+'&body='+encodeURIComponent(body);
 };
 window.sendMagicLink=function(){
   var fn=(document.getElementById('login-fname').value||'').trim();
@@ -1827,7 +1828,7 @@ function renderAdmin(){
         var opts=Object.keys(members).filter(function(o){return o!==mid && members[o].functionId===m.functionId;}).map(function(o){ var sel=(m.managerMid===o)?' selected':''; var lead=(o===fnsLeader(m.functionId))?' (leader)':''; return '<option value="'+o+'"'+sel+'>'+esc(personName(o))+lead+'</option>'; }).join('');
         mgrsel=' <select class="fn-sel" title="Reports to" onchange="setManager(\''+mid+'\',this.value)"><option value="">↳ reports to leader</option>'+opts+'</select>';
       }
-      var tags=''; if(isLead)tags+=' <span class="ld" style="color:var(--strip-ink)">leader</span>'; if(!m.uid)tags+=' <span class="ld" style="opacity:.6">invited</span>';
+      var tags=''; if(isLead)tags+=' <span class="ld" style="color:var(--strip-ink)">leader</span>'; if(!m.uid)tags+=(m.email?' <span class="ld" style="opacity:.6">not joined yet</span>':' <span class="ld" style="opacity:.6">no email</span>');
       var admBtn = '';
       if(ME.isSuper && activeCid && m.uid && m.uid!==ME.uid){
         admBtn = '<button class="tinybtn" onclick="toggleCompanyAdmin(\''+mid+'\')"'+(adm?' style="background:#0f8a6b;color:#fff;border-color:#0f8a6b"':'')+'>'+(adm?'✓ Admin':'Make admin')+'</button>';
