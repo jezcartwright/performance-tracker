@@ -235,6 +235,12 @@ tbody td{padding:14px 16px;vertical-align:middle}
 .ps-foot{display:flex;gap:10px;padding:14px 20px;border-top:1px solid var(--b2);background:#fdfcfa}
 .ps-foot button{flex:1;padding:12px;border-radius:8px;font-weight:700;font-size:14px;cursor:pointer;font-family:var(--ui)}
 .orgbtn.primary-org{background:var(--strip);border-color:var(--strip);color:#fff}
+.agr-l{display:block;font-size:11px;font-weight:700;letter-spacing:.3px;text-transform:uppercase;color:var(--t3);margin-bottom:4px}
+.agr-ok{display:flex;gap:11px;align-items:flex-start;background:#f3faf6;border:1px solid #bfe6d6;border-radius:9px;padding:12px 13px}
+.agr-tick{flex:none;width:26px;height:26px;border-radius:50%;background:#12936a;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px}
+.agr-line{font-size:14px;color:var(--t)}
+.agr-sub{font-size:12px;color:var(--t2);margin-top:2px}
+.agr-no{font-size:13px;color:var(--t2);background:#fbf6f1;border:1px dashed var(--b);border-radius:9px;padding:12px 13px}
 .form-foot{display:flex;gap:10px;justify-content:flex-end;margin-top:24px}
 .ghost{background:var(--card);border:1px solid var(--b);color:var(--t);border-radius:7px;padding:10px 16px;font-weight:600;font-size:13.5px}
 .ghost:hover{border-color:var(--t3)}
@@ -288,6 +294,9 @@ tbody td{padding:14px 16px;vertical-align:middle}
 .gbtn{width:100%;background:#fff;border:1.5px solid var(--b);color:var(--t);font-weight:700;font-size:14px;border-radius:8px;padding:11px;display:flex;align-items:center;justify-content:center;gap:9px}
 .gbtn:hover{border-color:var(--t3)}
 .login-msg{font-size:12.5px;color:var(--t2);margin-top:12px;min-height:16px}
+.login-consent{display:flex;gap:8px;align-items:flex-start;text-align:left;font-size:12.5px;color:var(--t2);line-height:1.45;margin:4px 2px 14px}
+.login-consent input{margin-top:2px;flex:none}
+.login-consent a{color:var(--strip-ink);font-weight:600}
 .hp{position:absolute;left:-9999px;width:1px;height:1px;opacity:0}
 .iconbtn{position:relative;width:38px;height:38px;border-radius:6px;border:1px solid var(--b);background:var(--card);display:grid;place-items:center;color:var(--t2)}
 .iconbtn:hover{border-color:var(--t3);color:var(--t)}
@@ -489,6 +498,7 @@ tr.rowdone:hover td{opacity:.78}
       </div>
       <input id="login-email" type="email" placeholder="you@company.com" autocomplete="email">
       <input id="login-hp" class="hp" tabindex="-1" autocomplete="off" placeholder="Leave blank">
+      <label class="login-consent"><input type="checkbox" id="login-consent"> I agree to the <a href="terms.html" target="_blank" rel="noopener">Terms</a> &amp; <a href="privacy.html" target="_blank" rel="noopener">Privacy&nbsp;Policy</a>.</label>
       <button class="login-btn" onclick="sendMagicLink()">Send sign-in link</button>
       <div class="login-or">or</div>
       <button class="gbtn" onclick="signInGoogle()">
@@ -687,6 +697,33 @@ tr.rowdone:hover td{opacity:.78}
     <div id="ovBody"></div>
   </section>
 
+  <!-- AGREEMENT RECORD -->
+  <div class="amodal" id="agrModal">
+    <div class="amodal-card" style="max-width:440px">
+      <div class="amodal-h"><h2>Agreement on file</h2><button class="amodal-x" onclick="closeAgreement()">✕</button></div>
+      <p class="amodal-sub">Record the client's acceptance of the Terms, Privacy Policy and Data Processing terms for this company.</p>
+      <label class="agr-l">Who accepted (name)</label>
+      <input class="adm-input" id="agrName" style="margin:0" placeholder="e.g. Jane Doe" autocomplete="off">
+      <div style="display:flex;gap:9px;margin-top:9px">
+        <div style="flex:1"><label class="agr-l">Title</label><input class="adm-input" id="agrTitle" style="margin:0" placeholder="e.g. COO" autocomplete="off"></div>
+        <div style="flex:1"><label class="agr-l">Date accepted</label><input class="adm-input" id="agrDate" type="date" style="margin:0"></div>
+      </div>
+      <label class="agr-l" style="margin-top:9px">Email (optional)</label>
+      <input class="adm-input" id="agrEmail" style="margin:0" placeholder="jane@client.com" autocomplete="off">
+      <label class="agr-l" style="margin-top:9px">How</label>
+      <select class="adm-input" id="agrMethod" style="margin:0">
+        <option value="clicked">Accepted online (one-click at sign-up)</option>
+        <option value="signed">Signed DPA on file</option>
+      </select>
+      <label class="agr-l" style="margin-top:9px">Note (optional)</label>
+      <input class="adm-input" id="agrNotes" style="margin:0" placeholder="e.g. signed PDF stored in client folder" autocomplete="off">
+      <div style="display:flex;gap:9px;margin-top:14px">
+        <button class="ghost" style="flex:1;justify-content:center" onclick="closeAgreement()">Cancel</button>
+        <button class="primary" style="flex:1;justify-content:center" onclick="saveAgreement()">Save record</button>
+      </div>
+    </div>
+  </div>
+
   <!-- ADD A PERSON -->
   <div class="amodal" id="personSheet">
     <div class="amodal-card" style="max-width:520px;padding:0">
@@ -857,6 +894,21 @@ tr.rowdone:hover td{opacity:.78}
         <p class="psub">You're viewing this company. Super admins can join any company to raise and discuss issues directly.</p>
         <div id="admMembership"></div>
       </div>
+
+      <div class="panel">
+        <h3>Data &amp; privacy</h3>
+        <p class="psub">For data-subject requests. Export gives a full copy of this company's records; deletion permanently erases the company and everyone in it.</p>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="tinybtn" onclick="exportCompany()">⇩ Export company data (JSON)</button>
+          <button class="tinybtn" onclick="removeCompany()" style="background:#fbeaea;color:#b42318;border-color:#f3c9c4">Delete this company…</button>
+        </div>
+      </div>
+
+      <div class="panel" id="agrPanel">
+        <h3>Agreement &amp; consent</h3>
+        <p class="psub">The Terms, Privacy Policy and Data Processing acceptance on file for this company. You control this record as super admin.</p>
+        <div id="agrBox"></div>
+      </div>
     </div>
   </section>
 
@@ -911,6 +963,8 @@ window.sendMagicLink=function(){
   if(hp){ m.textContent='Something went wrong. Please reload and try again.'; return; }
   if(!fn){ m.textContent='Please enter your first name.'; return; }
   if(!email||email.indexOf('@')<0){ m.textContent='Please enter a valid email.'; return; }
+  if(!document.getElementById('login-consent').checked){ m.textContent='Please agree to the Terms & Privacy Policy to continue.'; return; }
+  try{ localStorage.setItem('ptConsent', JSON.stringify({at:new Date().toISOString(), terms:POLICY_VERSION, privacy:POLICY_VERSION, method:'email'})); }catch(e){}
   m.textContent='Sending…';
   var cont=ACTION_URL+'?fn='+encodeURIComponent(fn)+(ln?'&ln='+encodeURIComponent(ln):'');
   auth.sendSignInLinkToEmail(email,{url:cont,handleCodeInApp:true}).then(function(){
@@ -924,6 +978,8 @@ window.sendMagicLink=function(){
 };
 window.signInGoogle=function(){
   var m=document.getElementById('login-msg');
+  if(!document.getElementById('login-consent').checked){ m.textContent='Please agree to the Terms & Privacy Policy to continue.'; return; }
+  try{ localStorage.setItem('ptConsent', JSON.stringify({at:new Date().toISOString(), terms:POLICY_VERSION, privacy:POLICY_VERSION, method:'google'})); }catch(e){}
   try{
     var provider=new firebase.auth.GoogleAuthProvider();
     var standalone=(window.matchMedia&&window.matchMedia('(display-mode: standalone)').matches)||window.navigator.standalone===true;
@@ -940,6 +996,8 @@ window.signOut=function(){ hideMenus(); auth.signOut().then(function(){ location
 
 /* ---------- STATE ---------- */
 var ME={uid:null,email:'',first:'',last:'',name:'',initials:'',mid:null,isSuper:false};
+var POLICY_VERSION='2026-06-07';
+var DPA_VERSION='2026-06-07';
 var activeCid=null, companies={}, company={}, fns={}, members={}, issues=[];
 var isAdmin=false;
 var sortKey='newest', asc=false, boardMode='active', showCompleted=false;
@@ -974,7 +1032,11 @@ function loadProfile(user){
     if(!prof.firstName){ var dn=(user.displayName||user.email||'User'); prof.firstName=dn.split(' ')[0]; prof.lastName=dn.split(' ').slice(1).join(' '); prof.email=user.email; prof.joinedAt=prof.joinedAt||new Date().toISOString(); }
     ME.first=prof.firstName||'User'; ME.last=prof.lastName||''; ME.name=(ME.first+' '+ME.last).trim(); ME.initials=initials(ME.name);
     lastSeenAt=snap.exists?ms2(snap.data().lastSeenAt):0;
-    db.collection('users').doc(user.uid).set({profile:prof,basicProfile:{email:user.email||null,displayName:user.displayName||null,lastSignedInAt:new Date().toISOString()}},{merge:true});
+    var _consent=null; try{ var _c=localStorage.getItem('ptConsent'); if(_c)_consent=JSON.parse(_c); }catch(e){}
+    var _set={profile:prof,basicProfile:{email:user.email||null,displayName:user.displayName||null,lastSignedInAt:new Date().toISOString()}};
+    if(_consent){ _set.consent=_consent; }
+    db.collection('users').doc(user.uid).set(_set,{merge:true});
+    if(_consent) localStorage.removeItem('ptConsent');
     localStorage.removeItem('nameForSignIn');
   }).catch(function(e){ var dn=(user.displayName||'User'); ME.first=dn.split(' ')[0]; ME.name=dn; ME.initials=initials(dn); });
 }
@@ -1573,6 +1635,28 @@ window.setLeader=function(fid,mid){ if(!isAdmin)return; fnsRef().doc(fid).update
 window.setMemberFn=function(mid,fid){ if(!isAdmin)return; membersRef().doc(mid).update({functionId:fid||null,managerMid:null}); };
 window.setManager=function(mid,mgr){ if(!isAdmin)return; if(mgr===mid)return; membersRef().doc(mid).update({managerMid:mgr||null}); };
 window.removeMember=function(mid){ if(!isAdmin)return; if(!confirm('Remove '+personName(mid)+' from this company?'))return; membersRef().doc(mid).delete(); };
+window.exportCompany=function(){ if(!ME.isSuper||!activeCid)return; var cid=activeCid; var base=companiesCol.doc(cid);
+  Promise.all([ base.get(), base.collection('functions').get(), base.collection('members').get(), base.collection('issues').get() ]).then(function(r){
+    var out={ exportedAt:new Date().toISOString(), company:Object.assign({id:cid},r[0].data()||{}), departments:[], people:[], issues:[] };
+    r[1].forEach(function(d){ out.departments.push(Object.assign({id:d.id},d.data())); });
+    r[2].forEach(function(d){ out.people.push(Object.assign({id:d.id},d.data())); });
+    r[3].forEach(function(d){ out.issues.push(Object.assign({id:d.id},d.data())); });
+    var blob=new Blob([JSON.stringify(out,null,2)],{type:'application/json'});
+    var url=URL.createObjectURL(blob); var a=document.createElement('a'); a.href=url; a.download=((out.company.name||'company').replace(/[^a-z0-9]+/gi,'-').toLowerCase())+'-export.json'; document.body.appendChild(a); a.click(); setTimeout(function(){ URL.revokeObjectURL(url); a.remove(); },120);
+  }).catch(function(e){ alert('Export failed: '+e.message); });
+};
+window.removeCompany=function(){ if(!ME.isSuper||!activeCid)return; var nm=company.name||'this company'; var cid=activeCid;
+  var typed=prompt('This permanently deletes “'+nm+'” and ALL its people, teams and issues. This cannot be undone.\n\nType the company name to confirm:');
+  if(typed===null)return; if((typed||'').trim()!==nm){ alert('Name didn\u2019t match — nothing deleted.'); return; }
+  var base=companiesCol.doc(cid);
+  function delColl(ref){ return ref.get().then(function(qs){ if(qs.empty)return 0; var b=db.batch(); qs.forEach(function(d){ b.delete(d.ref); }); return b.commit().then(function(){return qs.size;}); }); }
+  base.collection('issues').get().then(function(iss){ var chain=Promise.resolve(); iss.forEach(function(d){ chain=chain.then(function(){ return delColl(d.ref.collection('messages')); }); }); return chain; })
+    .then(function(){ var chain=Promise.resolve(); ['issues','members','functions','access'].forEach(function(s){ chain=chain.then(function(){ return delColl(base.collection(s)); }); }); return chain; })
+    .then(function(){ return base.delete(); })
+    .then(function(){ alert('“'+nm+'” has been deleted.'); return loadCompanies(); })
+    .then(function(){ goCompaniesHome(); })
+    .catch(function(e){ alert('Could not fully delete (you may need to retry for a large company): '+e.message); });
+};
 window.pickNewColor=function(el){ document.querySelectorAll('#newFnColors .cpick').forEach(function(x){x.classList.remove('sel');}); el.classList.add('sel'); newFnColor=el.dataset.c; };
 window.addFunction=function(){ if(!isAdmin)return; var n=document.getElementById('newFnName').value.trim(); if(!n)return; fnsRef().add({name:n,color:newFnColor,leaderMid:null,leaderName:''}); document.getElementById('newFnName').value=''; };
 window.addMember=function(){
@@ -1635,7 +1719,42 @@ function renderAdmin(){
     else if(ME.mid){ var fn=members[ME.mid]&&members[ME.mid].functionId&&fns[members[ME.mid].functionId]; mp.innerHTML='<div class="frow"><span class="mini" style="background:'+personColor(ME.mid)+';width:24px;height:24px;font-size:10px">'+esc(ME.initials)+'</span><span class="nm" style="font-size:13px">'+esc(ME.name)+' <span class="ld">· you</span></span><span class="ld">'+(fn?esc(fn.name):'no function')+'</span></div>'; }
     else { mp.innerHTML='<div class="psub">You’re not a member of this company. Join to raise and discuss issues here.</div><button class="tg" style="width:100%;justify-content:center" onclick="joinCompanyBtn()">Join '+esc((company&&company.name)||'this company')+'</button>'; }
   }
+  renderAgreement();
 }
+function renderAgreement(){
+  var box=document.getElementById('agrBox'); if(!box)return;
+  if(!activeCid){ box.innerHTML='<div class="psub">No company selected.</div>'; return; }
+  if(!ME.isSuper){ box.innerHTML='<div class="psub">Managed by the super admin.</div>'; return; }
+  var a=company.agreement;
+  if(a&&a.accepted){
+    var when=a.acceptedAt?(new Date(a.acceptedAt+(a.acceptedAt.length<=10?'T00:00:00':''))).toLocaleDateString():'—';
+    var method=(a.method==='signed')?'signed DPA on file':'accepted online';
+    box.innerHTML='<div class="agr-ok"><div class="agr-tick">✓</div><div>'
+      +'<div class="agr-line"><b>Terms, Privacy &amp; DPA accepted</b></div>'
+      +'<div class="agr-sub">By '+esc(a.signatoryName||'—')+(a.signatoryTitle?(', '+esc(a.signatoryTitle)):'')+' · '+esc(when)+' · '+esc(method)+'</div>'
+      +'<div class="agr-sub">Versions — Terms/Privacy '+esc(a.termsVersion||POLICY_VERSION)+', DPA '+esc(a.dpaVersion||DPA_VERSION)+(a.signatoryEmail?(' · '+esc(a.signatoryEmail)):'')+'</div>'
+      +(a.notes?'<div class="agr-sub">Note: '+esc(a.notes)+'</div>':'')
+      +(a.recordedByName?'<div class="agr-sub" style="opacity:.7">Recorded by '+esc(a.recordedByName)+'</div>':'')
+      +'</div></div><button class="tinybtn" style="margin-top:10px" onclick="openAgreement()">Edit record</button>';
+  } else {
+    box.innerHTML='<div class="agr-no">No acceptance recorded yet for this company.</div><button class="tg" style="margin-top:9px;justify-content:center" onclick="openAgreement()">Record acceptance</button>';
+  }
+}
+window.openAgreement=function(){ if(!ME.isSuper||!activeCid)return; var a=company.agreement||{};
+  document.getElementById('agrName').value=a.signatoryName||'';
+  document.getElementById('agrTitle').value=a.signatoryTitle||'';
+  document.getElementById('agrEmail').value=a.signatoryEmail||'';
+  document.getElementById('agrMethod').value=a.method||'clicked';
+  document.getElementById('agrDate').value=(a.acceptedAt?String(a.acceptedAt).slice(0,10):new Date().toISOString().slice(0,10));
+  document.getElementById('agrNotes').value=a.notes||'';
+  document.getElementById('agrModal').classList.add('on');
+};
+window.closeAgreement=function(){ document.getElementById('agrModal').classList.remove('on'); };
+window.saveAgreement=function(){ if(!ME.isSuper||!activeCid)return;
+  var name=(document.getElementById('agrName').value||'').trim(); if(!name){ alert('Please enter who accepted on the client\u2019s behalf.'); return; }
+  var rec={ accepted:true, signatoryName:name, signatoryTitle:(document.getElementById('agrTitle').value||'').trim()||null, signatoryEmail:(document.getElementById('agrEmail').value||'').trim()||null, method:document.getElementById('agrMethod').value, acceptedAt:(document.getElementById('agrDate').value||new Date().toISOString().slice(0,10)), termsVersion:POLICY_VERSION, dpaVersion:DPA_VERSION, recordedByUid:ME.uid, recordedByName:ME.name, recordedAt:new Date().toISOString() };
+  cRef().update({agreement:rec}).then(function(){ closeAgreement(); }).catch(function(e){ alert('Could not save: '+e.message); });
+};
 document.querySelectorAll('#sws .sw').forEach(function(s){ s.addEventListener('click',function(){ if(!isAdmin||!activeCid)return; cRef().update({theme:{strip:s.dataset.c,ink:s.dataset.i,soft:s.dataset.s,mid:s.dataset.m}}); }); });
 
 /* ---------- TEAM / ORG CHART ---------- */
