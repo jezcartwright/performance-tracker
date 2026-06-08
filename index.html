@@ -153,6 +153,7 @@ tbody td{padding:14px 16px;vertical-align:middle}
 .sw-track.on .sw-knob{left:18px}
 .sw-lab{font-size:11px;font-weight:700;color:var(--t3)}
 .sw-lab.on{color:#12936a}
+.pidchip{font-family:ui-monospace,Menlo,monospace;font-size:11px;font-weight:700;color:var(--t3);background:rgba(0,0,0,.05);border:1px solid rgba(0,0,0,.08);border-radius:5px;padding:1px 6px;margin-left:6px;letter-spacing:.02em;vertical-align:middle}
 
 /* Detail */
 .back{display:inline-flex;align-items:center;gap:6px;color:var(--t2);font-weight:600;font-size:13px;margin-bottom:14px}
@@ -821,7 +822,7 @@ tr.rowdone:hover td{opacity:.78}
   <div class="amodal" id="archModal">
     <div class="amodal-card">
       <div class="amodal-h"><h2>Archive</h2><button class="amodal-x" onclick="closeArchive()">✕</button></div>
-      <p class="amodal-sub">People removed from an org, kept on record. Reassign them to any company you manage — their details and login (by email) travel with them.</p>
+      <p class="amodal-sub">People removed from an org, kept on record. Each carries a permanent reference number (e.g. PT-…) so they stay identifiable even though their old work email belonged to the company they left. Reassign them to any company you manage and that number travels with them.</p>
       <div id="archBody"></div>
     </div>
   </div>
@@ -1023,6 +1024,7 @@ var MANAGING=false, archive=[], archiveCount=0, archiveOpen=false;
 
 function esc(s){return (s==null?'':String(s)).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 function initials(n){return (n||'').split(' ').filter(Boolean).map(function(w){return w[0];}).join('').slice(0,2).toUpperCase()||'?';}
+function newPid(){ return 'PT-'+Date.now().toString().slice(-6)+Math.floor(1000+Math.random()*9000); }
 function ms(ts){return ts&&ts.toMillis?ts.toMillis():(typeof ts==='number'?ts:0);}
 function ms2(iso){ if(!iso)return 0; var t=Date.parse(iso); return isNaN(t)?0:t; }
 function personColor(mid){var mm=members[mid]; if(mm&&mm.functionId&&fns[mm.functionId])return fns[mm.functionId].color; return 'var(--strip)';}
@@ -1293,7 +1295,7 @@ function resolveMyMid(){
 }
 function joinCompany(){
   var ref=membersRef().doc();
-  return ref.set({first:ME.first,last:ME.last,name:ME.name,initials:ME.initials,email:ME.email,functionId:null,isLeader:false,uid:ME.uid}).then(function(){ ME.mid=ref.id; ensureAccess(ref.id); });
+  return ref.set({first:ME.first,last:ME.last,name:ME.name,initials:ME.initials,email:ME.email,functionId:null,isLeader:false,uid:ME.uid,pid:newPid()}).then(function(){ ME.mid=ref.id; ensureAccess(ref.id); });
 }
 window.joinCompanyBtn=function(){ joinCompany().then(function(){ renderAdmin(); render(); }); };
 
@@ -1450,7 +1452,7 @@ window.savePerson=function(){ if(!isAdmin)return;
     if(psMgrOverride!=null){ mgr=(psMgrOverride==='TOP')?null:psMgrOverride; }
     else if(psLeads){ mgr=ceoMid; }
     else { mgr=deptLeaderMid(fid)||ceoMid||null; }
-    var mdoc={ first:first, last:last, name:name, initials:initials(name), email:email||null, functionId:fid, title:title||null, isLeader:!!psLeads, managerMid:mgr||null, uid:null };
+    var mdoc={ first:first, last:last, name:name, initials:initials(name), email:email||null, functionId:fid, title:title||null, isLeader:!!psLeads, managerMid:mgr||null, uid:null, pid:newPid() };
     return membersRef().add(mdoc).then(function(ref){ var newMid=ref.id; var tasks=[];
       if(psLeads){ var oldL=fns[fid]&&fns[fid].leaderMid; if(oldL&&oldL!==newMid&&members[oldL]) tasks.push(membersRef().doc(oldL).update({isLeader:false}));
         tasks.push(fnsRef().doc(fid).update({leaderMid:newMid,leaderName:name}));
@@ -1712,7 +1714,7 @@ window.addMember=function(){
   if(!f){ alert('First name required.'); return; }
   var nm=(f+' '+l).trim();
   var ref=membersRef().doc();
-  ref.set({first:f,last:l,name:nm,initials:initials(nm),email:em,functionId:fid||null,isLeader:!!lead,uid:null}).then(function(){
+  ref.set({first:f,last:l,name:nm,initials:initials(nm),email:em,functionId:fid||null,isLeader:!!lead,uid:null,pid:newPid()}).then(function(){
     if(lead && fid) fnsRef().doc(fid).update({leaderMid:ref.id,leaderName:nm});
   });
   document.getElementById('nmFirst').value=''; document.getElementById('nmLast').value=''; document.getElementById('nmEmail').value=''; document.getElementById('nmLeader').checked=false;
@@ -1958,7 +1960,7 @@ window.asAddNew=function(){
   if(!asCtx)return; var f=((document.getElementById('asFirst')||{}).value||'').trim(); if(!f)return;
   var l=((document.getElementById('asLast')||{}).value||'').trim(); var em=((document.getElementById('asEmail')||{}).value||'').trim();
   var name=(f+' '+l).trim(); var ref=membersRef().doc();
-  var data={first:f,last:l,name:name,initials:initials(name),email:em,uid:null,isLeader:false,managerMid:null,functionId:null};
+  var data={first:f,last:l,name:name,initials:initials(name),email:em,uid:null,isLeader:false,managerMid:null,functionId:null,pid:newPid()};
   if(asCtx.type==='ceo'){ var b=db.batch(); b.set(ref,data); b.update(cRef(),{ceoMemberId:ref.id}); b.commit().then(refreshAux).catch(asErr); }
   else if(asCtx.type==='leader'){ var fid=asCtx.fid; data.functionId=fid; data.isLeader=true; var prev=fnsLeader(fid); var b2=db.batch(); if(prev)b2.update(membersRef().doc(prev),{isLeader:false}); b2.set(ref,data); b2.update(fnsRef().doc(fid),{leaderMid:ref.id,leaderName:name}); b2.commit().then(refreshAux).catch(asErr); }
   else { data.functionId=(members[asCtx.mid]||{}).functionId||null; data.managerMid=asCtx.mid; ref.set(data).then(refreshAux).catch(asErr); }
@@ -1976,7 +1978,7 @@ window.removeFromOrg=function(mid){ if(!isAdmin)return; var m=members[mid]; if(!
   directs.forEach(function(x){ batch.update(membersRef().doc(x),{managerMid: isLead?null:(m.managerMid||null)}); });
   if(isLead) batch.update(fnsRef().doc(fid),{leaderMid:null,leaderName:null});
   var aref=db.collection('archive').doc();
-  batch.set(aref,{first:m.first||'',last:m.last||'',name:m.name,initials:m.initials||initials(m.name),email:m.email||'',role:(isLead?('Leader · '+(fns[fid]?fns[fid].name:'')):'Team member'),fromCid:activeCid,fromCompany:company.name||activeCid,fromFunction:(fns[fid]?fns[fid].name:''),removedAt:FV.serverTimestamp(),removedBy:ME.uid});
+  batch.set(aref,{pid:m.pid||newPid(),first:m.first||'',last:m.last||'',name:m.name,initials:m.initials||initials(m.name),email:m.email||'',role:(isLead?('Leader · '+(fns[fid]?fns[fid].name:'')):'Team member'),fromCid:activeCid,fromCompany:company.name||activeCid,fromFunction:(fns[fid]?fns[fid].name:''),removedAt:FV.serverTimestamp(),removedBy:ME.uid});
   batch.delete(membersRef().doc(mid));
   if(m.uid){ batch.delete(companiesCol.doc(activeCid).collection('access').doc(m.uid)); }
   batch.commit().then(refreshAux).catch(function(e){alert('Remove failed: '+e.message);});
@@ -1987,7 +1989,7 @@ window.openArchive=function(){ archiveOpen=true; renderArchive(); document.getEl
 window.closeArchive=function(){ archiveOpen=false; document.getElementById('archModal').classList.remove('on'); };
 function renderArchive(){ var el=document.getElementById('archBody'); if(!el)return;
   if(!archive.length){ el.innerHTML='<div class="pf-empty">No archived people yet. Remove someone in Manage Org mode and they\u2019ll appear here.</div>'; return; }
-  el.innerHTML=archive.map(function(a){ return '<div class="arch-row"><span class="av" style="background:var(--t3)">'+esc(a.initials||initials(a.name))+'</span><div class="arch-meta"><div class="an">'+esc(a.name)+'</div><div class="as">was '+esc(a.role||'')+(a.fromCompany?(' · '+esc(a.fromCompany)):'')+'</div></div><button class="tinybtn" onclick="reassignPick(\''+a.id+'\')">↪ Reassign</button></div>'; }).join('');
+  el.innerHTML=archive.map(function(a){ return '<div class="arch-row"><span class="av" style="background:var(--t3)">'+esc(a.initials||initials(a.name))+'</span><div class="arch-meta"><div class="an">'+esc(a.name)+(a.pid?(' <span class="pidchip">'+esc(a.pid)+'</span>'):'')+'</div><div class="as">was '+esc(a.role||'')+(a.fromCompany?(' · '+esc(a.fromCompany)):'')+'</div></div><button class="tinybtn" onclick="reassignPick(\''+a.id+'\')">↪ Reassign</button></div>'; }).join('');
 }
 window.reassignPick=function(id){ var a=null; for(var i=0;i<archive.length;i++){if(archive[i].id===id){a=archive[i];break;}} if(!a)return;
   var cids=Object.keys(companies).filter(function(c){return ME.isSuper||(companies[c].adminUids||[]).indexOf(ME.uid)>=0;});
@@ -1997,7 +1999,7 @@ window.reassignPick=function(id){ var a=null; for(var i=0;i<archive.length;i++){
   db.collection('companies').doc(cid).collection('functions').get().then(function(qs){ var fl=[]; qs.forEach(function(d){fl.push({id:d.id,name:(d.data().name||d.id)});}); fl.sort(function(x,y){return x.name.localeCompare(y.name);});
     var dp=prompt('Which department in '+(companies[cid].name||cid)+'?\n\n'+(fl.length?fl.map(function(f,i){return (i+1)+'. '+f.name;}).join('\n'):'(no departments — will add unassigned)')); var di=parseInt(dp,10)-1; var fid=(fl[di]?fl[di].id:null);
     var mref=db.collection('companies').doc(cid).collection('members').doc(); var batch=db.batch();
-    batch.set(mref,{first:a.first||'',last:a.last||'',name:a.name,initials:a.initials||initials(a.name),email:a.email||'',functionId:fid,isLeader:false,uid:null,managerMid:null});
+    batch.set(mref,{first:a.first||'',last:a.last||'',name:a.name,initials:a.initials||initials(a.name),email:a.email||'',functionId:fid,isLeader:false,uid:null,managerMid:null,pid:a.pid||newPid()});
     batch.delete(db.collection('archive').doc(a.id));
     batch.commit().then(function(){ alert(a.name+' reassigned to '+(companies[cid].name||cid)+(fid?(' · '+(fl[di].name)):'')+'.'); }).catch(function(e){alert('Reassign failed: '+e.message);});
   }).catch(function(e){alert('Could not load departments: '+e.message);});
@@ -2049,7 +2051,7 @@ function seedCompany(def){
         fn.people.forEach(function(p,idx){
           var mref=ref.collection('members').doc();
           var nm=p[0]+' '+p[1];
-          batch.set(mref,{first:p[0],last:p[1],name:nm,initials:initials(nm),email:p[2],functionId:fref.id,isLeader:idx===0,uid:null});
+          batch.set(mref,{first:p[0],last:p[1],name:nm,initials:initials(nm),email:p[2],functionId:fref.id,isLeader:idx===0,uid:null,pid:newPid()});
           if(idx===0){ leaderMid=mref.id; leaderName=nm; }
         });
         batch.set(fref,{name:fn.name,color:fn.color,leaderMid:leaderMid,leaderName:leaderName});
