@@ -1015,8 +1015,9 @@ window.passwordContinue=function(){
 window.inviteCopy=function(mid){ var m=members[mid]; if(!m)return;
   var email=m.email||''; if(!email){ alert('Add an email for '+(m.name||'this person')+' first, then you can invite them.'); return; }
   var url=location.href.split('#')[0].split('?')[0]; var co=(company&&company.name)||'your team'; var first=(m.first||m.name||'').split(' ')[0];
-  var subject='You’re invited to '+co+' on Progress Tracker';
-  var body='Hi '+first+',\n\nYou’ve been added to '+co+' on Progress Tracker. To get started:\n\n1. Go to '+url+'\n2. Enter your email ('+email+') and choose a password, then tap “Sign in or create account”.\n3. You’ll go straight into '+co+'.\n\nSee you there.';
+  var sender=(ME&&ME.first)?ME.first:(ME&&ME.name)||'';
+  var subject='You’ve been added to the '+co+' Progress Tracker';
+  var body='Hi '+first+',\n\nYou’ve just been added to the '+co+' Progress Tracker.\n\nTo get started please follow these steps:\n\n1. Go to '+url+'\n2. Enter your email ('+email+') and choose a password, then tap “Sign in or create account”.\n3. You’ll go straight into '+co+' Progress Tracker.\n\nSee you there.\n\nCheers,'+(sender?('\n'+sender):'');
   try{ if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(body); }catch(e){}
   window.location.href='mailto:'+encodeURIComponent(email)+'?subject='+encodeURIComponent(subject)+'&body='+encodeURIComponent(body);
 };
