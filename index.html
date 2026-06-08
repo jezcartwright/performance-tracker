@@ -725,6 +725,21 @@ tr.rowdone:hover td{opacity:.78}
     </div>
   </div>
 
+  <!-- ADD A TEAM -->
+  <div class="amodal" id="teamSheet">
+    <div class="amodal-card" style="max-width:420px">
+      <div class="amodal-h"><h2>Add a team</h2><button class="amodal-x" onclick="closeTeam()">✕</button></div>
+      <p class="amodal-sub">Name the team — whatever this company calls it (e.g. Executive Committee, Sales, Operations). You'll add people, including its leader, with “Add person”.</p>
+      <input class="adm-input" id="tmName" style="margin:0" placeholder="Team / department name" oninput="tmChk()" autocomplete="off">
+      <div style="font-size:11px;font-weight:700;letter-spacing:.3px;text-transform:uppercase;color:var(--t3);margin:13px 0 7px">Colour</div>
+      <div id="tmColors" class="sws"></div>
+      <div style="display:flex;gap:9px;margin-top:14px">
+        <button class="ghost" style="flex:1;justify-content:center" onclick="closeTeam()">Cancel</button>
+        <button class="primary" id="tmGo" style="flex:1;justify-content:center" onclick="saveTeam()" disabled>Add team</button>
+      </div>
+    </div>
+  </div>
+
   <!-- ADD A PERSON -->
   <div class="amodal" id="personSheet">
     <div class="amodal-card" style="max-width:520px;padding:0">
@@ -846,22 +861,14 @@ tr.rowdone:hover td{opacity:.78}
             <div class="admsub">Departments &amp; leaders</div>
             <div id="admFns"></div>
             <div id="addFnWrap" style="margin-top:13px;display:none">
-              <input class="adm-input" id="newFnName" placeholder="New department name">
-              <div id="newFnColors" class="sws" style="margin-bottom:10px"></div>
-              <button class="tg" style="width:100%;justify-content:center" onclick="addFunction()">+ Add department</button>
+              <button class="tg" style="width:100%;justify-content:center" onclick="openTeam()">+ Add department</button>
             </div>
           </div>
           <div>
             <div class="admsub">People &amp; reporting</div>
             <div id="admMembers"></div>
             <div id="addMemberWrap" style="margin-top:13px;display:none">
-              <div style="display:flex;gap:8px"><input class="adm-input" id="nmFirst" placeholder="First name"><input class="adm-input" id="nmLast" placeholder="Last name"></div>
-              <input class="adm-input" id="nmEmail" type="email" placeholder="email@company.com">
-              <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
-                <select class="fn-sel" id="nmFn" style="max-width:none;flex:1"></select>
-                <label class="showdone" style="margin:0"><input type="checkbox" id="nmLeader"> Leader</label>
-              </div>
-              <button class="tg" style="width:100%;justify-content:center" onclick="addMember()">+ Add member</button>
+              <button class="tg" style="width:100%;justify-content:center" onclick="openPerson()">+ Add person</button>
             </div>
           </div>
         </div>
@@ -1349,7 +1356,22 @@ function sampleColor(url, cb){
     im.onerror=function(){ cb(null); }; im.src=url;
   }catch(e){ cb(null); }
 }
-window.addTeam=function(){ if(!isAdmin)return; var n=(prompt('Name this team — whatever this company calls it (e.g. Executive Committee, Leadership Team, Sales, Operations):')||'').trim(); if(!n)return; var color=TEAM_COLORS[Object.keys(fns).length%TEAM_COLORS.length]; fnsRef().add({name:n,color:color,leaderMid:null,leaderName:''}).then(function(ref){ fns[ref.id]={id:ref.id,name:n,color:color,leaderMid:null,leaderName:''}; openAddSheet({type:'leader',fid:ref.id}); }).catch(function(e){ alert('Could not add team: '+e.message); }); };
+var tmColor=TEAM_COLORS[0];
+window.addTeam=function(){ openTeam(); };
+window.openTeam=function(){ if(!isAdmin||!activeCid)return;
+  document.getElementById('tmName').value='';
+  tmColor=TEAM_COLORS[Object.keys(fns).length%TEAM_COLORS.length];
+  document.getElementById('tmColors').innerHTML=TEAM_COLORS.map(function(c){return '<span class="cpick'+(c===tmColor?' sel':'')+'" style="background:'+c+'" data-c="'+c+'" onclick="tmPick(this)"></span>';}).join('');
+  document.getElementById('tmGo').disabled=true;
+  document.getElementById('teamSheet').classList.add('on');
+  setTimeout(function(){var e=document.getElementById('tmName');if(e)e.focus();},40);
+};
+window.closeTeam=function(){ document.getElementById('teamSheet').classList.remove('on'); };
+window.tmChk=function(){ document.getElementById('tmGo').disabled=!document.getElementById('tmName').value.trim(); };
+window.tmPick=function(el){ el.parentElement.querySelectorAll('.cpick').forEach(function(x){x.classList.remove('sel');}); el.classList.add('sel'); tmColor=el.dataset.c; };
+window.saveTeam=function(){ if(!isAdmin||!activeCid)return; var n=(document.getElementById('tmName').value||'').trim(); if(!n)return; var go=document.getElementById('tmGo'); go.disabled=true; go.textContent='Adding…';
+  fnsRef().add({name:n,color:tmColor,leaderMid:null,leaderName:''}).then(function(){ closeTeam(); go.disabled=false; go.textContent='Add team'; }).catch(function(e){ alert('Could not add team: '+e.message); go.disabled=false; go.textContent='Add team'; });
+};
 function landHome(){ if(ME.isSuper){ goCompaniesHome(); } else { setHome(false); goDash(); } }
 
 /* ---------- add-a-person sheet (person-first builder) ---------- */
@@ -1361,6 +1383,8 @@ window.openPerson=function(opts){ if(!isAdmin)return; opts=opts||{};
   psLeads=false; psMgrOverride=null;
   document.getElementById('ps-yn').querySelectorAll('button').forEach(function(b,i){b.classList.toggle('sel', i===1);});
   renderPsDept(opts.fid||'');
+  if(opts.leads){ psLeads=true; document.getElementById('ps-yn').querySelectorAll('button').forEach(function(b,i){b.classList.toggle('sel', i===0);}); }
+  if(opts.managerMid){ psMgrOverride=opts.managerMid; }
   document.getElementById('ps-repSel').classList.remove('on');
   document.getElementById('ps-go').disabled=true;
   psUpd();
@@ -1881,7 +1905,7 @@ window.appointCEO=function(mid){ if(!isAdmin)return; var m=members[mid]; if(!m)r
   batch.commit().then(refreshAux).catch(function(e){alert('Could not appoint CEO: '+e.message);});
 };
 window.appointCEOPick=function(){ if(!isAdmin)return; openAddSheet({type:'ceo'}); };
-window.addReport=function(mid){ if(!isAdmin)return; openAddSheet({type:'report',mid:mid}); };
+window.addReport=function(mid){ if(!isAdmin)return; var m=members[mid]; openPerson({ fid:(m&&m.functionId)?m.functionId:'', managerMid:mid }); };
 
 /* ---------- unified add-person sheet ---------- */
 var asCtx=null;
