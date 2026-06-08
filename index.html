@@ -358,7 +358,7 @@ tbody td{padding:14px 16px;vertical-align:middle}
 .crumb2 a{color:var(--strip-ink);cursor:pointer}.crumb2 a:hover{text-decoration:underline}
 .ov-head{display:flex;align-items:center;gap:16px;background:var(--card);border:1px solid var(--b);border-radius:16px;padding:18px 20px;flex-wrap:wrap}
 .ov-clogo{width:64px;height:64px;border-radius:14px;flex-shrink:0;display:grid;place-items:center;color:#fff;font-family:var(--display);font-weight:700;font-size:23px;overflow:hidden;box-shadow:inset 0 -3px 8px rgba(0,0,0,.16)}
-.ov-clogo img{width:100%;height:100%;object-fit:contain;background:#fff;padding:6px}
+.ov-clogo img{width:100%;height:100%;object-fit:cover;display:block}
 .ov-htext{flex:1;min-width:160px}
 .ov-htext h2{font-family:var(--display);font-weight:600;font-size:26px;margin:0}
 .ov-row2{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-top:5px;font-size:12px;color:var(--t3);font-weight:600}
@@ -1421,7 +1421,7 @@ function renderCoHome(){
   var cids=Object.keys(companies).sort(function(a,b){return (companies[a].name||'').localeCompare(companies[b].name||'');});
   box.innerHTML = cids.length ? cids.map(function(id){ var c=companies[id]; var th=(c.theme&&c.theme.strip)||'#ff6600';
     var mono=String((c.code||initials(c.name||'')||'•')).toUpperCase().slice(0,3);
-    var logo=c.logo?('<img src="'+c.logo+'" alt="" style="width:100%;height:100%;object-fit:contain;padding:6px">'):('<span style="font-family:var(--display);font-weight:700;color:'+th+';font-size:'+(mono.length>=3?'16px':'21px')+'">'+esc(mono)+'</span>');
+    var logo=c.logo?('<img src="'+c.logo+'" alt="" style="width:100%;height:100%;object-fit:cover;display:block">'):('<span style="font-family:var(--display);font-weight:700;color:'+th+';font-size:'+(mono.length>=3?'16px':'21px')+'">'+esc(mono)+'</span>');
     var cnt=peopleIndex?peopleIndex.filter(function(p){return p.cid===id;}).length:null;
     var cntH=(cnt!=null)?'<span class="cohome-cnt">'+cnt+(cnt===1?' person':' people')+'</span>':'';
     return '<button class="cohome-card" style="--ac:'+th+'" onclick="openCompanyOverview(\''+id+'\')"><span class="cohome-logo">'+logo+'</span><span class="cohome-body"><span class="cohome-nm">'+esc(c.name||id)+'</span><span class="cohome-code">'+(c.web?esc(c.web):(c.code?esc(String(c.code).toUpperCase()):''))+'</span></span>'+cntH+'<span class="cohome-chev">›</span></button>';
