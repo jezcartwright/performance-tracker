@@ -716,7 +716,7 @@ tr.rowdone:hover td{opacity:.78}
       <span class="pf-ava" id="pfAva">·</span>
       <div>
         <h1 class="pf-name" id="pfName">—</h1>
-        <div class="pf-sub"><span id="pfRole">—</span> · <span id="pfFn">—</span></div>
+        <div class="pf-sub"><span id="pfRole">—</span></div>
         <div class="pf-email" id="pfEmail"></div>
       </div>
       <div style="margin-left:auto;display:flex;gap:8px">
@@ -2150,8 +2150,10 @@ var curProfile=null;
 window.openProfile=function(mid){ var m=members[mid]; if(!m)return; curProfile=mid;
   var av=document.getElementById('pfAva'); av.textContent=personInit(mid); av.style.background=personColor(mid);
   document.getElementById('pfName').textContent=m.name;
-  var leads=isLeaderOfMid(mid); document.getElementById('pfRole').textContent=(company.ceoMemberId===mid)?'CEO':(leads?('Leader — '+(leadFnName(mid)||'')):'Team member');
-  document.getElementById('pfFn').textContent=(m.functionId&&fns[m.functionId])?fns[m.functionId].name:'No function';
+  var leads=isLeaderOfMid(mid), isCeo=(company.ceoMemberId===mid), dn=(m.functionId&&fns[m.functionId])?fns[m.functionId].name:'';
+  document.getElementById('pfRole').textContent = isCeo ? (m.title?m.title:'CEO')
+    : leads ? (m.title?m.title:('Leader · '+(leadFnName(mid)||dn||'')))
+    : (m.title ? (m.title+(dn?(' · '+dn):'')) : (dn||'Team member'));
   document.getElementById('pfEmail').textContent=m.email||'';
   var pe=document.getElementById('pfEdit'); if(pe) pe.style.display=(isAdmin && company.ceoMemberId!==mid)?'inline-flex':'none';
   var pv=document.getElementById('pfInvite'); if(pv) pv.style.display=(isAdmin && !m.uid && m.email)?'inline-flex':'none';
