@@ -507,14 +507,16 @@ tr.rowdone:hover td{opacity:.78}
         <input id="login-lname" placeholder="Last name" autocomplete="family-name">
       </div>
       <input id="login-email" type="email" placeholder="you@company.com" autocomplete="email">
+      <input id="login-pw" type="password" placeholder="Password (6+ characters)" autocomplete="current-password">
       <input id="login-hp" class="hp" tabindex="-1" autocomplete="off" placeholder="Leave blank">
       <label class="login-consent"><input type="checkbox" id="login-consent"><span>I agree to the <a href="terms.html" target="_blank" rel="noopener">Terms</a> &amp; <a href="privacy.html" target="_blank" rel="noopener">Privacy&nbsp;Policy</a>.</span></label>
-      <button class="login-btn" onclick="sendMagicLink()">Send sign-in link</button>
+      <button class="login-btn" onclick="passwordContinue()">Sign in or create account</button>
       <div class="login-or">or</div>
       <button class="gbtn" onclick="signInGoogle()">
         <svg width="17" height="17" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3c-1.6 4.7-6.1 8-11.3 8-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.6 4.1 29.6 2 24 2 11.8 2 2 11.8 2 24s9.8 22 22 22 22-9.8 22-22c0-1.5-.2-2.6-.4-3.5z"/><path fill="#FF3D00" d="M3.3 7.3l6.6 4.8C11.7 8.1 17.4 5 24 5c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.6 4.1 29.6 2 24 2 16 2 9 6.5 5.3 13.1z"/><path fill="#4CAF50" d="M24 46c5.5 0 10.4-2.1 14.1-5.5l-6.5-5.5C29.6 36.5 26.9 37.5 24 37.5c-5.2 0-9.6-3.3-11.2-7.9l-6.6 5.1C9.7 41.4 16.3 46 24 46z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.1 4.1-3.9 5.5l6.5 5.5C41.9 36 44 30.5 44 24c0-1.5-.2-2.6-.4-3.5z"/></svg>
         Sign in with Google
       </button>
+      <button onclick="sendMagicLink()" style="background:none;border:none;color:var(--strip-ink);font-weight:600;font-size:12.5px;cursor:pointer;margin-top:11px;padding:4px">Email me a one-time sign-in link instead</button>
     </div>
     <div id="login-sent" style="display:none">
       <p class="login-sub">We sent a sign-in link to <strong id="sent-email"></strong>. Tap the link in your email on this device to continue.</p>
@@ -693,6 +695,10 @@ tr.rowdone:hover td{opacity:.78}
         <div class="pf-sub"><span id="pfRole">—</span> · <span id="pfFn">—</span></div>
         <div class="pf-email" id="pfEmail"></div>
       </div>
+      <div style="margin-left:auto;display:flex;gap:8px">
+        <button class="tinybtn" id="pfInvite" style="display:none" onclick="inviteCopy(curProfile)">✉ Invite</button>
+        <button class="tinybtn" id="pfEdit" style="display:none" onclick="openPerson({edit:curProfile})">✎ Edit</button>
+      </div>
     </div>
     <div id="pfRel"></div>
     <h3 class="pf-h3">Issues they're dealing with</h3>
@@ -752,7 +758,7 @@ tr.rowdone:hover td{opacity:.78}
   <!-- ADD A PERSON -->
   <div class="amodal" id="personSheet">
     <div class="amodal-card" style="max-width:520px;padding:0">
-      <div class="ps-h"><h2>Add a person</h2><button class="amodal-x" onclick="closePerson()">✕</button></div>
+      <div class="ps-h"><h2 id="psHeading">Add a person</h2><button class="amodal-x" onclick="closePerson()">✕</button></div>
       <div class="ps-b">
         <div class="ps-grp"><div class="ps-l">Who</div>
           <div class="ps-row2">
@@ -912,7 +918,7 @@ tr.rowdone:hover td{opacity:.78}
         <div id="admMembership"></div>
       </div>
 
-      <div class="panel">
+      <div class="panel" id="dataPanel">
         <h3>Data &amp; privacy</h3>
         <p class="psub">For data-subject requests. Export gives a full copy of this company's records; deletion permanently erases the company and everyone in it.</p>
         <div style="display:flex;gap:8px;flex-wrap:wrap">
@@ -971,6 +977,48 @@ if(auth.isSignInWithEmailLink(window.location.href)){
   var em=localStorage.getItem('emailForSignIn')||window.prompt('Please confirm your email to sign in:');
   if(em){ auth.signInWithEmailLink(em,window.location.href).then(function(){ localStorage.removeItem('emailForSignIn'); history.replaceState(null,'',ACTION_URL); }).catch(function(e){ var m=document.getElementById('login-msg'); if(m)m.textContent='Sign-in error: '+e.message; }); }
 }
+window.passwordContinue=function(){
+  var fn=(document.getElementById('login-fname').value||'').trim();
+  var ln=(document.getElementById('login-lname').value||'').trim();
+  var email=(document.getElementById('login-email').value||'').trim();
+  var pw=(document.getElementById('login-pw').value||'');
+  var hp=(document.getElementById('login-hp')||{}).value||'';
+  var m=document.getElementById('login-msg');
+  if(hp){ m.textContent='Something went wrong. Please reload and try again.'; return; }
+  if(!email||email.indexOf('@')<0){ m.textContent='Please enter a valid email.'; return; }
+  if((pw||'').length<6){ m.textContent='Password must be at least 6 characters.'; return; }
+  if(!document.getElementById('login-consent').checked){ m.textContent='Please agree to the Terms & Privacy Policy to continue.'; return; }
+  try{ localStorage.setItem('ptConsent', JSON.stringify({at:new Date().toISOString(), terms:POLICY_VERSION, privacy:POLICY_VERSION, method:'password'})); }catch(e){}
+  m.textContent='Signing in…';
+  function doCreate(){
+    if(fn){ try{ localStorage.setItem('nameForSignIn',JSON.stringify({first:fn,last:ln})); }catch(_){} }
+    m.textContent='Creating your account…';
+    return auth.createUserWithEmailAndPassword(email,pw).then(function(){ m.textContent=''; }).catch(function(e2){
+      var c=e2.code||'';
+      if(c==='auth/email-already-in-use'){ m.textContent='That email already has an account — check your password.'; }
+      else if(c==='auth/operation-not-allowed'){ m.textContent='Email/password sign-in isn’t switched on yet — use Google or a one-time link for now.'; }
+      else if(c==='auth/weak-password'){ m.textContent='Please pick a stronger password (6+ characters).'; }
+      else { m.textContent='Error: '+(e2.message||c); }
+    });
+  }
+  auth.signInWithEmailAndPassword(email,pw).then(function(){ m.textContent=''; }).catch(function(e){
+    var c=e.code||'';
+    if(c==='auth/user-not-found'){ doCreate(); }
+    else if(c==='auth/invalid-credential'||c==='auth/invalid-login-credentials'){ if(fn) doCreate(); else m.textContent='Email or password not recognised. New here? Add your first name, then tap again to create your account.'; }
+    else if(c==='auth/wrong-password'){ m.textContent='Incorrect password. Try again, or use a one-time link below.'; }
+    else if(c==='auth/invalid-email'){ m.textContent='That email looks invalid.'; }
+    else if(c==='auth/operation-not-allowed'){ m.textContent='Email/password sign-in isn’t switched on yet — use Google or a one-time link for now.'; }
+    else if(c==='auth/too-many-requests'){ m.textContent='Too many attempts — please wait a moment and try again.'; }
+    else { m.textContent='Error: '+(e.message||c); }
+  });
+};
+window.inviteCopy=function(mid){ var m=members[mid]; if(!m)return;
+  var email=m.email||''; var url=location.href.split('#')[0].split('?')[0]; var co=(company&&company.name)||'your team';
+  var msg='Hi '+((m.first||m.name||'').split(' ')[0])+',\n\nYou\u2019ve been added to '+co+' on Progress Tracker. To get started:\n\n1. Go to '+url+'\n2. Enter your email ('+(email||'your work email')+') and choose a password, then tap \u201cSign in or create account\u201d.\n3. You\u2019ll go straight into '+co+'.\n\nSee you there.';
+  function done(){ alert('Invite copied — paste it into an email to '+(m.name||'them')+'.'); }
+  if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(msg).then(done,function(){ window.prompt('Copy this invite:',msg); }); }
+  else { window.prompt('Copy this invite:',msg); }
+};
 window.sendMagicLink=function(){
   var fn=(document.getElementById('login-fname').value||'').trim();
   var ln=(document.getElementById('login-lname').value||'').trim();
@@ -1258,7 +1306,7 @@ function startApp(){
   }
   subC=cRef().onSnapshot(function(s){
     company=s.exists?s.data():{}; company.adminUids=company.adminUids||[];
-    isAdmin=ME.isSuper;
+    isAdmin=ME.isSuper || company.adminUids.indexOf(ME.uid)>=0;
     applyTheme(company.theme||DEFAULT_THEME);
     renderClientLogo();
     document.getElementById('tabAdmin').style.display=isAdmin?'':'none';
@@ -1385,23 +1433,38 @@ window.saveTeam=function(){ if(!isAdmin||!activeCid)return; var n=(document.getE
 function landHome(){ if(ME.isSuper){ goCompaniesHome(); } else { setHome(false); goDash(); } }
 
 /* ---------- add-a-person sheet (person-first builder) ---------- */
-var psLeads=false, psMgrOverride=null;
+var psLeads=false, psMgrOverride=null, psEditMid=null;
 function deptLeaderMid(fid){ var f=fns[fid]; return (f&&f.leaderMid&&members[f.leaderMid])?f.leaderMid:null; }
 function roleLabelFor(mid){ var m=members[mid]; if(!mid||!m)return ''; if(company.ceoMemberId===mid)return 'CEO'; var f=fns[m.functionId]; if(f&&f.leaderMid===mid)return (f.name||'')+' leader'; if(m.title)return m.title; return f?f.name:''; }
 window.openPerson=function(opts){ if(!isAdmin)return; opts=opts||{};
+  psEditMid = opts.edit || null;
   ['ps-first','ps-last','ps-email','ps-title','ps-newDept'].forEach(function(id){var e=document.getElementById(id);if(e)e.value='';});
   psLeads=false; psMgrOverride=null;
   document.getElementById('ps-yn').querySelectorAll('button').forEach(function(b,i){b.classList.toggle('sel', i===1);});
-  renderPsDept(opts.fid||'');
-  if(opts.leads){ psLeads=true; document.getElementById('ps-yn').querySelectorAll('button').forEach(function(b,i){b.classList.toggle('sel', i===0);}); }
-  if(opts.managerMid){ psMgrOverride=opts.managerMid; }
+  var em = psEditMid && members[psEditMid] ? members[psEditMid] : null;
+  if(em){
+    document.getElementById('ps-first').value=em.first||'';
+    document.getElementById('ps-last').value=em.last||'';
+    document.getElementById('ps-email').value=em.email||'';
+    document.getElementById('ps-title').value=em.title||'';
+    var leadsNow=!!(em.functionId && fns[em.functionId] && fns[em.functionId].leaderMid===psEditMid);
+    psLeads=leadsNow;
+    document.getElementById('ps-yn').querySelectorAll('button').forEach(function(b,i){b.classList.toggle('sel', i===(leadsNow?0:1));});
+    renderPsDept(em.functionId||'');
+    psMgrOverride = em.managerMid ? em.managerMid : 'TOP';
+  } else {
+    renderPsDept(opts.fid||'');
+    if(opts.leads){ psLeads=true; document.getElementById('ps-yn').querySelectorAll('button').forEach(function(b,i){b.classList.toggle('sel', i===0);}); }
+    if(opts.managerMid){ psMgrOverride=opts.managerMid; }
+  }
+  var h=document.getElementById('psHeading'); if(h) h.textContent=em?'Edit person':'Add a person';
+  var go=document.getElementById('ps-go'); go.textContent=em?'Save changes':'Add person'; go.disabled=em?false:true;
   document.getElementById('ps-repSel').classList.remove('on');
-  document.getElementById('ps-go').disabled=true;
   psUpd();
   document.getElementById('personSheet').classList.add('on');
   setTimeout(function(){var e=document.getElementById('ps-first');if(e)e.focus();},40);
 };
-window.closePerson=function(){ document.getElementById('personSheet').classList.remove('on'); };
+window.closePerson=function(){ psEditMid=null; document.getElementById('personSheet').classList.remove('on'); };
 window.psChk=function(){ document.getElementById('ps-go').disabled=!document.getElementById('ps-first').value.trim(); };
 function renderPsDept(sel){ var s=document.getElementById('ps-dept'); var opts='';
   Object.keys(fns).forEach(function(fid){ var f=fns[fid]; var ld=deptLeaderMid(fid)?(' (led by '+esc(personName(f.leaderMid))+')'):' (no leader yet)'; opts+='<option value="'+fid+'"'+(fid===sel?' selected':'')+'>'+esc(f.name)+ld+'</option>'; });
@@ -1416,7 +1479,7 @@ function psUpd(){ var dv=document.getElementById('ps-dept').value; var isNew=(dv
   document.getElementById('ps-newDeptWrap').classList.toggle('on', isNew);
   psRenderRep();
   var drB=document.getElementById('ps-drBlock');
-  if(psLeads && !isNew && fns[dv]){ var mem=Object.keys(members).filter(function(m){return members[m].functionId===dv;});
+  if(psLeads && !isNew && !psEditMid && fns[dv]){ var mem=Object.keys(members).filter(function(m){return members[m].functionId===dv;});
     if(mem.length){ drB.style.display='block'; document.getElementById('ps-drList').innerHTML=mem.map(function(m){return '<label><input type="checkbox" value="'+m+'"> '+esc(personName(m))+' · '+esc(fns[dv].name)+'</label>';}).join(''); }
     else drB.style.display='none';
   } else drB.style.display='none';
@@ -1443,7 +1506,7 @@ window.savePerson=function(){ if(!isAdmin)return;
   var dv=document.getElementById('ps-dept').value;
   var newDeptNm=document.getElementById('ps-newDept').value.trim();
   if(dv==='__new' && !newDeptNm){ alert('Please name the new department.'); return; }
-  var go=document.getElementById('ps-go'); go.disabled=true; go.textContent='Adding…';
+  var go=document.getElementById('ps-go'); go.disabled=true; go.textContent=psEditMid?'Saving…':'Adding…';
   var name=(first+' '+last).trim();
   var ensure=(dv==='__new')?createDeptInline(newDeptNm):Promise.resolve(dv);
   ensure.then(function(fid){ if(!fid) throw new Error('Please name the department.');
@@ -1452,6 +1515,16 @@ window.savePerson=function(){ if(!isAdmin)return;
     if(psMgrOverride!=null){ mgr=(psMgrOverride==='TOP')?null:psMgrOverride; }
     else if(psLeads){ mgr=ceoMid; }
     else { mgr=deptLeaderMid(fid)||ceoMid||null; }
+    if(psEditMid){ var mid=psEditMid;
+      var prevLeaderFid=null; Object.keys(fns).forEach(function(f){ if(fns[f].leaderMid===mid) prevLeaderFid=f; });
+      var tasks=[ membersRef().doc(mid).update({first:first,last:last,name:name,initials:initials(name),email:email||null,functionId:fid,title:title||null,isLeader:!!psLeads,managerMid:(mgr||null)}) ];
+      if(psLeads){ var oldL=fns[fid]&&fns[fid].leaderMid;
+        if(oldL&&oldL!==mid&&members[oldL]) tasks.push(membersRef().doc(oldL).update({isLeader:false}));
+        tasks.push(fnsRef().doc(fid).update({leaderMid:mid,leaderName:name}));
+        if(prevLeaderFid&&prevLeaderFid!==fid) tasks.push(fnsRef().doc(prevLeaderFid).update({leaderMid:null,leaderName:''}));
+      } else if(prevLeaderFid){ tasks.push(fnsRef().doc(prevLeaderFid).update({leaderMid:null,leaderName:''})); }
+      return Promise.all(tasks);
+    }
     var mdoc={ first:first, last:last, name:name, initials:initials(name), email:email||null, functionId:fid, title:title||null, isLeader:!!psLeads, managerMid:mgr||null, uid:null, pid:newPid() };
     return membersRef().add(mdoc).then(function(ref){ var newMid=ref.id; var tasks=[];
       if(psLeads){ var oldL=fns[fid]&&fns[fid].leaderMid; if(oldL&&oldL!==newMid&&members[oldL]) tasks.push(membersRef().doc(oldL).update({isLeader:false}));
@@ -1461,7 +1534,7 @@ window.savePerson=function(){ if(!isAdmin)return;
       return Promise.all(tasks);
     });
   }).then(function(){ closePerson(); go.disabled=false; go.textContent='Add person'; })
-   .catch(function(e){ alert(e.message||'Could not add person'); go.disabled=false; go.textContent='Add person'; });
+   .catch(function(e){ alert(e.message||'Could not save'); go.disabled=false; go.textContent=psEditMid?'Save changes':'Add person'; });
 };
 
 /* ---------- global people search (all companies) ---------- */
@@ -1756,8 +1829,12 @@ function renderAdmin(){
       }
       var tags=''; if(isLead)tags+=' <span class="ld" style="color:var(--strip-ink)">leader</span>'; if(!m.uid)tags+=' <span class="ld" style="opacity:.6">invited</span>';
       var admBtn = '';
+      if(ME.isSuper && activeCid && m.uid && m.uid!==ME.uid){
+        admBtn = '<button class="tinybtn" onclick="toggleCompanyAdmin(\''+mid+'\')"'+(adm?' style="background:#0f8a6b;color:#fff;border-color:#0f8a6b"':'')+'>'+(adm?'✓ Admin':'Make admin')+'</button>';
+      }
+      var inv = (isAdmin && activeCid && !m.uid && m.email) ? '<button class="tinybtn" onclick="inviteCopy(\''+mid+'\')">✉ Invite</button>' : '';
       var rm = isAdmin ? '<button class="tinybtn" onclick="removeMember(\''+mid+'\')" style="background:#fbeaea;color:#b42318;border-color:#f3c9c4">Remove</button>' : '';
-      return '<div class="frow" style="align-items:flex-start"><span class="mini" style="background:'+personColor(mid)+';width:24px;height:24px;font-size:10px;margin-top:2px">'+esc(personInit(mid))+'</span><span class="nm" style="font-size:13px;flex:1">'+esc(personName(mid))+tags+'</span><span class="mrow-ctl">'+fnsel+mgrsel+' '+admBtn+' '+rm+'</span></div>';
+      return '<div class="frow" style="align-items:flex-start"><span class="mini" style="background:'+personColor(mid)+';width:24px;height:24px;font-size:10px;margin-top:2px">'+esc(personInit(mid))+'</span><span class="nm" style="font-size:13px;flex:1">'+esc(personName(mid))+tags+'</span><span class="mrow-ctl">'+fnsel+mgrsel+' '+admBtn+' '+inv+' '+rm+'</span></div>';
     }).join('') : '<div class="psub">'+(activeCid?'No members yet — add people below.':'Select or create a company first.')+'</div>';
   }
   var amw=document.getElementById('addMemberWrap'); if(amw){ amw.style.display=(isAdmin&&activeCid)?'block':'none'; var nf=document.getElementById('nmFn'); if(nf)nf.innerHTML='<option value="">— department —</option>'+fnOptions(''); }
@@ -1767,6 +1844,7 @@ function renderAdmin(){
     else if(ME.mid){ var fn=members[ME.mid]&&members[ME.mid].functionId&&fns[members[ME.mid].functionId]; mp.innerHTML='<div class="frow"><span class="mini" style="background:'+personColor(ME.mid)+';width:24px;height:24px;font-size:10px">'+esc(ME.initials)+'</span><span class="nm" style="font-size:13px">'+esc(ME.name)+' <span class="ld">· you</span></span><span class="ld">'+(fn?esc(fn.name):'no function')+'</span></div>'; }
     else { mp.innerHTML='<div class="psub">You’re not a member of this company. Join to raise and discuss issues here.</div><button class="tg" style="width:100%;justify-content:center" onclick="joinCompanyBtn()">Join '+esc((company&&company.name)||'this company')+'</button>'; }
   }
+  var dp=document.getElementById('dataPanel'); if(dp) dp.style.display=ME.isSuper?'':'none';
   renderAgreement();
 }
 function renderAgreement(){
@@ -1846,6 +1924,7 @@ function cardMenu(mid,kind){
   var m=members[mid]; var fid=m?m.functionId:null; var items='';
   if(kind==='member' && fid) items+='<div onclick="event.stopPropagation();appointLeader(\''+mid+'\')">★ Make '+esc(fns[fid]?fns[fid].name:'')+' leader</div>';
   if(kind!=='ceo') items+='<div onclick="event.stopPropagation();appointCEO(\''+mid+'\')">♛ Appoint as CEO</div>';
+  if(kind!=='ceo') items+='<div onclick="event.stopPropagation();openPerson({edit:\''+mid+'\'})">✎ Edit details</div>';
   if(kind!=='ceo') items+='<div onclick="event.stopPropagation();addReport(\''+mid+'\')">+ Add report</div>';
   if(kind!=='ceo') items+='<div class="dz" onclick="event.stopPropagation();removeFromOrg(\''+mid+'\')">Remove from org</div>';
   return '<div class="ocmenu" id="ocm_'+mid+'">'+items+'</div>';
@@ -1966,6 +2045,11 @@ window.asAddNew=function(){
   else { data.functionId=(members[asCtx.mid]||{}).functionId||null; data.managerMid=asCtx.mid; ref.set(data).then(refreshAux).catch(asErr); }
   closeAddSheet();
 };
+window.toggleCompanyAdmin=function(mid){ if(!ME.isSuper||!activeCid)return; var m=members[mid]; if(!m)return;
+  if(!m.uid){ alert(m.name+' needs to sign in once before they can be made an admin — admin rights are linked to their login.'); return; }
+  var admins=(company.adminUids||[]); var on=admins.indexOf(m.uid)>=0;
+  companiesCol.doc(activeCid).update({adminUids: on?FV.arrayRemove(m.uid):FV.arrayUnion(m.uid)}).catch(function(e){ alert('Could not update: '+e.message); });
+};
 window.removeFromOrg=function(mid){ if(!isAdmin)return; var m=members[mid]; if(!m)return;
   if(company.ceoMemberId===mid){ alert('Appoint a new CEO before removing the current one.'); return; }
   var fid=m.functionId; var isLead=fnsLeader(fid)===mid;
@@ -2013,6 +2097,8 @@ window.openProfile=function(mid){ var m=members[mid]; if(!m)return; curProfile=m
   var leads=isLeaderOfMid(mid); document.getElementById('pfRole').textContent=(company.ceoMemberId===mid)?'CEO':(leads?('Leader — '+(leadFnName(mid)||'')):'Team member');
   document.getElementById('pfFn').textContent=(m.functionId&&fns[m.functionId])?fns[m.functionId].name:'No function';
   document.getElementById('pfEmail').textContent=m.email||'';
+  var pe=document.getElementById('pfEdit'); if(pe) pe.style.display=(isAdmin && company.ceoMemberId!==mid)?'inline-flex':'none';
+  var pv=document.getElementById('pfInvite'); if(pv) pv.style.display=(isAdmin && !m.uid && m.email)?'inline-flex':'none';
   renderProfileIssues(mid);
   renderProfileRel(mid);
   clearTabs(); var t=document.getElementById('tabTeam'); if(t)t.classList.add('active');
