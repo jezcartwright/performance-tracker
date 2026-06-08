@@ -209,6 +209,32 @@ tbody td{padding:14px 16px;vertical-align:middle}
 .yn button.sel{color:#fff}
 .yn button:first-child.sel{border-color:#12936a;background:#12936a}
 .yn button:last-child.sel{border-color:#cf3a2e;background:#cf3a2e}
+/* add-person sheet */
+.ps-h{display:flex;align-items:center;justify-content:space-between;padding:18px 20px 10px}
+.ps-h h2{font-family:var(--display);font-size:25px;margin:0;font-weight:700}
+.ps-b{padding:2px 20px 18px;max-height:64vh;overflow:auto}
+.ps-grp{margin-top:15px}
+.ps-l{font-size:10.5px;font-weight:800;letter-spacing:1.3px;text-transform:uppercase;color:var(--t3);margin-bottom:9px}
+.ps-fld{margin-bottom:11px}
+.ps-fld label{display:block;font-size:12px;font-weight:600;color:var(--t2);margin-bottom:5px}
+.ps-row2{display:flex;gap:10px}.ps-row2 .ps-fld{flex:1}
+#personSheet input,#personSheet select{width:100%;padding:11px 12px;border:1.5px solid var(--b);border-radius:6px;font-size:14px;font-family:var(--ui);background:#fff;color:var(--t)}
+#personSheet input:focus,#personSheet select:focus{outline:none;border-color:var(--strip)}
+.ps-hint{font-size:11.5px;color:var(--t3);margin:4px 1px 0}
+.ps-reveal{margin-top:9px;padding:11px;background:var(--strip-soft);border:1px dashed var(--strip-mid);border-radius:8px;display:none}
+.ps-reveal.on{display:block}
+.ps-rep{display:flex;align-items:center;gap:10px;padding:12px 13px;border:1.5px solid var(--b);border-radius:8px;background:#fdfcfa}
+.ps-ar{color:var(--t3);font-weight:700}
+.ps-who{font-weight:700;font-size:14px}
+.ps-ro{font-size:12px;color:var(--t2)}
+.ps-chg{margin-left:auto;border:1px solid var(--b);background:#fff;border-radius:6px;padding:5px 10px;font-size:12px;font-weight:600;color:var(--strip-ink);cursor:pointer}
+.ps-repsel{margin-top:9px;display:none}.ps-repsel.on{display:block}
+.dr{border:1.5px solid var(--b);border-radius:8px;max-height:128px;overflow:auto}
+.dr label{display:flex;align-items:center;gap:9px;padding:9px 11px;font-size:13.5px;border-bottom:1px solid var(--b2);cursor:pointer;margin:0;font-weight:500;color:var(--t)}
+.dr label:last-child{border-bottom:none}.dr input{width:auto!important;margin:0}
+.ps-foot{display:flex;gap:10px;padding:14px 20px;border-top:1px solid var(--b2);background:#fdfcfa}
+.ps-foot button{flex:1;padding:12px;border-radius:8px;font-weight:700;font-size:14px;cursor:pointer;font-family:var(--ui)}
+.orgbtn.primary-org{background:var(--strip);border-color:var(--strip);color:#fff}
 .form-foot{display:flex;gap:10px;justify-content:flex-end;margin-top:24px}
 .ghost{background:var(--card);border:1px solid var(--b);color:var(--t);border-radius:7px;padding:10px 16px;font-weight:600;font-size:13.5px}
 .ghost:hover{border-color:var(--t3)}
@@ -660,6 +686,37 @@ tr.rowdone:hover td{opacity:.78}
     </button>
     <div id="ovBody"></div>
   </section>
+
+  <!-- ADD A PERSON -->
+  <div class="amodal" id="personSheet">
+    <div class="amodal-card" style="max-width:520px;padding:0">
+      <div class="ps-h"><h2>Add a person</h2><button class="amodal-x" onclick="closePerson()">✕</button></div>
+      <div class="ps-b">
+        <div class="ps-grp"><div class="ps-l">Who</div>
+          <div class="ps-row2">
+            <div class="ps-fld"><label>First name</label><input id="ps-first" oninput="psChk()" placeholder="e.g. Priya" autocomplete="off"></div>
+            <div class="ps-fld"><label>Last name</label><input id="ps-last" placeholder="e.g. Shah" autocomplete="off"></div>
+          </div>
+          <div class="ps-fld" style="margin-bottom:0"><label>Email (optional)</label><input id="ps-email" placeholder="name@company.com" autocomplete="off"><p class="ps-hint">With an email they can log in later — without one they're just a box on the chart.</p></div>
+        </div>
+        <div class="ps-grp"><div class="ps-l">Where they sit</div>
+          <div class="ps-fld"><label>Department / team</label><select id="ps-dept" onchange="psDept()"></select>
+            <div class="ps-reveal" id="ps-newDeptWrap"><label style="font-size:12px;font-weight:600;color:var(--t2);margin-bottom:5px;display:block">Name the new department</label><input id="ps-newDept" placeholder="e.g. Operations, Executive Committee" oninput="psUpd()" autocomplete="off"></div>
+          </div>
+          <div class="ps-fld"><label>Job title (optional)</label><input id="ps-title" placeholder="e.g. Financial Controller" autocomplete="off"></div>
+          <div class="ps-fld" style="margin-bottom:0"><label>Leads this department?</label>
+            <div class="yn" id="ps-yn"><button onclick="psLead(this,true)">Yes</button><button class="sel" onclick="psLead(this,false)">No</button></div>
+          </div>
+        </div>
+        <div class="ps-grp"><div class="ps-l">Reporting</div>
+          <div class="ps-rep"><span class="ps-ar">↳</span><div><div class="ps-who" id="ps-repWho">—</div><div class="ps-ro" id="ps-repRole"></div></div><button class="ps-chg" onclick="psToggleChg()">Change</button></div>
+          <div class="ps-repsel" id="ps-repSel"><label style="font-size:12px;font-weight:600;color:var(--t2);margin-bottom:5px;display:block" id="ps-repLbl"></label><select id="ps-repList" onchange="psPickMgr()"></select></div>
+          <div class="ps-fld" id="ps-drBlock" style="margin-top:12px;margin-bottom:0;display:none"><label>Who already works under them? (optional)</label><div class="dr" id="ps-drList"></div><p class="ps-hint">Tick people already in this department to move them under this leader.</p></div>
+        </div>
+      </div>
+      <div class="ps-foot"><button class="ghost" onclick="closePerson()">Cancel</button><button class="primary" id="ps-go" onclick="savePerson()" disabled>Add person</button></div>
+    </div>
+  </div>
 
   <!-- WHOLE-ORG VISIBILITY WARNING -->
   <div class="amodal" id="visWarn">
@@ -1224,6 +1281,84 @@ function sampleColor(url, cb){
 window.addTeam=function(){ if(!isAdmin)return; var n=(prompt('Name this team — whatever this company calls it (e.g. Executive Committee, Leadership Team, Sales, Operations):')||'').trim(); if(!n)return; var color=TEAM_COLORS[Object.keys(fns).length%TEAM_COLORS.length]; fnsRef().add({name:n,color:color,leaderMid:null,leaderName:''}).then(function(ref){ fns[ref.id]={id:ref.id,name:n,color:color,leaderMid:null,leaderName:''}; openAddSheet({type:'leader',fid:ref.id}); }).catch(function(e){ alert('Could not add team: '+e.message); }); };
 function landHome(){ if(ME.isSuper){ goCompaniesHome(); } else { setHome(false); goDash(); } }
 
+/* ---------- add-a-person sheet (person-first builder) ---------- */
+var psLeads=false, psMgrOverride=null;
+function deptLeaderMid(fid){ var f=fns[fid]; return (f&&f.leaderMid&&members[f.leaderMid])?f.leaderMid:null; }
+function roleLabelFor(mid){ var m=members[mid]; if(!mid||!m)return ''; if(company.ceoMemberId===mid)return 'CEO'; var f=fns[m.functionId]; if(f&&f.leaderMid===mid)return (f.name||'')+' leader'; if(m.title)return m.title; return f?f.name:''; }
+window.openPerson=function(opts){ if(!isAdmin)return; opts=opts||{};
+  ['ps-first','ps-last','ps-email','ps-title','ps-newDept'].forEach(function(id){var e=document.getElementById(id);if(e)e.value='';});
+  psLeads=false; psMgrOverride=null;
+  document.getElementById('ps-yn').querySelectorAll('button').forEach(function(b,i){b.classList.toggle('sel', i===1);});
+  renderPsDept(opts.fid||'');
+  document.getElementById('ps-repSel').classList.remove('on');
+  document.getElementById('ps-go').disabled=true;
+  psUpd();
+  document.getElementById('personSheet').classList.add('on');
+  setTimeout(function(){var e=document.getElementById('ps-first');if(e)e.focus();},40);
+};
+window.closePerson=function(){ document.getElementById('personSheet').classList.remove('on'); };
+window.psChk=function(){ document.getElementById('ps-go').disabled=!document.getElementById('ps-first').value.trim(); };
+function renderPsDept(sel){ var s=document.getElementById('ps-dept'); var opts='';
+  Object.keys(fns).forEach(function(fid){ var f=fns[fid]; var ld=deptLeaderMid(fid)?(' (led by '+esc(personName(f.leaderMid))+')'):' (no leader yet)'; opts+='<option value="'+fid+'"'+(fid===sel?' selected':'')+'>'+esc(f.name)+ld+'</option>'; });
+  opts+='<option value="__new"'+(!Object.keys(fns).length?' selected':'')+'>➕ New department…</option>';
+  s.innerHTML=opts;
+}
+window.psDept=function(){ psMgrOverride=null; psUpd(); };
+window.psLead=function(b,val){ b.parentElement.querySelectorAll('button').forEach(function(x){x.classList.remove('sel');}); b.classList.add('sel'); psLeads=val; psMgrOverride=null; psUpd(); };
+window.psToggleChg=function(){ document.getElementById('ps-repSel').classList.toggle('on'); };
+window.psPickMgr=function(){ var v=document.getElementById('ps-repList').value; psMgrOverride=(v===''?'TOP':v); psRenderRep(); };
+function psUpd(){ var dv=document.getElementById('ps-dept').value; var isNew=(dv==='__new');
+  document.getElementById('ps-newDeptWrap').classList.toggle('on', isNew);
+  psRenderRep();
+  var drB=document.getElementById('ps-drBlock');
+  if(psLeads && !isNew && fns[dv]){ var mem=Object.keys(members).filter(function(m){return members[m].functionId===dv;});
+    if(mem.length){ drB.style.display='block'; document.getElementById('ps-drList').innerHTML=mem.map(function(m){return '<label><input type="checkbox" value="'+m+'"> '+esc(personName(m))+' · '+esc(fns[dv].name)+'</label>';}).join(''); }
+    else drB.style.display='none';
+  } else drB.style.display='none';
+}
+function psRenderRep(){ var dv=document.getElementById('ps-dept').value; var isNew=(dv==='__new');
+  var ceoMid=(company.ceoMemberId&&members[company.ceoMemberId])?company.ceoMemberId:null;
+  var who, lbl, list;
+  if(psLeads){ who=ceoMid; lbl=ceoMid?'Reports to someone other than the CEO':'Reports to'; list=ceoMid?[ceoMid]:[]; }
+  else { var lead=isNew?null:deptLeaderMid(dv); if(lead){ who=lead; lbl='Reports to someone else in '+(fns[dv].name||''); list=Object.keys(members).filter(function(m){return members[m].functionId===dv;}); } else { who=ceoMid; lbl='Reports to'; list=ceoMid?[ceoMid]:[]; } }
+  var effMid = (psMgrOverride==null) ? who : (psMgrOverride==='TOP'?null:psMgrOverride);
+  var whoEl=document.getElementById('ps-repWho'), roEl=document.getElementById('ps-repRole');
+  if(effMid && members[effMid]){ whoEl.textContent=personName(effMid); roEl.textContent=roleLabelFor(effMid); }
+  else { whoEl.textContent='No manager'; roEl.textContent='sits at the top'; }
+  document.getElementById('ps-repLbl').textContent=lbl;
+  var sel=(psMgrOverride==null)?(who||''):(psMgrOverride==='TOP'?'':psMgrOverride);
+  document.getElementById('ps-repList').innerHTML=list.map(function(m){return '<option value="'+m+'"'+(m===sel?' selected':'')+'>'+esc(personName(m))+' — '+esc(roleLabelFor(m))+'</option>';}).join('')+'<option value=""'+(sel===''?' selected':'')+'>No manager (sits at the top)</option>';
+}
+function createDeptInline(nm){ if(!nm) return Promise.resolve(null); var color=TEAM_COLORS[Object.keys(fns).length%TEAM_COLORS.length]; return fnsRef().add({name:nm,color:color,leaderMid:null,leaderName:''}).then(function(ref){ fns[ref.id]={id:ref.id,name:nm,color:color,leaderMid:null,leaderName:''}; return ref.id; }); }
+window.savePerson=function(){ if(!isAdmin)return;
+  var first=document.getElementById('ps-first').value.trim(); if(!first){alert('Please add a first name.');return;}
+  var last=document.getElementById('ps-last').value.trim();
+  var email=document.getElementById('ps-email').value.trim();
+  var title=document.getElementById('ps-title').value.trim();
+  var dv=document.getElementById('ps-dept').value;
+  var newDeptNm=document.getElementById('ps-newDept').value.trim();
+  if(dv==='__new' && !newDeptNm){ alert('Please name the new department.'); return; }
+  var go=document.getElementById('ps-go'); go.disabled=true; go.textContent='Adding…';
+  var name=(first+' '+last).trim();
+  var ensure=(dv==='__new')?createDeptInline(newDeptNm):Promise.resolve(dv);
+  ensure.then(function(fid){ if(!fid) throw new Error('Please name the department.');
+    var ceoMid=(company.ceoMemberId&&members[company.ceoMemberId])?company.ceoMemberId:null;
+    var mgr;
+    if(psMgrOverride!=null){ mgr=(psMgrOverride==='TOP')?null:psMgrOverride; }
+    else if(psLeads){ mgr=ceoMid; }
+    else { mgr=deptLeaderMid(fid)||ceoMid||null; }
+    var mdoc={ first:first, last:last, name:name, initials:initials(name), email:email||null, functionId:fid, title:title||null, isLeader:!!psLeads, managerMid:mgr||null, uid:null };
+    return membersRef().add(mdoc).then(function(ref){ var newMid=ref.id; var tasks=[];
+      if(psLeads){ var oldL=fns[fid]&&fns[fid].leaderMid; if(oldL&&oldL!==newMid&&members[oldL]) tasks.push(membersRef().doc(oldL).update({isLeader:false}));
+        tasks.push(fnsRef().doc(fid).update({leaderMid:newMid,leaderName:name}));
+        Array.prototype.slice.call(document.querySelectorAll('#ps-drList input:checked')).forEach(function(x){ if(x.value!==newMid) tasks.push(membersRef().doc(x.value).update({managerMid:newMid})); });
+      }
+      return Promise.all(tasks);
+    });
+  }).then(function(){ closePerson(); go.disabled=false; go.textContent='Add person'; })
+   .catch(function(e){ alert(e.message||'Could not add person'); go.disabled=false; go.textContent='Add person'; });
+};
+
 /* ---------- global people search (all companies) ---------- */
 var peopleIndex=null, peopleIndexLoading=false;
 function buildPeopleIndex(){
@@ -1535,7 +1670,8 @@ function peopleChip(mid){ var n=teamCount(mid); return n>0?'<div class="pcount">
 function orgCard(mid,kind){
   var lead=(kind==='leader'), ceo=(kind==='ceo');
   var oc=openCountFor(mid); var chip=oc>0?'<div class="pc">'+oc+' open</div>':'';
-  var role=ceo?'CEO':(lead?('Leader · '+esc(fnNameOfLeader(mid)||'')):'Team member');
+  var _m=members[mid]||{}; var _dn=(_m.functionId&&fns[_m.functionId])?fns[_m.functionId].name:'';
+  var role=ceo?(_m.title?esc(_m.title):'CEO'):(lead?(_m.title?esc(_m.title):('Leader · '+esc(fnNameOfLeader(mid)||_dn||''))):(_m.title?(esc(_m.title)+(_dn?(' · '+esc(_dn)):'')):(_dn?esc(_dn):'Team member')));
   var dots=MANAGING?'<span class="ocdots" onclick="event.stopPropagation();toggleCardMenu(\''+mid+'\')">⋯</span>'+cardMenu(mid,kind):'';
   return '<div class="pcard'+(lead?' leader':'')+(ceo?' ceoc':'')+'" onclick="openProfile(\''+mid+'\')">'+dots+'<div class="av" style="background:'+(ceo?'#1a1a1a':personColor(mid))+'">'+esc(personInit(mid))+'</div><div class="pn">'+esc(personName(mid))+'</div><div class="pr">'+role+'</div><div class="chips">'+peopleChip(mid)+chip+'</div></div>';
 }
@@ -1565,28 +1701,32 @@ function leaderNode(fid,seen){
 function controlsBar(){
   if(!isAdmin) return '<div class="orgbar"><div class="orgcrumb">'+esc(company.name||'Organisation')+'</div></div>';
   var mg='<button class="orgbtn'+(MANAGING?' on':'')+'" onclick="toggleManageOrg()">✎ Manage Org</button>';
+  var addp='<button class="orgbtn primary-org" onclick="openPerson()">+ Add person</button>';
   var addt='<button class="orgbtn" onclick="addTeam()">+ Add team</button>';
+  var setceo=(!(company.ceoMemberId&&members[company.ceoMemberId]))?'<button class="orgbtn" onclick="appointCEOPick()">♛ Set a CEO</button>':'';
   var arch='<button class="orgbtn" onclick="openArchive()">🗄 Archive <span id="archCount">'+archiveCount+'</span></button>';
-  var banner=MANAGING?'<div class="mgbanner">✎ Manage Org on — tap the CEO or a leader slot to set them, hover a card\u2019s ⋯ to add a report or remove someone, or “+ Add team”. Click a person to view them.</div>':'';
-  return '<div class="orgbar"><div class="orgcrumb">'+esc(company.name||'Organisation')+'</div><div class="orgctrls">'+mg+addt+arch+'</div></div>'+banner;
+  var banner=MANAGING?'<div class="mgbanner">✎ Manage Org on — tap a leader slot to set them, hover a card\u2019s ⋯ to add a report or remove someone. Use “+ Add person” to build, or click anyone to view them.</div>':'';
+  return '<div class="orgbar"><div class="orgcrumb">'+esc(company.name||'Organisation')+'</div><div class="orgctrls">'+mg+addp+addt+setceo+arch+'</div></div>'+banner;
 }
 function renderTeam(){
   var wrap=document.getElementById('orgWrap'); if(!wrap)return;
   if(!activeCid){ wrap.innerHTML='<div class="pf-empty">No company selected.</div>'; return; }
   if(!Object.keys(fns).length){
     var ceo0=company.ceoMemberId;
-    var rootCard0=(ceo0&&members[ceo0])?orgCard(ceo0,'ceo'):emptyCeoSlot();
-    var addTile='<li><div class="pcard empty" style="cursor:pointer" onclick="addTeam()"><div class="av" style="background:var(--strip);opacity:.9;color:#fff">+</div><div class="pn">Add the first team</div><div class="pr">name it &amp; pick a leader</div></div></li>';
-    var tree0='<div class="tree"><ul><li>'+rootCard0+'<ul>'+addTile+'</ul></li></ul></div>';
-    wrap.innerHTML=controlsBar()+'<div class="dept orgchart">'+tree0+'</div>';
+    var addTile='<li><div class="pcard empty" style="cursor:pointer" onclick="openPerson()"><div class="av" style="background:var(--strip);opacity:.9;color:#fff">+</div><div class="pn">Add the first person</div><div class="pr">name them &amp; their team</div></div></li>';
+    var inner=(ceo0&&members[ceo0])
+      ? '<ul><li>'+orgCard(ceo0,'ceo')+'<ul>'+addTile+'</ul></li></ul>'
+      : '<ul>'+addTile+'</ul>';
+    wrap.innerHTML=controlsBar()+'<div class="dept orgchart"><div class="tree">'+inner+'</div></div>';
     var sc0=wrap.querySelector('.orgchart'); if(sc0){ sc0.scrollLeft=Math.max(0,(sc0.scrollWidth-sc0.clientWidth)/2); }
     return;
   }
   var seen={};
-  var senior='<ul>'+deptList().map(function(fid){return leaderNode(fid,seen);}).join('')+'</ul>';
+  var leaderLis=deptList().map(function(fid){return leaderNode(fid,seen);}).join('');
   var ceo=company.ceoMemberId;
-  var rootCard=(ceo&&members[ceo])?orgCard(ceo,'ceo'):emptyCeoSlot();
-  var tree='<div class="tree"><ul><li>'+rootCard+senior+'</li></ul></div>';
+  var tree=(ceo&&members[ceo])
+    ? '<div class="tree"><ul><li>'+orgCard(ceo,'ceo')+'<ul>'+leaderLis+'</ul></li></ul></div>'
+    : '<div class="tree"><ul>'+leaderLis+'</ul></div>';
   wrap.innerHTML=controlsBar()+'<div class="dept orgchart">'+tree+'</div>';
   var sc=wrap.querySelector('.orgchart'); if(sc){ sc.scrollLeft=Math.max(0,(sc.scrollWidth-sc.clientWidth)/2); }
 }
