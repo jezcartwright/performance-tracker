@@ -1151,7 +1151,11 @@ function renderOverview(){
     +(canEdit?'<div style="display:flex;gap:8px"><input class="adm-input" id="ovWebIn" style="margin:0" placeholder="companyname.com" value="'+esc(c.web||'')+'"><button class="tinybtn" onclick="ovPullLogo()">Pull logo</button></div>':'')
     +'<div style="display:flex;align-items:center;gap:12px;margin-top:13px"><div class="ov-clogo" style="width:46px;height:46px;font-size:15px;background:'+(c.logo?'#fff':th)+'">'+ovLogoHTML()+'</div><div class="psub" style="margin:0">'+(c.logo?('Logo set'+(c.web?(' · from '+esc(c.web)):'')):'Monogram (no logo set)')+'</div></div>'
     +'<p class="psub" style="margin-top:10px">Enter the client website and we fetch their logo automatically (brand logo, then favicon, then the code monogram). You can also upload one in Branding.</p></div>';
-  var chart='<div class="ov-panel ov-full"><h3>Org chart</h3><div class="dept orgchart" style="padding:16px 8px">'+ovMiniChart()+'</div><span style="display:inline-block;margin-top:6px;color:'+thi+';font-weight:700;cursor:pointer;font-size:13px" onclick="openFullChart(\''+c.id+'\')">Open full org chart →</span></div>';
+  var chartActions='<div style="margin-top:10px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">'
+    +'<button class="tinybtn" style="background:'+ths+';border-color:'+thi+';color:'+thi+';font-weight:700" onclick="ovAddPerson(\''+c.id+'\')">+ Add person</button>'
+    +'<button class="tinybtn" onclick="ovAddTeam(\''+c.id+'\')">+ Add team</button>'
+    +'<span style="color:'+thi+';font-weight:700;cursor:pointer;font-size:13px;margin-left:auto" onclick="openFullChart(\''+c.id+'\')">Open full org chart →</span></div>';
+  var chart='<div class="ov-panel ov-full"><h3>Org chart</h3><div class="dept orgchart" style="padding:16px 8px">'+ovMiniChart()+'</div>'+chartActions+'</div>';
   document.getElementById('ovBody').innerHTML='<div class="crumb2"><a onclick="goCompaniesHome()">Companies</a> › <span style="color:var(--t)">'+esc(c.name||c.id)+'</span></div>'+head+'<div class="ov-grid">'+stats+weblogo+chart+'</div>';
 }
 function ovMiniChart(){
@@ -1177,11 +1181,15 @@ window.ovOpenWeb=function(){ var w=ovCompany.web; if(w) window.open(/^https?:/.t
 window.backToAdmin=function(){ goCompaniesHome(); };
 window.openFullCompany=function(cid){ switchCompany(cid); };
 window.openFullChart=function(cid){ switchCompany(cid); window.goTeam(); };
-window.ovAddCEO=function(cid){ window.pendingAppoint={type:'ceo'}; switchCompany(cid); };
-window.ovAddLeader=function(cid,fid){ window.pendingAppoint={type:'leader',fid:fid}; switchCompany(cid); };
+window.ovAddCEO=function(cid){ if(activeCid===cid){ goTeam(); openAddSheet({type:'ceo'}); return; } window.pendingAppoint={type:'ceo'}; switchCompany(cid); };
+window.ovAddLeader=function(cid,fid){ if(activeCid===cid){ goTeam(); openAddSheet({type:'leader',fid:fid}); return; } window.pendingAppoint={type:'leader',fid:fid}; switchCompany(cid); };
+window.ovAddPerson=function(cid){ if(activeCid===cid){ goTeam(); openPerson(); return; } window.pendingAppoint={type:'person'}; switchCompany(cid); };
+window.ovAddTeam=function(cid){ if(activeCid===cid){ goTeam(); addTeam(); return; } window.pendingAppoint={type:'team'}; switchCompany(cid); };
 function tryPendingAppoint(){ var p=window.pendingAppoint; if(!p||!isAdmin)return;
   if(p.type==='ceo'){ window.pendingAppoint=null; goTeam(); openAddSheet({type:'ceo'}); }
   else if(p.type==='leader'){ if(!fns[p.fid])return; window.pendingAppoint=null; goTeam(); openAddSheet({type:'leader',fid:p.fid}); }
+  else if(p.type==='person'){ window.pendingAppoint=null; goTeam(); openPerson(); }
+  else if(p.type==='team'){ window.pendingAppoint=null; goTeam(); addTeam(); }
 }
 function domainFrom(raw){ return (raw||'').replace(/^https?:\/\//,'').replace(/\/.*/,'').trim(); }
 function fetchLogoUrl(domain,cb){ var cands=['https://logo.clearbit.com/'+domain,'https://www.google.com/s2/favicons?domain='+domain+'&sz=128']; var i=0; (function n(){ if(i>=cands.length){ cb(null); return; } var u=cands[i++]; var im=new Image(); im.onload=function(){ if(im.naturalWidth<8){ n(); return; } cb(u); }; im.onerror=function(){ n(); }; im.src=u; })(); }
