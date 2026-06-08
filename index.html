@@ -145,6 +145,14 @@ tbody td{padding:14px 16px;vertical-align:middle}
 .conv{font-size:10.5px;font-weight:700;padding:3px 8px;border-radius:5px;letter-spacing:.04em}
 .conv-y{background:#12936a;color:#fff}
 .conv-n{background:#cf3a2e;color:#fff}
+.sw-tog{display:inline-flex;align-items:center;gap:7px;cursor:pointer;vertical-align:middle}
+.sw-tog.ro{cursor:default;opacity:.7}
+.sw-track{width:38px;height:22px;border-radius:11px;background:#d6d0c7;position:relative;flex:none;transition:background .15s}
+.sw-track.on{background:#12936a}
+.sw-knob{position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.25);transition:left .15s}
+.sw-track.on .sw-knob{left:18px}
+.sw-lab{font-size:11px;font-weight:700;color:var(--t3)}
+.sw-lab.on{color:#12936a}
 
 /* Detail */
 .back{display:inline-flex;align-items:center;gap:6px;color:var(--t2);font-weight:600;font-size:13px;margin-bottom:14px}
@@ -575,7 +583,7 @@ tr.rowdone:hover td{opacity:.78}
           <th>Issue</th>
           <th>Function</th>
           <th class="hs">Raised by</th>
-          <th class="hs">Spoke first</th>
+          <th class="hs">Spoken</th>
           <th>Status</th>
           <th class="hs">Raised</th>
         </tr></thead>
@@ -636,7 +644,7 @@ tr.rowdone:hover td{opacity:.78}
           <div><div class="k">Function</div><div class="v"><span class="fpill" id="dF" style="background:#7c3aed">Technology</span></div></div>
           <div><div class="k">Leader tagged</div><div class="v"><span class="mini" id="dLav" style="background:#7c3aed">ML</span><span id="dL">Marcus Lin</span></div></div>
           <div><div class="k">Raised by</div><div class="v"><span class="mini" id="dRav" style="background:#db2777">AD</span><span id="dR">Amara Diallo</span></div></div>
-          <div><div class="k">Spoke to function first?</div><div class="v"><span class="conv conv-y" id="dConv">YES</span></div></div>
+          <div><div class="k">Spoken</div><div class="v" id="dConv"></div></div>
         </div>
         <div class="sec"><h3>Description</h3><p id="dDesc">—</p></div>
         <div class="sec">
@@ -1514,6 +1522,11 @@ function visibleIssues(){
   else if(!showCompleted) list=list.filter(function(i){return i.status!=='done';});
   return list;
 }
+function canToggleSpoken(i){ return isAdmin || i.raiserUid===ME.uid || i.leaderUid===ME.uid || i.raiserMid===ME.mid || i.leaderMid===ME.mid || (i.participants||[]).indexOf(ME.mid)>=0; }
+function spokenToggle(i){ var on=!!i.conversationHad; var can=canToggleSpoken(i);
+  var oc=can?(' onclick="event.stopPropagation();toggleSpoken(\''+i.id+'\')"'):'';
+  return '<span class="sw-tog'+(can?'':' ro')+'"'+oc+' title="'+(on?'Spoken':'Not spoken yet')+'"><span class="sw-track'+(on?' on':'')+'"><span class="sw-knob"></span></span><span class="sw-lab'+(on?' on':'')+'">'+(on?'Yes':'No')+'</span></span>'; }
+window.toggleSpoken=function(id){ var i=null; for(var k=0;k<issues.length;k++){ if(issues[k].id===id){ i=issues[k]; break; } } if(!i&&curIssue&&curIssue.id===id)i=curIssue; if(!i)return; if(!canToggleSpoken(i))return; issuesRef().doc(id).update({conversationHad:!i.conversationHad, updatedAt:FV.serverTimestamp()}).catch(function(e){ alert('Could not update: '+e.message); }); };
 function rowHTML(i){
   var fc=i.color||(fns[i.functionId]&&fns[i.functionId].color)||'var(--strip)';
   var cls=(i.status==='done'&&boardMode!=='done')?' class="rowdone"':'';
@@ -1521,7 +1534,7 @@ function rowHTML(i){
    +'<td><div class="t-title">'+esc(i.title)+'</div><div class="t-sub">'+esc((i.description||'').slice(0,72))+'</div></td>'
    +'<td><span class="fpill" style="background:'+fc+'">'+esc(i.functionName||'')+'</span></td>'
    +'<td class="hs"><div class="who"><span class="mini" style="background:'+personColor(i.raiserMid)+'">'+esc(i.raiserInitials||personInit(i.raiserMid))+'</span>'+esc(i.raiserName||personName(i.raiserMid))+'</div></td>'
-   +'<td class="hs"><span class="conv '+(i.conversationHad?'conv-y':'conv-n')+'">'+(i.conversationHad?'YES':'NO')+'</span></td>'
+   +'<td class="hs">'+spokenToggle(i)+'</td>'
    +'<td><span class="st '+sm[i.status][0]+'"><span class="d"></span>'+sm[i.status][1]+'</span></td>'
    +'<td class="hs" style="color:var(--t3);font-size:12.5px">'+timeAgo(i.createdAt)+'</td></tr>';
 }
@@ -1587,7 +1600,7 @@ function fillDetail(i){
   document.getElementById('dL').textContent=i.leaderMid?(i.leaderName||personName(i.leaderMid)):'No leader set';
   var ra=document.getElementById('dRav'); ra.textContent=i.raiserInitials||personInit(i.raiserMid); ra.style.background=personColor(i.raiserMid);
   document.getElementById('dR').textContent=i.raiserName||personName(i.raiserMid);
-  var cv=document.getElementById('dConv'); cv.className='conv '+(i.conversationHad?'conv-y':'conv-n'); cv.textContent=i.conversationHad?'YES':'NO';
+  var cv=document.getElementById('dConv'); if(cv) cv.innerHTML=spokenToggle(i);
   document.getElementById('dDesc').textContent=i.description||'—';
   renderStepper(i.status);
   renderParts(i);
