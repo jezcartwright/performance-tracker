@@ -224,6 +224,13 @@ tbody td{padding:14px 16px;vertical-align:middle}
 .rchip{display:inline-flex;align-items:center;gap:6px;background:var(--strip-soft);border:1px solid var(--strip-mid);border-radius:999px;padding:3px 5px 3px 4px;font-size:12.5px;font-weight:600;color:#333}
 .rchip button{border:none;background:none;cursor:pointer;font-size:15px;line-height:1;color:#999;padding:0 3px}
 .rchip button:hover{color:#d33}
+.ta{position:relative}
+.ta-list{position:absolute;left:0;right:0;top:calc(100% + 4px);z-index:40;background:#fff;border:1.5px solid var(--b);border-radius:10px;box-shadow:0 10px 28px rgba(0,0,0,.14);max-height:248px;overflow:auto;padding:4px}
+.ta-opt{display:flex;align-items:center;gap:9px;padding:8px 9px;border-radius:7px;cursor:pointer;font-size:14px}
+.ta-opt:hover{background:var(--strip-soft)}
+.ta-nm{font-weight:600;color:#222}
+.ta-sub{color:#999;font-size:12px;margin-left:auto}
+.ta-empty{padding:10px 11px;color:#999;font-size:13px}
 .yn{display:flex;gap:9px}
 .yn button{flex:1;padding:11px;border-radius:8px;border:1.5px solid var(--b);font-weight:700;color:var(--t2);font-size:13.5px}
 .yn button.sel{color:#fff}
@@ -648,15 +655,21 @@ tr.rowdone:hover td{opacity:.78}
           <button type="button" onclick="riSetMode('person')">A person</button>
         </div>
         <select id="fs" onchange="showTag()"><option value="">Select…</option></select>
-        <select id="ps" onchange="showTag()" style="display:none"><option value="">Select a person…</option></select>
+        <div class="ta" id="ps-wrap" style="display:none">
+          <input id="ps-input" class="ta-input" type="text" placeholder="Search for a person…" autocomplete="off" oninput="psSearch(this)" onfocus="psSearch(this)" onblur="taBlur('ps-list')">
+          <div id="ps-list" class="ta-list" style="display:none"></div>
+        </div>
         <div class="tagp" id="tp">
           <svg viewBox="0 0 24 24" width="15" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-          Will tag <strong id="tn"></strong>
+          Tagged <strong id="tn"></strong>
         </div>
       </div>
       <div class="fld" id="ri-others-fld">
         <label>Tag others <span style="font-weight:400;text-transform:none;letter-spacing:0;color:#999">(optional)</span></label>
-        <select id="ri-add" onchange="riAddOther(this)"><option value="">Add someone…</option></select>
+        <div class="ta">
+          <input id="ri-add-input" class="ta-input" type="text" placeholder="Search to add someone…" autocomplete="off" oninput="addSearch(this)" onfocus="addSearch(this)" onblur="taBlur('ri-add-list')">
+          <div id="ri-add-list" class="ta-list" style="display:none"></div>
+        </div>
         <div class="chips" id="ri-chips"></div>
       </div>
       <div class="fld">
@@ -1714,12 +1727,25 @@ function render(){
 document.querySelectorAll('.schip').forEach(function(c){ c.addEventListener('click',function(){ var k=c.dataset.k; if(k===sortKey)asc=!asc; else {sortKey=k;asc=false;} document.querySelectorAll('.schip').forEach(function(x){x.classList.toggle('on',x.dataset.k===sortKey);}); var car=c.querySelector('.car'); if(car)car.textContent=asc?'↑':'↓'; render(); }); });
 
 /* ---------- RAISE ---------- */
-var raiseConv=null, riMode='fn', riOthers=[], riEditId=null;
-function fillPeopleSelect(id, placeholder){ var s=document.getElementById(id); if(!s)return; var ids=Object.keys(members).sort(function(a,b){return personName(a).localeCompare(personName(b));}); var opts='<option value="">'+placeholder+'</option>'; ids.forEach(function(m){ opts+='<option value="'+m+'">'+esc(personName(m))+'</option>'; }); s.innerHTML=opts; s.value=''; }
+var raiseConv=null, riMode='fn', riOthers=[], riEditId=null, psMid=null;
+function peopleMatches(q, exclude){ q=(q||'').trim().toLowerCase(); var ids=Object.keys(members).filter(function(m){ if(exclude&&exclude.indexOf(m)>=0)return false; if(!q)return true; var nm=personName(m).toLowerCase(); var em=((members[m]||{}).email||'').toLowerCase(); return nm.indexOf(q)>=0||em.indexOf(q)>=0; }); ids.sort(function(a,b){return personName(a).localeCompare(personName(b));}); return ids.slice(0,8); }
+function renderTaList(listId, q, exclude, pickFn){
+  var el=document.getElementById(listId); if(!el)return;
+  var ms=peopleMatches(q, exclude);
+  if(!ms.length){ el.innerHTML='<div class="ta-empty">No matches</div>'; el.style.display='block'; return; }
+  el.innerHTML=ms.map(function(m){ var sub=(members[m]||{}).title||(isLeaderOfMid(m)?'Leader':((members[m]&&members[m].functionId&&fns[members[m].functionId])?fns[members[m].functionId].name:'')); return '<div class="ta-opt" onmousedown="event.preventDefault();'+pickFn+'(\''+m+'\')"><span class="mini" style="background:'+personColor(m)+';width:24px;height:24px;font-size:9px">'+esc(personInit(m))+'</span><span class="ta-nm">'+esc(personName(m))+'</span>'+(sub?'<span class="ta-sub">'+esc(sub)+'</span>':'')+'</div>'; }).join('');
+  el.style.display='block';
+}
+function hideTa(listId){ var el=document.getElementById(listId); if(el){ el.innerHTML=''; el.style.display='none'; } }
+window.taBlur=function(listId){ setTimeout(function(){ hideTa(listId); },150); };
+window.psSearch=function(inp){ psMid=null; showTag(); renderTaList('ps-list', inp.value, [], 'psPick'); };
+window.psPick=function(m){ psMid=m; var inp=document.getElementById('ps-input'); if(inp)inp.value=personName(m); hideTa('ps-list'); showTag(); };
+window.addSearch=function(inp){ renderTaList('ri-add-list', inp.value, riOthers.concat([ME.mid]), 'addPick'); };
+window.addPick=function(m){ if(m!==ME.mid && riOthers.indexOf(m)<0){ riOthers.push(m); renderChips(); } var inp=document.getElementById('ri-add-input'); if(inp)inp.value=''; hideTa('ri-add-list'); };
 function renderChips(){ var c=document.getElementById('ri-chips'); if(!c)return; c.innerHTML=riOthers.map(function(m){ return '<span class="rchip"><span class="mini" style="background:'+personColor(m)+';width:22px;height:22px;font-size:9px">'+esc(personInit(m))+'</span>'+esc(personName(m))+'<button type="button" onclick="riRemoveOther(\''+m+'\')">×</button></span>'; }).join(''); }
 function renderFnSelect(){
   var s=document.getElementById('fs'); if(s){ var opts='<option value="">Select…</option>'; Object.keys(fns).forEach(function(fid){ opts+='<option value="'+fid+'">'+esc(fns[fid].name)+'</option>'; }); s.innerHTML=opts; s.value=''; }
-  fillPeopleSelect('ps','Select a person…'); fillPeopleSelect('ri-add','Add someone…');
+  psMid=null; var pin=document.getElementById('ps-input'); if(pin)pin.value=''; var ain=document.getElementById('ri-add-input'); if(ain)ain.value=''; hideTa('ps-list'); hideTa('ri-add-list');
   var t=document.getElementById('ri-title'); if(t)t.value=''; var d=document.getElementById('ri-desc'); if(d)d.value='';
   var p=document.getElementById('tp'); if(p)p.classList.remove('show');
   document.querySelectorAll('#raise .yn button').forEach(function(b){b.classList.remove('sel');});
@@ -1731,11 +1757,10 @@ function renderFnSelect(){
 window.riSetMode=function(mode){
   riMode=mode;
   var btns=document.querySelectorAll('#ri-mode button'); if(btns[0])btns[0].classList.toggle('sel',mode==='fn'); if(btns[1])btns[1].classList.toggle('sel',mode==='person');
-  var fs=document.getElementById('fs'), ps=document.getElementById('ps'); if(fs)fs.style.display=(mode==='fn')?'':'none'; if(ps)ps.style.display=(mode==='person')?'':'none';
+  var fs=document.getElementById('fs'), pw=document.getElementById('ps-wrap'); if(fs)fs.style.display=(mode==='fn')?'':'none'; if(pw)pw.style.display=(mode==='person')?'':'none';
   var lbl=document.getElementById('ri-spoken-lbl'); if(lbl)lbl.textContent=(mode==='person')?'Spoken to them already?':'Spoken to that function already?';
   showTag();
 };
-window.riAddOther=function(sel){ var m=sel.value; sel.value=''; if(!m)return; if(m!==ME.mid && riOthers.indexOf(m)<0){ riOthers.push(m); renderChips(); } };
 window.riRemoveOther=function(m){ riOthers=riOthers.filter(function(x){return x!==m;}); renderChips(); };
 var visPrev='leader', visEl=null;
 window.visChange=function(sel){
@@ -1748,7 +1773,7 @@ window.visWarnCancel=function(){ if(visEl)visEl.value=visPrev; document.getEleme
 window.visWarnConfirm=function(){ visPrev='team'; document.getElementById('visWarn').classList.remove('on'); };
 window.showTag=function(){
   var p=document.getElementById('tp'); if(!p)return;
-  if(riMode==='person'){ var pm=document.getElementById('ps').value; if(pm){ document.getElementById('tn').textContent=personName(pm); p.classList.add('show'); } else p.classList.remove('show'); return; }
+  if(riMode==='person'){ if(psMid){ document.getElementById('tn').textContent=personName(psMid); p.classList.add('show'); } else p.classList.remove('show'); return; }
   var fid=document.getElementById('fs').value; var f=fns[fid]; if(f){ document.getElementById('tn').textContent=f.leaderMid?(f.leaderName||personName(f.leaderMid)):'no leader set yet'; p.classList.add('show'); } else p.classList.remove('show');
 };
 window.pickYN=function(b){ b.parentElement.querySelectorAll('button').forEach(function(x){x.classList.remove('sel');}); b.classList.add('sel'); raiseConv=(b.textContent.trim().toLowerCase()==='yes'); };
@@ -1761,8 +1786,8 @@ window.raiseIssue=function(){
   var vis=((document.getElementById('ri-vis')||{}).value)||'leader';
   var fid=null, fName='', color=null, leaderMid=null, leaderName='', leaderUid=null;
   if(riMode==='person'){
-    var pm=document.getElementById('ps').value;
-    if(!pm){ alert('Please choose a person.'); return; }
+    var pm=psMid;
+    if(!pm){ alert('Please search for and choose a person.'); return; }
     var pmem=members[pm]||{};
     leaderMid=pm; leaderName=personName(pm); leaderUid=pmem.uid||null;
     fid=pmem.functionId||null; var pf=fid?fns[fid]:null; fName=pf?pf.name:''; color=pf?pf.color:null;
@@ -1819,7 +1844,7 @@ window.editIssue=function(){
   document.getElementById('ri-desc').value=i.description||'';
   var fnLeader=(i.functionId&&fns[i.functionId])?fns[i.functionId].leaderMid:null;
   var mode=i.targetType||((i.leaderMid&&fnLeader&&i.leaderMid===fnLeader)?'fn':(i.leaderMid?'person':'fn'));
-  if(mode==='person'){ riSetMode('person'); var ps=document.getElementById('ps'); if(ps)ps.value=i.leaderMid||''; }
+  if(mode==='person'){ riSetMode('person'); psMid=i.leaderMid||null; var pin=document.getElementById('ps-input'); if(pin)pin.value=i.leaderMid?personName(i.leaderMid):''; }
   else { riSetMode('fn'); var fs=document.getElementById('fs'); if(fs)fs.value=i.functionId||''; }
   showTag();
   var vs=document.getElementById('ri-vis'); if(vs)vs.value=i.visibility||'leader'; visPrev=i.visibility||'leader';
