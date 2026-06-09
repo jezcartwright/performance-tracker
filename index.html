@@ -684,7 +684,7 @@ tr.rowdone:hover td{opacity:.78}
         <p class="note">The leader you tag and anyone added always sees it — this sets who <em>else</em> can.</p>
       </div>
       <div class="fld" style="margin-bottom:0">
-        <label id="ri-spoken-lbl">Spoken to that function already?</label>
+        <label id="ri-spoken-lbl">Spoken to someone in that function already?</label>
         <div class="yn"><button onclick="pickYN(this)">Yes</button><button onclick="pickYN(this)">No</button></div>
         <p class="note">Recorded on the issue — either answer lets you continue.</p>
       </div>
@@ -1758,7 +1758,7 @@ window.riSetMode=function(mode){
   riMode=mode;
   var btns=document.querySelectorAll('#ri-mode button'); if(btns[0])btns[0].classList.toggle('sel',mode==='fn'); if(btns[1])btns[1].classList.toggle('sel',mode==='person');
   var fs=document.getElementById('fs'), pw=document.getElementById('ps-wrap'); if(fs)fs.style.display=(mode==='fn')?'':'none'; if(pw)pw.style.display=(mode==='person')?'':'none';
-  var lbl=document.getElementById('ri-spoken-lbl'); if(lbl)lbl.textContent=(mode==='person')?'Spoken to them already?':'Spoken to that function already?';
+  var lbl=document.getElementById('ri-spoken-lbl'); if(lbl)lbl.textContent=(mode==='person')?'Spoken to them already?':'Spoken to someone in that function already?';
   showTag();
 };
 window.riRemoveOther=function(m){ riOthers=riOthers.filter(function(x){return x!==m;}); renderChips(); };
