@@ -244,6 +244,12 @@ tbody td{padding:14px 16px;vertical-align:middle}
 .dact:hover{background:#faf7f3}
 .dact.danger{color:#cf3a2e;border-color:#f0c8c3}
 .dact.danger:hover{background:#fdf1f0}
+.orgchart.managing .pcard{cursor:grab;touch-action:none}
+.orgchart.managing .pcard.ceoc{cursor:default;touch-action:auto}
+.pcard.dragging{opacity:.4}
+.drag-ghost{position:fixed;z-index:9999;pointer-events:none;background:#1a1a1a;color:#fff;padding:6px 11px;border-radius:8px;font-size:12px;font-weight:700;box-shadow:0 8px 22px rgba(0,0,0,.32)}
+.pcard.drop-child{outline:3px solid var(--strip);outline-offset:2px;border-radius:12px}
+.drop-bar{position:fixed;z-index:9998;width:3px;background:var(--strip);border-radius:2px;pointer-events:none;box-shadow:0 0 0 1px rgba(255,255,255,.6)}
 /* add-person sheet */
 .ps-h{display:flex;align-items:center;justify-content:space-between;padding:18px 20px 10px}
 .ps-h h2{font-family:var(--display);font-size:25px;margin:0;font-weight:700}
@@ -2075,14 +2081,14 @@ function pcardHTML(mid,lead){
 }
 function fnsLeader(fid){ return fns[fid]?fns[fid].leaderMid:null; }
 function effMgr(mid,fid){ var m=members[mid]; var lead=fnsLeader(fid); if(!m)return lead; var mg=m.managerMid; if(mg && mg!==mid && members[mg] && members[mg].functionId===fid) return mg; return lead; }
-function childrenOf(parentMid,fid){ return Object.keys(members).filter(function(mid){ if(members[mid].functionId!==fid)return false; if(mid===fnsLeader(fid))return false; return effMgr(mid,fid)===parentMid; }).sort(function(a,b){return personName(a).localeCompare(personName(b));}); }
+function childrenOf(parentMid,fid){ return Object.keys(members).filter(function(mid){ if(members[mid].functionId!==fid)return false; if(mid===fnsLeader(fid))return false; return effMgr(mid,fid)===parentMid; }).sort(function(a,b){ var oa=ordOf(a),ob=ordOf(b); if(oa!==ob)return oa-ob; return personName(a).localeCompare(personName(b)); }); }
 function nodeLI(mid,fid,seen){ seen=seen||{}; if(seen[mid])return ''; seen[mid]=1;
   var kids=childrenOf(mid,fid);
   var html='<li>'+orgCard(mid,'member');
   if(kids.length){ html+='<ul>'+kids.map(function(k){return nodeLI(k,fid,seen);}).join('')+'</ul>'; }
   return html+'</li>';
 }
-function deptList(){ return Object.keys(fns).sort(function(a,b){return (fns[a].name||'').localeCompare(fns[b].name||'');}); }
+function deptList(){ return Object.keys(fns).sort(function(a,b){ var oa=fnOrd(a),ob=fnOrd(b); if(oa!==ob)return oa-ob; return (fns[a].name||'').localeCompare(fns[b].name||''); }); }
 function fnNameOfLeader(mid){ var ks=Object.keys(fns); for(var i=0;i<ks.length;i++){ if(fns[ks[i]].leaderMid===mid) return fns[ks[i]].name; } return ''; }
 function teamCount(mid){
   if(company.ceoMemberId===mid) return Object.keys(members).filter(function(x){return x!==mid;}).length;
@@ -2098,7 +2104,7 @@ function orgCard(mid,kind){
   var _m=members[mid]||{}; var _dn=(_m.functionId&&fns[_m.functionId])?fns[_m.functionId].name:'';
   var role=ceo?(_m.title?esc(_m.title):'CEO'):(lead?(_m.title?esc(_m.title):('Leader · '+esc(fnNameOfLeader(mid)||_dn||''))):(_m.title?(esc(_m.title)+(_dn?(' · '+esc(_dn)):'')):(_dn?esc(_dn):'Team member')));
   var dots=MANAGING?'<span class="ocdots" onclick="event.stopPropagation();toggleCardMenu(\''+mid+'\')">⋯</span>'+cardMenu(mid,kind):'';
-  return '<div class="pcard'+(lead?' leader':'')+(ceo?' ceoc':'')+'" onclick="openProfile(\''+mid+'\')">'+dots+'<div class="av" style="background:'+(ceo?'#1a1a1a':personColor(mid))+'">'+esc(personInit(mid))+'</div><div class="pn">'+esc(personName(mid))+'</div><div class="pr">'+role+'</div><div class="chips">'+peopleChip(mid)+chip+'</div></div>';
+  return '<div class="pcard'+(lead?' leader':'')+(ceo?' ceoc':'')+'" data-mid="'+mid+'" onclick="openProfile(\''+mid+'\')">'+dots+'<div class="av" style="background:'+(ceo?'#1a1a1a':personColor(mid))+'">'+esc(personInit(mid))+'</div><div class="pn">'+esc(personName(mid))+'</div><div class="pr">'+role+'</div><div class="chips">'+peopleChip(mid)+chip+'</div></div>';
 }
 function cardMenu(mid,kind){
   var m=members[mid]; var fid=m?m.functionId:null; var items='';
@@ -2131,7 +2137,7 @@ function controlsBar(){
   var addt='<button class="orgbtn" onclick="addTeam()">+ Add team</button>';
   var setceo=(!(company.ceoMemberId&&members[company.ceoMemberId]))?'<button class="orgbtn" onclick="appointCEOPick()">♛ Set a CEO</button>':'';
   var arch='<button class="orgbtn" onclick="openArchive()">🗄 Archive <span id="archCount">'+archiveCount+'</span></button>';
-  var banner=MANAGING?'<div class="mgbanner">✎ Manage Org on — tap a leader slot to set them, hover a card\u2019s ⋯ to add a report or remove someone. Use “+ Add person” to build, or click anyone to view them.</div>':'';
+  var banner=MANAGING?'<div class="mgbanner">✎ Manage Org on — <strong>drag a card onto another</strong> to change who they report to (their team moves too); <strong>drop on a card’s left/right edge</strong> to reorder. Tap a leader slot to set them, or use a card’s ⋯ menu. Tap anyone to view them.</div>':'';
   return '<div class="orgbar"><div class="orgcrumb">'+esc(company.name||'Organisation')+'</div><div class="orgctrls">'+mg+addp+addt+setceo+arch+'</div></div>'+banner;
 }
 function renderTeam(){
@@ -2143,7 +2149,7 @@ function renderTeam(){
     var inner=(ceo0&&members[ceo0])
       ? '<ul><li>'+orgCard(ceo0,'ceo')+'<ul>'+addTile+'</ul></li></ul>'
       : '<ul>'+addTile+'</ul>';
-    wrap.innerHTML=controlsBar()+'<div class="dept orgchart"><div class="tree">'+inner+'</div></div>';
+    wrap.innerHTML=controlsBar()+'<div class="dept orgchart'+(MANAGING?' managing':'')+'"><div class="tree">'+inner+'</div></div>';
     var sc0=wrap.querySelector('.orgchart'); if(sc0){ sc0.scrollLeft=Math.max(0,(sc0.scrollWidth-sc0.clientWidth)/2); }
     return;
   }
@@ -2153,13 +2159,92 @@ function renderTeam(){
   var tree=(ceo&&members[ceo])
     ? '<div class="tree"><ul><li>'+orgCard(ceo,'ceo')+'<ul>'+leaderLis+'</ul></li></ul></div>'
     : '<div class="tree"><ul>'+leaderLis+'</ul></div>';
-  wrap.innerHTML=controlsBar()+'<div class="dept orgchart">'+tree+'</div>';
+  wrap.innerHTML=controlsBar()+'<div class="dept orgchart'+(MANAGING?' managing':'')+'">'+tree+'</div>';
   var sc=wrap.querySelector('.orgchart'); if(sc){ sc.scrollLeft=Math.max(0,(sc.scrollWidth-sc.clientWidth)/2); }
 }
 window.toggleManageOrg=function(){ MANAGING=!MANAGING; if(openOcm){openOcm.classList.remove('on');openOcm=null;} renderTeam(); };
 var openOcm=null;
 window.toggleCardMenu=function(mid){ var el=document.getElementById('ocm_'+mid); if(!el)return; if(openOcm&&openOcm!==el)openOcm.classList.remove('on'); el.classList.toggle('on'); openOcm=el.classList.contains('on')?el:null; };
 document.addEventListener('click',function(){ if(openOcm){openOcm.classList.remove('on');openOcm=null;} });
+
+/* ---------- ORG DRAG: reassign + reorder siblings (admin, Manage Org mode) ---------- */
+function ordOf(mid){ var o=members[mid]&&members[mid].order; return typeof o==='number'?o:1e9; }
+function fnOrd(fid){ var o=fns[fid]&&fns[fid].order; return typeof o==='number'?o:1e9; }
+function isDeptLeader(mid){ var m=members[mid]; return !!(m&&m.functionId&&fnsLeader(m.functionId)===mid); }
+function orgDescendants(mid){ var m=members[mid]; if(!m)return []; var fid=m.functionId; if(isDeptLeader(mid)){ return Object.keys(members).filter(function(x){return members[x].functionId===fid&&x!==mid;}); } var out=[]; (function rec(id){ childrenOf(id,fid).forEach(function(k){ out.push(k); rec(k); }); })(mid); return out; }
+function orgSubtree(mid){ var s={}; s[mid]=1; orgDescendants(mid).forEach(function(x){s[x]=1;}); return s; }
+function orgParent(mid){ if(!members[mid]||mid===company.ceoMemberId)return null; if(isDeptLeader(mid))return company.ceoMemberId; return effMgr(mid,members[mid].functionId); }
+function siblingsUnder(parentMid){ if(parentMid===company.ceoMemberId){ return deptList().map(fnsLeader).filter(function(x){return x&&members[x];}); } if(!members[parentMid])return []; return childrenOf(parentMid,members[parentMid].functionId); }
+function commitMove(dragMid, sub, newFid, newMgr, orderedSibs){
+  var batch=db.batch();
+  batch.update(membersRef().doc(dragMid), {functionId:newFid||null, managerMid:newMgr||null, isLeader:false});
+  Object.keys(sub).forEach(function(x){ if(x!==dragMid) batch.update(membersRef().doc(x), {functionId:newFid||null}); });
+  (orderedSibs||[]).forEach(function(mid,i){ batch.update(membersRef().doc(mid), {order:i}); });
+  batch.commit().then(refreshAux).catch(function(e){ alert('Could not move: '+e.message); });
+}
+function reorderDepartments(dragFid, targetFid, zone){
+  var order=deptList().filter(function(f){return f!==dragFid;});
+  var idx=order.indexOf(targetFid); if(idx<0)idx=order.length; if(zone==='after')idx+=1;
+  order.splice(idx,0,dragFid);
+  var batch=db.batch(); order.forEach(function(fid,i){ batch.update(fnsRef().doc(fid),{order:i}); });
+  batch.commit().then(refreshAux).catch(function(e){ alert('Could not reorder: '+e.message); });
+}
+function applyDrop(dragMid, targetMid, zone){
+  if(!isAdmin||dragMid===targetMid) return;
+  var sub=orgSubtree(dragMid); if(sub[targetMid]){ alert('You can’t move someone under their own team.'); return; }
+  var ceo=company.ceoMemberId, dragLeader=isDeptLeader(dragMid), hasTeam=orgDescendants(dragMid).length>0;
+  if(zone==='child'){
+    if(targetMid===ceo){ alert('To make someone a department head, use the card ⋯ menu.'); return; }
+    if(dragLeader){ alert('A department can’t be nested under a person by dragging. Drop on a leader’s left/right edge to reorder departments, or use the ⋯ menu.'); return; }
+    var tFid=members[targetMid].functionId;
+    var newMgr=isDeptLeader(targetMid)?null:targetMid;
+    var sibs=siblingsUnder(targetMid).filter(function(x){return x!==dragMid;}); sibs.push(dragMid);
+    if(!confirm('Move '+personName(dragMid)+(hasTeam?' and their team':'')+' to report to '+personName(targetMid)+'?')) return;
+    commitMove(dragMid, sub, tFid, newMgr, sibs);
+    return;
+  }
+  if(targetMid===ceo) return;
+  if(isDeptLeader(targetMid)){
+    if(!dragLeader){ alert('Only department heads sit at the top level. Drop onto a card to make this person report to it.'); return; }
+    reorderDepartments(members[dragMid].functionId, members[targetMid].functionId, zone);
+    return;
+  }
+  if(dragLeader){ alert('A department can’t be nested under a person by dragging.'); return; }
+  var tFid2=members[targetMid].functionId, parent=orgParent(targetMid);
+  var newMgr2=(parent&&!isDeptLeader(parent)&&parent!==ceo)?parent:null;
+  var sibs2=siblingsUnder(parent).filter(function(x){return x!==dragMid;});
+  var idx=sibs2.indexOf(targetMid); if(idx<0)idx=sibs2.length; if(zone==='after')idx+=1;
+  sibs2.splice(idx,0,dragMid);
+  if(orgParent(dragMid)!==parent){ if(!confirm('Move '+personName(dragMid)+(hasTeam?' and their team':'')+' alongside '+personName(targetMid)+'?')) return; }
+  commitMove(dragMid, sub, tFid2, newMgr2, sibs2);
+}
+(function(){
+  var startX=0,startY=0,activeCard=null,drag=false,suppress=false,ghost=null,curTarget=null,curZone=null;
+  function cardEl(t){ while(t&&t.nodeType===1){ if(t.classList&&t.classList.contains('pcard'))return t; t=t.parentElement; } return null; }
+  function midOf(el){ return el?el.getAttribute('data-mid'):null; }
+  function clearInd(){ var c=document.querySelector('.pcard.drop-child'); if(c)c.classList.remove('drop-child'); var b=document.getElementById('dropbar'); if(b&&b.parentNode)b.parentNode.removeChild(b); }
+  document.addEventListener('pointerdown', function(e){
+    if(!MANAGING||!isAdmin) return; if(e.button&&e.button!==0) return;
+    var card=cardEl(e.target); if(!card) return;
+    if(e.target.closest&&e.target.closest('.ocdots,.ocmenu')) return;
+    var mid=midOf(card); if(!mid||mid===company.ceoMemberId) return;
+    startX=e.clientX; startY=e.clientY; activeCard=card; drag=false;
+  });
+  document.addEventListener('pointermove', function(e){
+    if(!activeCard) return;
+    if(!drag){ if(Math.abs(e.clientX-startX)+Math.abs(e.clientY-startY)<8) return; drag=true; activeCard.classList.add('dragging'); ghost=document.createElement('div'); ghost.className='drag-ghost'; ghost.textContent=personName(midOf(activeCard)); document.body.appendChild(ghost); }
+    e.preventDefault();
+    ghost.style.left=(e.clientX+12)+'px'; ghost.style.top=(e.clientY+14)+'px';
+    var under=cardEl(document.elementFromPoint(e.clientX,e.clientY));
+    clearInd(); curTarget=null; curZone=null;
+    if(under&&under!==activeCard){ var tmid=midOf(under), sub=orgSubtree(midOf(activeCard)); if(tmid&&!sub[tmid]){ var r=under.getBoundingClientRect(); var rel=(e.clientX-r.left)/r.width; var zone=rel<0.3?'before':(rel>0.7?'after':'child'); curTarget=tmid; curZone=zone; if(zone==='child'){ under.classList.add('drop-child'); } else { var bar=document.createElement('div'); bar.id='dropbar'; bar.className='drop-bar'; document.body.appendChild(bar); bar.style.left=((zone==='before'?r.left-4:r.right+1))+'px'; bar.style.top=r.top+'px'; bar.style.height=r.height+'px'; } } }
+  });
+  document.addEventListener('pointerup', function(){
+    if(activeCard&&drag){ suppress=true; activeCard.classList.remove('dragging'); if(ghost&&ghost.parentNode){ghost.parentNode.removeChild(ghost);} ghost=null; clearInd(); var dmid=midOf(activeCard); if(curTarget&&curZone) applyDrop(dmid,curTarget,curZone); }
+    activeCard=null; drag=false; curTarget=null; curZone=null;
+  });
+  document.addEventListener('click', function(e){ if(suppress){ suppress=false; e.stopPropagation(); e.preventDefault(); } }, true);
+})();
 
 /* ---------- appointments ---------- */
 window.appointLeader=function(mid){ if(!isAdmin)return; var m=members[mid]; if(!m||!m.functionId)return; var fid=m.functionId; var prev=fnsLeader(fid);
