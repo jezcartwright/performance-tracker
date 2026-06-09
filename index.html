@@ -1206,7 +1206,7 @@ function setHeader(){
   document.getElementById('meEmail').textContent=ME.email;
   renderClientLogo();
 }
-function clientMonogram(){ return String((activeCid?(company.code||initials(company.name||'')):'PI')||'•').toUpperCase().slice(0,3); }
+function clientMonogram(){ if(!activeCid)return 'PI'; var c=company||{}; var m=c.code||(c.name?initials(c.name):''); return String(m||'').toUpperCase().slice(0,3); }
 function renderClientLogo(){
   var el=document.getElementById('clientLogo'); if(!el)return;
   if(!activeCid){
@@ -1214,7 +1214,7 @@ function renderClientLogo(){
     el.innerHTML='<img src="'+PI_P+'" alt="Performance Intelligence" style="height:25px;width:auto;display:block">';
   } else if(company && company.logo){
     el.style.background='#fff';
-    el.innerHTML='<img src="'+company.logo+'" alt="'+esc(company.name||'')+'" style="width:100%;height:100%;object-fit:cover;display:block">';
+    el.innerHTML='<img src="'+company.logo+'" alt="'+esc(company.name||'')+'" style="width:100%;height:100%;object-fit:contain;padding:5px;box-sizing:border-box;display:block">';
   } else {
     el.style.background='#fff';
     var t=clientMonogram();
