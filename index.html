@@ -220,11 +220,23 @@ tbody td{padding:14px 16px;vertical-align:middle}
 .fld textarea{resize:vertical;min-height:96px;font-family:var(--serif)}
 .tagp{margin-top:9px;font-size:12.5px;display:none;align-items:center;gap:8px;background:var(--strip-soft);color:var(--strip-ink);padding:10px 13px;border-radius:8px;font-weight:600}
 .tagp.show{display:flex}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px}
+.rchip{display:inline-flex;align-items:center;gap:6px;background:var(--strip-soft);border:1px solid var(--strip-mid);border-radius:999px;padding:3px 5px 3px 4px;font-size:12.5px;font-weight:600;color:#333}
+.rchip button{border:none;background:none;cursor:pointer;font-size:15px;line-height:1;color:#999;padding:0 3px}
+.rchip button:hover{color:#d33}
 .yn{display:flex;gap:9px}
 .yn button{flex:1;padding:11px;border-radius:8px;border:1.5px solid var(--b);font-weight:700;color:var(--t2);font-size:13.5px}
 .yn button.sel{color:#fff}
 .yn button:first-child.sel{border-color:#12936a;background:#12936a}
 .yn button:last-child.sel{border-color:#cf3a2e;background:#cf3a2e}
+.seg{display:flex;gap:9px}
+.seg button{flex:1;padding:11px;border-radius:8px;border:1.5px solid var(--b);background:#fff;font-weight:700;color:var(--t2);font-size:13.5px;cursor:pointer}
+.seg button.sel{background:#1a1a1a;border-color:#1a1a1a;color:#fff}
+.dactions{display:flex;gap:8px;justify-content:flex-end;margin:0 0 12px}
+.dact{display:inline-flex;align-items:center;gap:5px;padding:7px 13px;border:1.5px solid var(--b);background:#fff;border-radius:8px;font-weight:600;font-size:13px;color:var(--t2);cursor:pointer}
+.dact:hover{background:#faf7f3}
+.dact.danger{color:#cf3a2e;border-color:#f0c8c3}
+.dact.danger:hover{background:#fdf1f0}
 /* add-person sheet */
 .ps-h{display:flex;align-items:center;justify-content:space-between;padding:18px 20px 10px}
 .ps-h h2{font-family:var(--display);font-size:25px;margin:0;font-weight:700}
@@ -625,36 +637,47 @@ tr.rowdone:hover td{opacity:.78}
       <svg viewBox="0 0 24 24" width="15" fill="none" stroke="currentColor" stroke-width="2"><path d="m15 18-6-6 6-6"/></svg> All issues
     </button>
     <div class="form-card">
-      <h1>Raise an issue</h1>
-      <p class="lead">The function's leader is tagged automatically and notified.</p>
+      <h1 id="ri-h1">Raise an issue</h1>
+      <p class="lead">Whoever you tag — a department's leader or a specific person — is notified automatically.</p>
       <div class="fld"><label>Title</label><input id="ri-title" placeholder="Short summary of the issue"></div>
       <div class="fld"><label>Description</label><textarea id="ri-desc" placeholder="What's happening, and what's the impact?"></textarea></div>
       <div class="fld">
-        <label>Function / department</label>
+        <label>Raise against</label>
+        <div class="seg" id="ri-mode" style="margin-bottom:10px">
+          <button type="button" class="sel" onclick="riSetMode('fn')">Function / department</button>
+          <button type="button" onclick="riSetMode('person')">A person</button>
+        </div>
         <select id="fs" onchange="showTag()"><option value="">Select…</option></select>
+        <select id="ps" onchange="showTag()" style="display:none"><option value="">Select a person…</option></select>
         <div class="tagp" id="tp">
           <svg viewBox="0 0 24 24" width="15" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
           Will tag <strong id="tn"></strong>
         </div>
       </div>
+      <div class="fld" id="ri-others-fld">
+        <label>Tag others <span style="font-weight:400;text-transform:none;letter-spacing:0;color:#999">(optional)</span></label>
+        <select id="ri-add" onchange="riAddOther(this)"><option value="">Add someone…</option></select>
+        <div class="chips" id="ri-chips"></div>
+      </div>
       <div class="fld">
         <label>Who can see this issue?</label>
         <select id="ri-vis" onchange="visChange(this)">
-          <option value="leader">Leaders only — leaders, the CEO &amp; you</option>
-          <option value="dept">Team only — the tagged department</option>
           <option value="participants">Just those involved — you &amp; anyone tagged in</option>
+          <option value="teamleader">Team leader only — just the tagged leader &amp; you</option>
+          <option value="leader">Leaders — all leaders, the CEO &amp; you</option>
+          <option value="dept">Team — the tagged department</option>
           <option value="team">Whole org — everyone in the company</option>
         </select>
         <p class="note">The leader you tag and anyone added always sees it — this sets who <em>else</em> can.</p>
       </div>
       <div class="fld" style="margin-bottom:0">
-        <label>Spoken to that function already?</label>
+        <label id="ri-spoken-lbl">Spoken to that function already?</label>
         <div class="yn"><button onclick="pickYN(this)">Yes</button><button onclick="pickYN(this)">No</button></div>
         <p class="note">Recorded on the issue — either answer lets you continue.</p>
       </div>
       <div class="form-foot">
-        <button class="ghost" onclick="goDash()">Cancel</button>
-        <button class="primary" onclick="raiseIssue()">Raise issue</button>
+        <button class="ghost" onclick="riCancel()">Cancel</button>
+        <button class="primary" id="ri-submit" onclick="raiseIssue()">Raise issue</button>
       </div>
     </div>
   </section>
@@ -664,6 +687,7 @@ tr.rowdone:hover td{opacity:.78}
     <button class="back" onclick="goDash()">
       <svg viewBox="0 0 24 24" width="15" fill="none" stroke="currentColor" stroke-width="2"><path d="m15 18-6-6 6-6"/></svg> All issues
     </button>
+    <div class="dactions" id="dActions"></div>
     <div class="dgrid">
       <div>
         <h1 class="dtitle" id="dT">Reporting dashboard data is 48h stale</h1>
@@ -1628,7 +1652,8 @@ window.gpsRender=function(){
 window.gpsOpen=function(cid,mid){ window.pendingProfileMid=mid; var inp=document.getElementById('gpsInput'); if(inp)inp.value=''; var box=document.getElementById('gpsResults'); if(box){ box.innerHTML=''; box.style.display='none'; } switchCompany(cid); };
 window.toggleShowDone=function(){ var c=document.getElementById('showDone'); showCompleted=!!(c&&c.checked); render(); };
 function updateSortbarUI(){ var w=document.getElementById('showDoneWrap'); if(w)w.style.display=(boardMode==='done')?'none':'flex'; }
-window.openRaise=function(){ clearTabs(); renderFnSelect(); show('raise'); };
+window.openRaise=function(){ riEditId=null; clearTabs(); renderFnSelect(); var h=document.getElementById('ri-h1'); if(h)h.textContent='Raise an issue'; var b=document.getElementById('ri-submit'); if(b)b.textContent='Raise issue'; show('raise'); };
+window.riCancel=function(){ if(riEditId){ var id=riEditId; riEditId=null; openIssue(id); } else goDash(); };
 
 /* ---------- DASHBOARD ---------- */
 function canSeeIssue(i){
@@ -1646,6 +1671,8 @@ function applyVisibility(list){
   if(isAdmin) return list;
   return list.filter(canSeeIssue);
 }
+function canEditIssue(i){ return !!i && (isAdmin || (i.raiserMid && i.raiserMid===ME.mid)); }
+function canDeleteIssue(i){ if(!i) return false; if(isAdmin) return true; if(i.status==='done') return false; return !!(i.raiserMid && i.raiserMid===ME.mid); }
 function visibleIssues(){
   var list=applyVisibility(issues.slice());
   if(boardMode==='mine') list=list.filter(function(i){return i.raiserMid===ME.mid;});
@@ -1687,36 +1714,80 @@ function render(){
 document.querySelectorAll('.schip').forEach(function(c){ c.addEventListener('click',function(){ var k=c.dataset.k; if(k===sortKey)asc=!asc; else {sortKey=k;asc=false;} document.querySelectorAll('.schip').forEach(function(x){x.classList.toggle('on',x.dataset.k===sortKey);}); var car=c.querySelector('.car'); if(car)car.textContent=asc?'↑':'↓'; render(); }); });
 
 /* ---------- RAISE ---------- */
-var raiseConv=null;
+var raiseConv=null, riMode='fn', riOthers=[], riEditId=null;
+function fillPeopleSelect(id, placeholder){ var s=document.getElementById(id); if(!s)return; var ids=Object.keys(members).sort(function(a,b){return personName(a).localeCompare(personName(b));}); var opts='<option value="">'+placeholder+'</option>'; ids.forEach(function(m){ opts+='<option value="'+m+'">'+esc(personName(m))+'</option>'; }); s.innerHTML=opts; s.value=''; }
+function renderChips(){ var c=document.getElementById('ri-chips'); if(!c)return; c.innerHTML=riOthers.map(function(m){ return '<span class="rchip"><span class="mini" style="background:'+personColor(m)+';width:22px;height:22px;font-size:9px">'+esc(personInit(m))+'</span>'+esc(personName(m))+'<button type="button" onclick="riRemoveOther(\''+m+'\')">×</button></span>'; }).join(''); }
 function renderFnSelect(){
   var s=document.getElementById('fs'); if(s){ var opts='<option value="">Select…</option>'; Object.keys(fns).forEach(function(fid){ opts+='<option value="'+fid+'">'+esc(fns[fid].name)+'</option>'; }); s.innerHTML=opts; s.value=''; }
+  fillPeopleSelect('ps','Select a person…'); fillPeopleSelect('ri-add','Add someone…');
   var t=document.getElementById('ri-title'); if(t)t.value=''; var d=document.getElementById('ri-desc'); if(d)d.value='';
   var p=document.getElementById('tp'); if(p)p.classList.remove('show');
   document.querySelectorAll('#raise .yn button').forEach(function(b){b.classList.remove('sel');});
-  raiseConv=null;
+  raiseConv=null; riOthers=[]; renderChips();
   var vs=document.getElementById('ri-vis'); if(vs){ vs.value='leader'; } visPrev='leader';
+  var of=document.getElementById('ri-others-fld'); if(of)of.style.display='';
+  riSetMode('fn');
 }
+window.riSetMode=function(mode){
+  riMode=mode;
+  var btns=document.querySelectorAll('#ri-mode button'); if(btns[0])btns[0].classList.toggle('sel',mode==='fn'); if(btns[1])btns[1].classList.toggle('sel',mode==='person');
+  var fs=document.getElementById('fs'), ps=document.getElementById('ps'); if(fs)fs.style.display=(mode==='fn')?'':'none'; if(ps)ps.style.display=(mode==='person')?'':'none';
+  var lbl=document.getElementById('ri-spoken-lbl'); if(lbl)lbl.textContent=(mode==='person')?'Spoken to them already?':'Spoken to that function already?';
+  showTag();
+};
+window.riAddOther=function(sel){ var m=sel.value; sel.value=''; if(!m)return; if(m!==ME.mid && riOthers.indexOf(m)<0){ riOthers.push(m); renderChips(); } };
+window.riRemoveOther=function(m){ riOthers=riOthers.filter(function(x){return x!==m;}); renderChips(); };
 var visPrev='leader', visEl=null;
-window.visChange=function(sel){ visEl=sel; if(sel.value==='team'){ document.getElementById('visWarnCo').textContent=(company&&company.name)||'this company'; document.getElementById('visWarn').classList.add('on'); } else { visPrev=sel.value; } };
+window.visChange=function(sel){
+  visEl=sel;
+  var of=document.getElementById('ri-others-fld'); if(of)of.style.display=(sel.value==='teamleader')?'none':'';
+  if(sel.value==='teamleader'){ riOthers=[]; renderChips(); }
+  if(sel.value==='team'){ document.getElementById('visWarnCo').textContent=(company&&company.name)||'this company'; document.getElementById('visWarn').classList.add('on'); } else { visPrev=sel.value; }
+};
 window.visWarnCancel=function(){ if(visEl)visEl.value=visPrev; document.getElementById('visWarn').classList.remove('on'); };
 window.visWarnConfirm=function(){ visPrev='team'; document.getElementById('visWarn').classList.remove('on'); };
-window.showTag=function(){ var fid=document.getElementById('fs').value; var p=document.getElementById('tp'); var f=fns[fid]; if(f){ document.getElementById('tn').textContent=f.leaderMid?(f.leaderName||personName(f.leaderMid)):'no leader set yet'; p.classList.add('show'); } else p.classList.remove('show'); };
+window.showTag=function(){
+  var p=document.getElementById('tp'); if(!p)return;
+  if(riMode==='person'){ var pm=document.getElementById('ps').value; if(pm){ document.getElementById('tn').textContent=personName(pm); p.classList.add('show'); } else p.classList.remove('show'); return; }
+  var fid=document.getElementById('fs').value; var f=fns[fid]; if(f){ document.getElementById('tn').textContent=f.leaderMid?(f.leaderName||personName(f.leaderMid)):'no leader set yet'; p.classList.add('show'); } else p.classList.remove('show');
+};
 window.pickYN=function(b){ b.parentElement.querySelectorAll('button').forEach(function(x){x.classList.remove('sel');}); b.classList.add('sel'); raiseConv=(b.textContent.trim().toLowerCase()==='yes'); };
 window.raiseIssue=function(){
   if(!activeCid){ alert('No company selected.'); return; }
   if(!ME.mid){ if(confirm('You’re not yet a member of this company. Join it so you can raise issues?')){ joinCompany().then(function(){ alert('Joined this company — tap “Raise issue” again.'); renderAdmin(); }); } return; }
   var title=document.getElementById('ri-title').value.trim();
   var desc=document.getElementById('ri-desc').value.trim();
-  var fid=document.getElementById('fs').value;
   if(!title){ alert('Please add a title.'); return; }
-  if(!fid){ alert('Please choose a function.'); return; }
-  var f=fns[fid]; var parts=[ME.mid]; if(f.leaderMid&&f.leaderMid!==ME.mid)parts.push(f.leaderMid);
   var vis=((document.getElementById('ri-vis')||{}).value)||'leader';
-  var leaderUid=(f.leaderMid&&members[f.leaderMid]&&members[f.leaderMid].uid)||null;
-  issuesRef().add({ title:title, description:desc, functionId:fid, functionName:f.name, color:f.color, leaderMid:f.leaderMid||null, leaderName:f.leaderName||'', leaderUid:leaderUid, raiserMid:ME.mid, raiserUid:ME.uid, raiserName:ME.name, raiserInitials:ME.initials, conversationHad:!!raiseConv, visibility:vis, status:'open', participants:parts, createdAt:FV.serverTimestamp(), updatedAt:FV.serverTimestamp() })
+  var fid=null, fName='', color=null, leaderMid=null, leaderName='', leaderUid=null;
+  if(riMode==='person'){
+    var pm=document.getElementById('ps').value;
+    if(!pm){ alert('Please choose a person.'); return; }
+    var pmem=members[pm]||{};
+    leaderMid=pm; leaderName=personName(pm); leaderUid=pmem.uid||null;
+    fid=pmem.functionId||null; var pf=fid?fns[fid]:null; fName=pf?pf.name:''; color=pf?pf.color:null;
+  } else {
+    fid=document.getElementById('fs').value;
+    if(!fid){ alert('Please choose a function or a person.'); return; }
+    var f=fns[fid]; fName=f.name; color=f.color; leaderMid=f.leaderMid||null; leaderName=f.leaderName||(leaderMid?personName(leaderMid):''); leaderUid=(leaderMid&&members[leaderMid]&&members[leaderMid].uid)||null;
+  }
+  var parts=[ME.mid]; if(leaderMid&&leaderMid!==ME.mid)parts.push(leaderMid);
+  if(vis!=='teamleader'){ riOthers.forEach(function(m){ if(parts.indexOf(m)<0)parts.push(m); }); }
+  if(riEditId){
+    var upd={ title:title, description:desc, functionId:fid, functionName:fName, color:color, leaderMid:leaderMid, leaderName:leaderName, leaderUid:leaderUid, conversationHad:!!raiseConv, visibility:vis, targetType:riMode, updatedAt:FV.serverTimestamp() };
+    if(leaderMid) upd.participants=FV.arrayUnion(leaderMid);
+    var eid=riEditId;
+    issuesRef().doc(eid).update(upd).then(function(){
+      issuesRef().doc(eid).collection('messages').add({type:'system',text:ME.first+' edited this issue.',authorMid:ME.mid,authorUid:ME.uid,authorName:ME.name,createdAt:FV.serverTimestamp()});
+      riEditId=null; openIssue(eid);
+    }).catch(function(e){ alert('Could not save changes: '+e.message); });
+    return;
+  }
+  issuesRef().add({ title:title, description:desc, functionId:fid, functionName:fName, color:color, leaderMid:leaderMid, leaderName:leaderName, leaderUid:leaderUid, raiserMid:ME.mid, raiserUid:ME.uid, raiserName:ME.name, raiserInitials:ME.initials, conversationHad:!!raiseConv, visibility:vis, targetType:riMode, status:'open', participants:parts, createdAt:FV.serverTimestamp(), updatedAt:FV.serverTimestamp() })
   .then(function(ref){
-    var who=f.leaderMid?('tagged '+(f.leaderName||personName(f.leaderMid))):'no leader is set for this function yet';
-    ref.collection('messages').add({type:'system',text:ME.first+' raised this and '+who+'.',authorMid:ME.mid,authorUid:ME.uid,authorName:ME.name,createdAt:FV.serverTimestamp()});
+    var who=leaderMid?('tagged '+(leaderName||personName(leaderMid))):(riMode==='person'?'tagged that person':'no leader is set for this function yet');
+    var extra=(vis!=='teamleader'&&riOthers.length)?(' and '+riOthers.length+' other'+(riOthers.length>1?'s':'')):'';
+    ref.collection('messages').add({type:'system',text:ME.first+' raised this and '+who+extra+'.',authorMid:ME.mid,authorUid:ME.uid,authorName:ME.name,createdAt:FV.serverTimestamp()});
     goDash();
   }).catch(function(e){ alert('Could not raise issue: '+e.message); });
 };
@@ -1737,7 +1808,35 @@ function fillDetail(i){
   renderParts(i);
   var canResolve=(i.raiserMid&&i.raiserMid===ME.mid)||isAdmin;
   document.getElementById('fab').style.display=(canResolve && i.status!=='done')?'flex':'none';
+  var act=document.getElementById('dActions');
+  if(act){ var ah=''; if(canEditIssue(i)) ah+='<button class="dact" onclick="editIssue()"><svg viewBox="0 0 24 24" width="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg> Edit</button>'; if(canDeleteIssue(i)) ah+='<button class="dact danger" onclick="deleteIssue()"><svg viewBox="0 0 24 24" width="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg> Delete</button>'; act.innerHTML=ah; }
 }
+window.editIssue=function(){
+  if(!curIssue||!curId)return; if(!canEditIssue(curIssue)){ alert('Only the person who raised this (or an admin) can edit it.'); return; }
+  var i=curIssue;
+  clearTabs(); renderFnSelect(); riEditId=curId;
+  document.getElementById('ri-title').value=i.title||'';
+  document.getElementById('ri-desc').value=i.description||'';
+  var fnLeader=(i.functionId&&fns[i.functionId])?fns[i.functionId].leaderMid:null;
+  var mode=i.targetType||((i.leaderMid&&fnLeader&&i.leaderMid===fnLeader)?'fn':(i.leaderMid?'person':'fn'));
+  if(mode==='person'){ riSetMode('person'); var ps=document.getElementById('ps'); if(ps)ps.value=i.leaderMid||''; }
+  else { riSetMode('fn'); var fs=document.getElementById('fs'); if(fs)fs.value=i.functionId||''; }
+  showTag();
+  var vs=document.getElementById('ri-vis'); if(vs)vs.value=i.visibility||'leader'; visPrev=i.visibility||'leader';
+  var of=document.getElementById('ri-others-fld'); if(of)of.style.display='none'; riOthers=[]; renderChips();
+  raiseConv=!!i.conversationHad;
+  var yn=document.querySelectorAll('#raise .yn button'); if(yn.length>=2){ yn[0].classList.toggle('sel',i.conversationHad===true); yn[1].classList.toggle('sel',i.conversationHad===false); }
+  var h=document.getElementById('ri-h1'); if(h)h.textContent='Edit issue';
+  var b=document.getElementById('ri-submit'); if(b)b.textContent='Save changes';
+  show('raise');
+};
+window.deleteIssue=function(){
+  if(!curIssue||!curId)return;
+  if(!canDeleteIssue(curIssue)){ alert(curIssue.status==='done'?'Completed issues can only be deleted by an admin.':'Only the person who raised this (or an admin) can delete it.'); return; }
+  if(!confirm('Delete this issue? This permanently removes it and its discussion, and can’t be undone.'))return;
+  var id=curId;
+  issuesRef().doc(id).delete().then(function(){ goDash(); }).catch(function(e){ alert('Could not delete: '+e.message); });
+};
 function renderStepper(st){
   var order=[['open','Open'],['prog','In Progress'],['done','Resolved']];
   var idx=-1; order.forEach(function(o,n){ if(o[0]===st)idx=n; });
