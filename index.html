@@ -2097,7 +2097,7 @@ function teamCount(mid){
   function rec(id){ var k=childrenOf(id,fid); var n=k.length; k.forEach(function(x){n+=rec(x);}); return n; }
   return rec(mid);
 }
-function peopleChip(mid){ if(company.ceoMemberId===mid){ var d=siblingsUnder(mid).length; return d>0?'<div class="pcount">'+d+(d===1?' direct report':' direct reports')+'</div>':''; } var n=teamCount(mid); return n>0?'<div class="pcount">'+n+(n===1?' person':' people')+'</div>':''; }
+function peopleChip(mid){ if(company.ceoMemberId===mid){ var d=siblingsUnder(mid).length; return d>0?'<div class="pcount">'+d+(d===1?' person':' people')+'</div>':''; } var n=teamCount(mid); return n>0?'<div class="pcount">'+n+(n===1?' person':' people')+'</div>':''; }
 function orgCard(mid,kind){
   var lead=(kind==='leader'), ceo=(kind==='ceo');
   var oc=openCountFor(mid); var chip=oc>0?'<div class="pc">'+oc+' open</div>':'';
