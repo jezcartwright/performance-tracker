@@ -570,6 +570,18 @@ tr.rowdone:hover td{opacity:.78}
     <div id="login-sent" style="display:none">
       <p class="login-sub">We sent a sign-in link to <strong id="sent-email"></strong>. Tap the link in your email on this device to continue.</p>
     </div>
+    <div id="login-invite" style="display:none">
+      <p class="login-sub" id="inv-sub">Welcome — choose a password to join.</p>
+      <input id="inv-email" type="email" readonly autocomplete="email" style="background:var(--bg);color:var(--t2)">
+      <div class="pw-wrap">
+        <input id="inv-pw" type="password" placeholder="Choose a password" autocomplete="new-password">
+        <button type="button" class="pw-show" onclick="invTogglePw()">Show</button>
+      </div>
+      <div class="pw-hint">At least 6 characters</div>
+      <label class="login-consent"><input type="checkbox" id="inv-consent" onchange="invChk()"><span>I agree to the <a href="terms.html" target="_blank" rel="noopener">Terms</a> &amp; <a href="privacy.html" target="_blank" rel="noopener">Privacy&nbsp;Policy</a>.</span></label>
+      <button class="login-btn" id="inv-go" onclick="invSubmit()" disabled>Create account &amp; join</button>
+      <button class="auth-forgot" style="margin:12px auto 0;display:block" onclick="invNotYou()">Not you? Sign in differently</button>
+    </div>
     <div class="login-msg" id="login-msg"></div>
   </div>
 </div>
@@ -1045,6 +1057,22 @@ if(auth.isSignInWithEmailLink(window.location.href)){
   var em=localStorage.getItem('emailForSignIn')||window.prompt('Please confirm your email to sign in:');
   if(em){ auth.signInWithEmailLink(em,window.location.href).then(function(){ localStorage.removeItem('emailForSignIn'); history.replaceState(null,'',ACTION_URL); }).catch(function(e){ var m=document.getElementById('login-msg'); if(m)m.textContent='Sign-in error: '+e.message; }); }
 }
+window.__invite=null;
+(function initInvite(){
+  try{
+    var p=new URLSearchParams(window.location.search);
+    if(p.get('invite')!=='1') return;
+    var em=(p.get('em')||'').trim(); if(!em) return;
+    var fn=p.get('fn')||'', ln=p.get('ln')||'', co=p.get('co')||'your team';
+    window.__invite={em:em,fn:fn,ln:ln,co:co};
+    var box=document.getElementById('login-box'); if(box)box.style.display='none';
+    var inv=document.getElementById('login-invite'); if(!inv)return;
+    inv.style.display='block';
+    var sub=document.getElementById('inv-sub'); if(sub)sub.textContent=(fn?('Welcome, '+fn+' — '):'Welcome — ')+'choose a password to join '+co+'.';
+    var emEl=document.getElementById('inv-email'); if(emEl)emEl.value=em;
+    try{ if(fn) localStorage.setItem('nameForSignIn',JSON.stringify({first:fn,last:ln})); }catch(e){}
+  }catch(e){}
+})();
 var authModeCur='signin';
 window.authMode=function(mode){ authModeCur=(mode==='create')?'create':'signin'; var create=(authModeCur==='create');
   document.getElementById('tabSignin').classList.toggle('active',!create);
@@ -1060,6 +1088,38 @@ window.authMode=function(mode){ authModeCur=(mode==='create')?'create':'signin';
 };
 window.authConsentChk=function(){ var go=document.getElementById('auth-go'); if(!go)return; go.disabled=(authModeCur==='create') && !document.getElementById('login-consent').checked; };
 window.togglePw=function(){ var pw=document.getElementById('login-pw'); var b=document.querySelector('.pw-show'); if(!pw)return; if(pw.type==='password'){ pw.type='text'; if(b)b.textContent='Hide'; } else { pw.type='password'; if(b)b.textContent='Show'; } };
+window.invTogglePw=function(){ var pw=document.getElementById('inv-pw'); var b=document.querySelector('#login-invite .pw-show'); if(!pw)return; if(pw.type==='password'){ pw.type='text'; if(b)b.textContent='Hide'; } else { pw.type='password'; if(b)b.textContent='Show'; } };
+window.invChk=function(){ var g=document.getElementById('inv-go'); if(g)g.disabled=!document.getElementById('inv-consent').checked; };
+window.invNotYou=function(){ var inv=document.getElementById('login-invite'); if(inv)inv.style.display='none'; var box=document.getElementById('login-box'); if(box)box.style.display='block'; window.__invite=null; try{history.replaceState(null,'',ACTION_URL);}catch(e){} authMode('signin'); };
+window.invSubmit=function(){
+  var m=document.getElementById('login-msg');
+  var inv=window.__invite||{};
+  var email=(inv.em||'').trim();
+  var pw=(document.getElementById('inv-pw').value||'');
+  if(!email){ m.textContent='This invite link is missing an email — ask for a fresh invite.'; return; }
+  if(!document.getElementById('inv-consent').checked){ m.textContent='Please agree to the Terms & Privacy Policy to continue.'; return; }
+  if(pw.length<6){ m.textContent='Password must be at least 6 characters.'; return; }
+  try{ localStorage.setItem('ptConsent', JSON.stringify({at:new Date().toISOString(), terms:POLICY_VERSION, privacy:POLICY_VERSION, method:'invite'})); }catch(e){}
+  try{ if(inv.fn) localStorage.setItem('nameForSignIn',JSON.stringify({first:inv.fn,last:inv.ln||''})); }catch(e){}
+  var go=document.getElementById('inv-go'); if(go)go.disabled=true;
+  m.textContent='Creating your account…';
+  auth.createUserWithEmailAndPassword(email,pw).then(function(){ try{history.replaceState(null,'',ACTION_URL);}catch(e){} m.textContent=''; }).catch(function(e){
+    var c=e.code||'';
+    if(c==='auth/email-already-in-use'){
+      m.textContent='You already have an account — signing you in…';
+      auth.signInWithEmailAndPassword(email,pw).then(function(){ try{history.replaceState(null,'',ACTION_URL);}catch(_){} m.textContent=''; }).catch(function(e2){
+        var c2=e2.code||'';
+        if(c2==='auth/wrong-password'||c2==='auth/invalid-credential'||c2==='auth/invalid-login-credentials'){ m.textContent='You already have an account with this email. Tap “Not you? Sign in differently” and use your existing password, or reset it.'; }
+        else { m.textContent='Error: '+(e2.message||c2); }
+        if(go)go.disabled=false;
+      });
+    }
+    else if(c==='auth/weak-password'){ m.textContent='Please pick a stronger password (6+ characters).'; if(go)go.disabled=false; }
+    else if(c==='auth/invalid-email'){ m.textContent='That email looks invalid — ask for a fresh invite.'; if(go)go.disabled=false; }
+    else if(c==='auth/operation-not-allowed'){ m.textContent='Email/password sign-in isn’t switched on yet — use Google for now.'; if(go)go.disabled=false; }
+    else { m.textContent='Error: '+(e.message||c); if(go)go.disabled=false; }
+  });
+};
 window.authSubmit=function(){
   var m=document.getElementById('login-msg');
   var email=(document.getElementById('login-email').value||'').trim();
@@ -1110,10 +1170,11 @@ window.forgotPw=function(){
 };
 window.inviteCopy=function(mid){ var m=members[mid]; if(!m)return;
   var email=m.email||''; if(!email){ alert('Add an email for '+(m.name||'this person')+' first, then you can invite them.'); return; }
-  var url=location.href.split('#')[0].split('?')[0]; var co=(company&&company.name)||'your team'; var first=(m.first||m.name||'').split(' ')[0];
+  var base=location.href.split('#')[0].split('?')[0]; var co=(company&&company.name)||'your team'; var first=(m.first||m.name||'').split(' ')[0];
   var sender=(ME&&ME.first)?ME.first:(ME&&ME.name)||'';
+  var link=base+'?invite=1&em='+encodeURIComponent(email)+'&fn='+encodeURIComponent(m.first||first||'')+(m.last?('&ln='+encodeURIComponent(m.last)):'')+'&co='+encodeURIComponent(co);
   var subject='You’ve been added to the '+co+' Progress Tracker';
-  var body='Hi '+first+',\n\nYou’ve just been added to the '+co+' Progress Tracker.\n\nTo get started please follow these steps:\n\n1. Go to '+url+'\n2. Enter your email ('+email+') and choose a password, then tap “Sign in or create account”.\n3. You’ll go straight into '+co+' Progress Tracker.\n\nSee you there.\n\nCheers,'+(sender?('\n'+sender):'');
+  var body='Hi '+first+',\n\nYou’ve been added to the '+co+' Progress Tracker.\n\nTo get started:\n\n1. Tap this link: '+link+'\n2. It opens a “Welcome to '+co+'” page with your email already filled in — just choose a password and tick to accept the Terms.\n3. Tap “Create account & join” and you’ll go straight into '+co+' Progress Tracker.\n\nIf the link doesn’t open, go to '+base+', tap “Create account”, and sign up with this email ('+email+').\n\nSee you there.\n\nCheers,'+(sender?('\n'+sender):'');
   try{ if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(body); }catch(e){}
   window.location.href='mailto:'+encodeURIComponent(email)+'?subject='+encodeURIComponent(subject)+'&body='+encodeURIComponent(body);
 };
