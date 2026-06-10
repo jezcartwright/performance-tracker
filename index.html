@@ -1463,21 +1463,25 @@ function closeCoMenu(){ var m=document.getElementById('coMenu'); if(m)m.classLis
 document.addEventListener('click',function(e){ var w=document.getElementById('coWrap'); if(w && !w.contains(e.target)) closeCoMenu(); });
 window.switchCompany=function(cid){ if(!cid)return; if(cid===activeCid&&!document.getElementById('app').classList.contains('home'))return; setHome(false); try{pushRecent(cid);}catch(e){} activeCid=cid; curId=null; curIssue=null; if(msgsUnsub){msgsUnsub();msgsUnsub=null;} boardMode='active'; clearTabs(); var t=document.getElementById('tabAll'); if(t)t.classList.add('active'); updateSortbarUI(); startApp(); show('dashboard'); };
 
+var appShown=false, revealPending=false, themeSeen=false, membersSeen=false, revealTimer=null;
+function revealApp(){ clearTimeout(revealTimer); revealPending=false; appShown=true; var ls=document.getElementById('login-screen'); if(ls)ls.style.display='none'; document.getElementById('app').style.display='block'; setHeader(); }
+function maybeReveal(){ if(revealPending && themeSeen && membersSeen) revealApp(); }
 function startApp(){
-  try{ var _ct=JSON.parse(localStorage.getItem('ptTheme')||'null'); if(_ct&&_ct.strip)applyTheme(_ct); }catch(e){}
-  document.getElementById('login-screen').style.display='none';
-  document.getElementById('app').style.display='block';
-  setHeader(); renderCoSwitch();
+  renderCoSwitch();
   document.getElementById('superFlag').style.display=ME.isSuper?'inline-block':'none';
   document.getElementById('coPanel').style.display='none';
   var appEl=document.getElementById('app'); if(appEl)appEl.classList.toggle('cansuper',!!ME.isSuper);
+  try{ var _t=(activeCid&&companies[activeCid]&&companies[activeCid].theme)?companies[activeCid].theme:JSON.parse(localStorage.getItem('ptTheme')||'null'); if(_t&&_t.strip)applyTheme(_t); }catch(e){}
   [subC,subF,subM,subI,subA].forEach(function(u){ if(u)u(); }); subC=subF=subM=subI=subA=null;
   if(!activeCid){
     isAdmin=ME.isSuper; company={}; fns={}; members={}; issues=[]; ME.mid=null;
     document.getElementById('tabAdmin').style.display=isAdmin?'':'none';
     applyTheme(DEFAULT_THEME); renderClientLogo(); render(); renderAdmin();
+    revealApp();
     return;
   }
+  if(appShown){ document.getElementById('app').style.display='block'; }
+  else { document.getElementById('login-screen').style.display='none'; document.getElementById('app').style.display='none'; revealPending=true; themeSeen=false; membersSeen=false; clearTimeout(revealTimer); revealTimer=setTimeout(revealApp,2000); }
   subC=cRef().onSnapshot(function(s){
     company=s.exists?s.data():{}; company.adminUids=company.adminUids||[];
     isAdmin=ME.isSuper || company.adminUids.indexOf(ME.uid)>=0;
@@ -1487,9 +1491,10 @@ function startApp(){
     var af=document.getElementById('adminFlag'); if(af)af.style.display=(isAdmin&&!ME.isSuper)?'inline-block':'none';
     renderAdmin();
     if(curProfile){ var _pe=document.getElementById('profile'); if(_pe&&_pe.classList.contains("active"))paintProfile(curProfile); }
+    themeSeen=true; maybeReveal();
   },function(e){console.error('company',e);});
   subF=fnsRef().onSnapshot(function(qs){ fns={}; qs.forEach(function(d){fns[d.id]=Object.assign({id:d.id},d.data());}); renderFnSelect(); renderAdmin(); render(); refreshAux(); if(curProfile){ var _pe=document.getElementById('profile'); if(_pe&&_pe.classList.contains("active"))paintProfile(curProfile); } tryPendingAppoint(); },function(e){console.error('fns',e);});
-  subM=membersRef().onSnapshot(function(qs){ members={}; qs.forEach(function(d){ var m=d.data(); m.mid=d.id; m.name=m.name||((m.first||'')+' '+(m.last||'')).trim(); m.initials=m.initials||initials(m.name); members[d.id]=m; }); resolveMyMid(); renderAdmin(); render(); refreshAux(); if(curIssue)fillDetail(curIssue); if(window.pendingProfileMid && members[window.pendingProfileMid]){ var _pm=window.pendingProfileMid; window.pendingProfileMid=null; openProfile(_pm); } tryPendingAppoint(); },function(e){console.error('members',e);});
+  subM=membersRef().onSnapshot(function(qs){ members={}; qs.forEach(function(d){ var m=d.data(); m.mid=d.id; m.name=m.name||((m.first||'')+' '+(m.last||'')).trim(); m.initials=m.initials||initials(m.name); members[d.id]=m; }); resolveMyMid(); membersSeen=true; maybeReveal(); renderAdmin(); render(); refreshAux(); if(curIssue)fillDetail(curIssue); if(window.pendingProfileMid && members[window.pendingProfileMid]){ var _pm=window.pendingProfileMid; window.pendingProfileMid=null; openProfile(_pm); } tryPendingAppoint(); },function(e){console.error('members',e);});
   subI=issuesRef().orderBy('createdAt','desc').onSnapshot(function(qs){
     issues=[]; qs.forEach(function(d){var i=d.data(); i.id=d.id; issues.push(i);});
     render(); updateBadge();
