@@ -1242,6 +1242,8 @@ function loadCompanies(){
     }).catch(function(e){ console.warn('email seat discovery (index may be needed):',e); });
   }).then(function(){
     return companiesCol.where('adminUids','array-contains',ME.uid).get().catch(function(){return {forEach:function(){}};});
+  }).then(function(asnap){
+    asnap.forEach(function(d){ cids[d.id]=1; });
     return Promise.all(Object.keys(cids).map(function(id){ return companiesCol.doc(id).get(); }));
   }).then(function(docs){
     docs.forEach(function(d){ if(d.exists) companies[d.id]=Object.assign({id:d.id},d.data()); });
@@ -1612,7 +1614,7 @@ function createDeptInline(nm){ if(!nm) return Promise.resolve(null); var color=T
 window.savePerson=function(){ if(!isAdmin)return;
   var first=document.getElementById('ps-first').value.trim(); if(!first){alert('Please add a first name.');return;}
   var last=document.getElementById('ps-last').value.trim();
-  var email=document.getElementById('ps-email').value.trim();
+  var email=document.getElementById('ps-email').value.trim().toLowerCase();
   var title=document.getElementById('ps-title').value.trim();
   var dv=document.getElementById('ps-dept').value;
   var newDeptNm=document.getElementById('ps-newDept').value.trim();
