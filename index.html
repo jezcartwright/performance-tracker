@@ -1781,7 +1781,7 @@ function grpRow(label,color,count){ return '<tr class="grp"><td colspan="6"><spa
 function render(){
   refreshAux();
   var el=document.getElementById('rows'); if(!el)return;
-  if(!activeCid){ el.innerHTML='<tr class="empty-row"><td colspan="6">'+(ME.isSuper?'No company yet — open Admin &amp; Setup to create one or seed the test data.':'You’re not a member of any company yet — ask an admin to add you.')+'</td></tr>'; return; }
+  if(!activeCid){ el.innerHTML='<tr class="empty-row"><td colspan="6">'+(ME.isSuper?'No company yet — open Admin &amp; Setup to create one or seed the test data.':'We couldn’t match your email to an invitation — check you signed in with the address you were invited on, or ask your admin to confirm it.')+'</td></tr>'; return; }
   var list=visibleIssues();
   if(!list.length){ var msg = boardMode==='done' ? 'No completed issues yet — resolved issues land here.' : (boardMode==='mine' ? 'You haven\'t raised any issues yet.' : 'No open issues — tap “Raise an issue” to add one.'); el.innerHTML='<tr class="empty-row"><td colspan="6">'+msg+'</td></tr>'; return; }
   var byNew=function(a,b){return ms(b.createdAt)-ms(a.createdAt);};
@@ -1845,7 +1845,7 @@ window.riSetMode=function(mode){
   var btns=document.querySelectorAll('#ri-mode button'); if(btns[0])btns[0].classList.toggle('sel',mode==='fn'); if(btns[1])btns[1].classList.toggle('sel',mode==='person');
   var fs=document.getElementById('fs'), pw=document.getElementById('ps-wrap'); if(fs)fs.style.display=(mode==='fn')?'':'none'; if(pw)pw.style.display=(mode==='person')?'':'none';
   var lbl=document.getElementById('ri-spoken-lbl'); if(lbl)lbl.textContent=(mode==='person')?'Spoken to them already?':'Spoken to someone in that function already?';
-  renderVisOptions(mode);
+  renderVisOptions(mode, mode==='person'?'participants':'leader');
   showTag();
 };
 window.riRemoveOther=function(m){ riOthers=riOthers.filter(function(x){return x!==m;}); renderChips(); };
