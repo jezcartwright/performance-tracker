@@ -378,7 +378,8 @@ tbody td{padding:14px 16px;vertical-align:middle}
 .co-switch{border:1px solid var(--b);border-radius:6px;padding:8px 11px;font-family:var(--ui);font-size:13px;font-weight:700;color:var(--t);background:var(--card);outline:none;cursor:pointer;max-width:180px}
 .co-switch:hover{border-color:var(--strip)}
 .adm-top{display:flex;align-items:center;gap:12px;margin-bottom:14px}
-.superflag{display:inline-block;background:#1a1a1a;color:#fff;font-size:10px;font-weight:800;letter-spacing:1.2px;padding:3px 8px;border-radius:6px;vertical-align:middle}
+.superflag{display:inline-block;background:#ff6600;color:#fff;font-size:10px;font-weight:800;letter-spacing:1.2px;padding:3px 8px;border-radius:6px;vertical-align:middle}
+.superbar{display:block;text-align:center;margin:0 0 12px}
 .adminflag{display:inline-block;background:#ececea;color:#5a5550;border:1px solid #ddd8d2;font-size:10px;font-weight:800;letter-spacing:1.2px;padding:2px 8px;border-radius:6px;vertical-align:middle}
 .adminpill{display:inline-block;background:#ececea;color:#5a5550;border:1px solid #ddd8d2;font-size:9.5px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;padding:1px 7px;border-radius:20px;margin-left:6px;vertical-align:middle}
 .co-row{display:flex;align-items:center;gap:10px;padding:9px 0;border-top:1px solid var(--b2)}
@@ -641,6 +642,8 @@ tr.rowdone:hover td{opacity:.78}
 </div></header>
 
 <div class="wrap">
+
+  <div class="superbar" id="superFlag" style="display:none"><span class="superflag">SUPER ADMIN</span></div>
 
   <nav class="navbar">
     <button class="tg active" data-s="dashboard" id="tabAll">All Issues <span class="ct" id="allCount">0</span></button>
@@ -987,7 +990,7 @@ tr.rowdone:hover td{opacity:.78}
 
   <!-- ADMIN -->
   <section class="screen" id="admin">
-    <div class="adm-top"><span class="flag" id="admCoLabel">● Setup</span><span id="superFlag" class="superflag" style="display:none">SUPER ADMIN</span><span id="adminFlag" class="adminflag" style="display:none">ADMIN</span></div>
+    <div class="adm-top"><span class="flag" id="admCoLabel">● Setup</span><span id="adminFlag" class="adminflag" style="display:none">ADMIN</span></div>
     <div class="agrid">
       <div class="panel" id="coPanel" style="display:none;grid-column:1/-1">
         <h3>Companies <span class="superflag">SUPER ADMIN</span></h3>
@@ -1534,7 +1537,7 @@ function revealApp(){ clearTimeout(revealTimer); revealPending=false; appShown=t
 function maybeReveal(){ if(revealPending && themeSeen && membersSeen) revealApp(); }
 function startApp(){
   renderCoSwitch();
-  document.getElementById('superFlag').style.display=ME.isSuper?'inline-block':'none';
+  document.getElementById('superFlag').style.display=ME.isSuper?'':'none';
   document.getElementById('coPanel').style.display='none';
   var appEl=document.getElementById('app'); if(appEl)appEl.classList.toggle('cansuper',!!ME.isSuper);
   try{ var _t=(activeCid&&companies[activeCid]&&companies[activeCid].theme)?companies[activeCid].theme:JSON.parse(localStorage.getItem('ptTheme')||'null'); if(_t&&_t.strip)applyTheme(_t); }catch(e){}
