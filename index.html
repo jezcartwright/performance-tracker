@@ -776,6 +776,7 @@ tr.rowdone:hover td{opacity:.78}
       </div>
       <div style="margin-left:auto;display:flex;gap:8px">
         <button class="tinybtn" id="pfInvite" style="display:none" onclick="inviteCopy(curProfile)">✉ Invite</button>
+        <button class="tinybtn" id="pfAdmin" style="display:none" onclick="toggleCompanyAdmin(curProfile)">Make admin</button>
         <button class="tinybtn" id="pfEdit" style="display:none" onclick="openPerson({edit:curProfile})">✎ Edit</button>
       </div>
     </div>
@@ -948,24 +949,9 @@ tr.rowdone:hover td{opacity:.78}
         </div>
       </div>
       <div class="panel" style="grid-column:1/-1">
-        <h3>Departments &amp; people</h3>
-        <p class="psub">Define departments and leaders, then add people and set who they report to. The <a href="#" onclick="goTeam();return false" style="color:var(--strip-ink);font-weight:700;text-decoration:none">Team org chart</a> shows it all visually.</p>
-        <div class="admcols">
-          <div>
-            <div class="admsub">Departments &amp; leaders</div>
-            <div id="admFns"></div>
-            <div id="addFnWrap" style="margin-top:13px;display:none">
-              <button class="tg" style="width:100%;justify-content:center" onclick="openTeam()">+ Add department</button>
-            </div>
-          </div>
-          <div>
-            <div class="admsub">People &amp; reporting</div>
-            <div id="admMembers"></div>
-            <div id="addMemberWrap" style="margin-top:13px;display:none">
-              <button class="tg" style="width:100%;justify-content:center" onclick="openPerson()">+ Add person</button>
-            </div>
-          </div>
-        </div>
+        <h3>People &amp; structure</h3>
+        <p class="psub">Departments, leaders, people and reporting lines are all managed visually in the org chart — add, move, promote or remove anyone there, and tap a person to invite them or make them an admin.</p>
+        <button class="tg" style="justify-content:center" onclick="goTeam()">Open the org chart →</button>
       </div>
 
       <div class="panel">
@@ -1486,6 +1472,7 @@ function startApp(){
     document.getElementById('tabAdmin').style.display=isAdmin?'':'none';
     var af=document.getElementById('adminFlag'); if(af)af.style.display=(isAdmin&&!ME.isSuper)?'inline-block':'none';
     renderAdmin();
+    if(curProfile){ var _pe=document.getElementById('profile'); if(_pe&&_pe.classList.contains('active'))openProfile(curProfile); }
   },function(e){console.error('company',e);});
   subF=fnsRef().onSnapshot(function(qs){ fns={}; qs.forEach(function(d){fns[d.id]=Object.assign({id:d.id},d.data());}); renderFnSelect(); renderAdmin(); render(); refreshAux(); if(curProfile){ var _pe=document.getElementById('profile'); if(_pe&&_pe.classList.contains('active'))openProfile(curProfile); } tryPendingAppoint(); },function(e){console.error('fns',e);});
   subM=membersRef().onSnapshot(function(qs){ members={}; qs.forEach(function(d){ var m=d.data(); m.mid=d.id; m.name=m.name||((m.first||'')+' '+(m.last||'')).trim(); m.initials=m.initials||initials(m.name); members[d.id]=m; }); resolveMyMid(); renderAdmin(); render(); refreshAux(); if(curIssue)fillDetail(curIssue); if(window.pendingProfileMid && members[window.pendingProfileMid]){ var _pm=window.pendingProfileMid; window.pendingProfileMid=null; openProfile(_pm); } tryPendingAppoint(); },function(e){console.error('members',e);});
@@ -2087,37 +2074,7 @@ function renderAdmin(){
       return '<div class="co-row clickrow" onclick="openCompanyOverview(\''+id+'\')"><span class="swatch" style="background:'+theme+'"></span><span class="nm">'+esc(c.name||id)+(active?' <span class="ld">· viewing</span>':'')+'</span><span class="co-rmeta">'+esc((c.code||'').toUpperCase())+'</span><button class="tinybtn" onclick="event.stopPropagation();switchCompany(\''+id+'\')">Open</button><span class="co-chev">›</span></div>';
     }).join('') : '<div class="psub">No companies yet. Add one below, or seed the test data.</div>';
   }
-  // functions
-  var fe=document.getElementById('admFns');
-  if(fe){ var fk=Object.keys(fns);
-    fe.innerHTML = fk.length ? fk.map(function(fid){ var f=fns[fid];
-      var lead = isAdmin ? '<select class="lead-sel" onchange="setLeader(\''+fid+'\',this.value)"><option value="">— leader —</option>'+memberOptions(f.leaderMid)+'</select>' : (f.leaderMid?esc(f.leaderName||personName(f.leaderMid)):'no leader');
-      return '<div class="frow"><span class="fn-dot" style="background:'+f.color+'"></span><span class="nm">'+esc(f.name)+'</span><span class="ld">'+lead+'</span></div>';
-    }).join('') : '<div class="psub">'+(activeCid?'No functions yet.':'Select or create a company first.')+'</div>';
-  }
-  var afw=document.getElementById('addFnWrap');
-  if(afw){ afw.style.display=(isAdmin&&activeCid)?'block':'none'; var cc=document.getElementById('newFnColors'); if(cc&&!cc.dataset.built){ cc.innerHTML=PALETTE.map(function(c,n){return '<span class="cpick'+(n===0?' sel':'')+'" style="background:'+c+'" data-c="'+c+'" onclick="pickNewColor(this)"></span>';}).join(''); cc.dataset.built='1'; } }
-  // members
-  var me=document.getElementById('admMembers');
-  if(me){ var mk=Object.keys(members).sort(function(a,b){return personName(a).localeCompare(personName(b));});
-    me.innerHTML = mk.length ? mk.map(function(mid){ var m=members[mid]; var adm=(company.adminUids||[]).indexOf(m.uid)>=0 && m.uid; var isLead=isLeaderOfMid(mid);
-      var fnsel = isAdmin ? '<select class="fn-sel" onchange="setMemberFn(\''+mid+'\',this.value)"><option value="">— dept —</option>'+fnOptions(m.functionId)+'</select>' : (m.functionId&&fns[m.functionId]?esc(fns[m.functionId].name):'—');
-      var mgrsel='';
-      if(isAdmin && m.functionId && !isLead){
-        var opts=Object.keys(members).filter(function(o){return o!==mid && members[o].functionId===m.functionId;}).map(function(o){ var sel=(m.managerMid===o)?' selected':''; var lead=(o===fnsLeader(m.functionId))?' (leader)':''; return '<option value="'+o+'"'+sel+'>'+esc(personName(o))+lead+'</option>'; }).join('');
-        mgrsel=' <select class="fn-sel" title="Reports to" onchange="setManager(\''+mid+'\',this.value)"><option value="">↳ reports to leader</option>'+opts+'</select>';
-      }
-      var tags=''; if(isLead)tags+=' <span class="ld" style="color:var(--strip-ink)">leader</span>'; if(!m.uid)tags+=(m.email?' <span class="ld" style="opacity:.6">not joined yet</span>':' <span class="ld" style="opacity:.6">no email</span>');
-      var admBtn = '';
-      if(ME.isSuper && activeCid && m.uid && m.uid!==ME.uid){
-        admBtn = '<button class="tinybtn" onclick="toggleCompanyAdmin(\''+mid+'\')"'+(adm?' style="background:#0f8a6b;color:#fff;border-color:#0f8a6b"':'')+'>'+(adm?'✓ Admin':'Make admin')+'</button>';
-      }
-      var inv = (isAdmin && activeCid && !m.uid && m.email) ? '<button class="tinybtn" onclick="inviteCopy(\''+mid+'\')">✉ Invite</button>' : '';
-      var rm = isAdmin ? '<button class="tinybtn" onclick="removeMember(\''+mid+'\')" style="background:#fbeaea;color:#b42318;border-color:#f3c9c4">Remove</button>' : '';
-      return '<div class="frow" style="align-items:flex-start"><span class="mini" style="background:'+personColor(mid)+';width:24px;height:24px;font-size:10px;margin-top:2px">'+esc(personInit(mid))+'</span><span class="nm" style="font-size:13px;flex:1">'+esc(personName(mid))+tags+'</span><span class="mrow-ctl">'+fnsel+mgrsel+' '+admBtn+' '+inv+' '+rm+'</span></div>';
-    }).join('') : '<div class="psub">'+(activeCid?'No members yet — add people below.':'Select or create a company first.')+'</div>';
-  }
-  var amw=document.getElementById('addMemberWrap'); if(amw){ amw.style.display=(isAdmin&&activeCid)?'block':'none'; var nf=document.getElementById('nmFn'); if(nf)nf.innerHTML='<option value="">— department —</option>'+fnOptions(''); }
+  // departments, leaders, people & reporting are now managed in the org chart (goTeam)
   // membership panel
   var mp=document.getElementById('admMembership');
   if(mp){ if(!activeCid){ mp.innerHTML='<div class="psub">No company selected.</div>'; }
@@ -2460,6 +2417,7 @@ window.openProfile=function(mid){ var m=members[mid]; if(!m)return; curProfile=m
   document.getElementById('pfEmail').textContent=m.email||'';
   var pe=document.getElementById('pfEdit'); if(pe) pe.style.display=(isAdmin && company.ceoMemberId!==mid)?'inline-flex':'none';
   var pv=document.getElementById('pfInvite'); if(pv) pv.style.display=(isAdmin && !m.uid && m.email)?'inline-flex':'none';
+  var pa=document.getElementById('pfAdmin'); if(pa){ if(ME.isSuper && activeCid && m.uid && m.uid!==ME.uid){ var _ca=(company.adminUids||[]).indexOf(m.uid)>=0; pa.style.display='inline-flex'; pa.textContent=_ca?'✓ Admin':'Make admin'; pa.style.background=_ca?'#0f8a6b':''; pa.style.color=_ca?'#fff':''; pa.style.borderColor=_ca?'#0f8a6b':''; } else { pa.style.display='none'; } }
   renderProfileIssues(mid);
   renderProfileRel(mid);
   clearTabs(); var t=document.getElementById('tabTeam'); if(t)t.classList.add('active');
