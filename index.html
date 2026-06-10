@@ -611,7 +611,7 @@ tr.rowdone:hover td{opacity:.78}
       </div>
       <div class="posrel">
         <button class="userpill" onclick="toggleMenu(event)"><span class="ava" id="meAva">·</span> <span id="meName">…</span></button>
-        <div class="menu" id="userMenu"><div class="mhd"><div class="n" id="meFull">…</div><div class="e" id="meEmail"></div></div><div class="mi" onclick="signOut()">Sign out</div></div>
+        <div class="menu" id="userMenu"><div class="mhd"><div class="n" id="meFull">…</div><div class="e" id="meEmail"></div></div><div class="mi" id="miProfile" onclick="goMyProfile()">My profile</div><div class="mi" onclick="signOut()">Sign out</div></div>
       </div>
     </div>
 </div></header>
@@ -1472,9 +1472,9 @@ function startApp(){
     document.getElementById('tabAdmin').style.display=isAdmin?'':'none';
     var af=document.getElementById('adminFlag'); if(af)af.style.display=(isAdmin&&!ME.isSuper)?'inline-block':'none';
     renderAdmin();
-    if(curProfile){ var _pe=document.getElementById('profile'); if(_pe&&_pe.classList.contains('active'))openProfile(curProfile); }
+    if(curProfile){ var _pe=document.getElementById('profile'); if(_pe&&_pe.classList.contains("active"))paintProfile(curProfile); }
   },function(e){console.error('company',e);});
-  subF=fnsRef().onSnapshot(function(qs){ fns={}; qs.forEach(function(d){fns[d.id]=Object.assign({id:d.id},d.data());}); renderFnSelect(); renderAdmin(); render(); refreshAux(); if(curProfile){ var _pe=document.getElementById('profile'); if(_pe&&_pe.classList.contains('active'))openProfile(curProfile); } tryPendingAppoint(); },function(e){console.error('fns',e);});
+  subF=fnsRef().onSnapshot(function(qs){ fns={}; qs.forEach(function(d){fns[d.id]=Object.assign({id:d.id},d.data());}); renderFnSelect(); renderAdmin(); render(); refreshAux(); if(curProfile){ var _pe=document.getElementById('profile'); if(_pe&&_pe.classList.contains("active"))paintProfile(curProfile); } tryPendingAppoint(); },function(e){console.error('fns',e);});
   subM=membersRef().onSnapshot(function(qs){ members={}; qs.forEach(function(d){ var m=d.data(); m.mid=d.id; m.name=m.name||((m.first||'')+' '+(m.last||'')).trim(); m.initials=m.initials||initials(m.name); members[d.id]=m; }); resolveMyMid(); renderAdmin(); render(); refreshAux(); if(curIssue)fillDetail(curIssue); if(window.pendingProfileMid && members[window.pendingProfileMid]){ var _pm=window.pendingProfileMid; window.pendingProfileMid=null; openProfile(_pm); } tryPendingAppoint(); },function(e){console.error('members',e);});
   subI=issuesRef().orderBy('createdAt','desc').onSnapshot(function(qs){
     issues=[]; qs.forEach(function(d){var i=d.data(); i.id=d.id; issues.push(i);});
@@ -1499,8 +1499,15 @@ function ensureAccess(mid){
 }
 function resolveMyMid(){
   ME.mid=null; var keys=Object.keys(members);
-  for(var i=0;i<keys.length;i++){ if(members[keys[i]].uid===ME.uid){ ME.mid=keys[i]; ensureAccess(ME.mid); return; } }
-  for(var j=0;j<keys.length;j++){ var m=members[keys[j]]; if(!m.uid && m.email && m.email.toLowerCase()===(ME.email||'').toLowerCase()){ var k=keys[j]; ME.mid=k; membersRef().doc(k).update({uid:ME.uid}).then(function(){ ensureAccess(k); }).catch(function(e){console.warn('claim',e);}); return; } }
+  for(var i=0;i<keys.length;i++){ if(members[keys[i]].uid===ME.uid){ ME.mid=keys[i]; ensureAccess(ME.mid); syncMeName(); return; } }
+  for(var j=0;j<keys.length;j++){ var m=members[keys[j]]; if(!m.uid && m.email && m.email.toLowerCase()===(ME.email||'').toLowerCase()){ var k=keys[j]; ME.mid=k; membersRef().doc(k).update({uid:ME.uid}).then(function(){ ensureAccess(k); }).catch(function(e){console.warn('claim',e);}); syncMeName(); return; } }
+}
+function syncMeName(){
+  if(!ME.mid)return; var m=members[ME.mid]; if(!m||!m.name)return;
+  if(!ME.first || ME.first.indexOf('@')>=0){
+    ME.name=m.name; ME.first=m.first||(m.name.split(' ')[0])||ME.first; ME.last=m.last||(m.name.split(' ').slice(1).join(' '))||''; ME.initials=m.initials||personInit(ME.mid);
+    setHeader();
+  }
 }
 function joinCompany(){
   var ref=membersRef().doc();
@@ -2010,7 +2017,8 @@ function renderNotif(){
   if(!list.length){ el.innerHTML='<div class="empty">Nothing needs your attention.</div>'; return; }
   el.innerHTML=list.map(function(i){ return '<div class="ni" onclick="openIssue(\''+i.id+'\');hideMenus()"><span style="width:9px;height:9px;border-radius:50%;background:'+(i.color||'var(--strip)')+';flex-shrink:0;margin-top:5px"></span><div><div class="t">'+esc(i.title)+'</div><div class="s">'+esc(i.functionName||'')+' · '+sm[i.status][1]+' · '+timeAgo(i.updatedAt)+'</div></div></div>'; }).join('');
 }
-window.toggleMenu=function(e){ e.stopPropagation(); hideMenus('menu'); document.getElementById('userMenu').classList.toggle('on'); };
+window.toggleMenu=function(e){ e.stopPropagation(); hideMenus('menu'); var mp=document.getElementById('miProfile'); if(mp)mp.style.display=(ME.mid&&members[ME.mid])?'':'none'; document.getElementById('userMenu').classList.toggle('on'); };
+window.goMyProfile=function(){ var mn=document.getElementById('userMenu'); if(mn)mn.classList.remove('on'); if(ME.mid&&members[ME.mid])openProfile(ME.mid); };
 function hideMenus(except){ if(except!=='menu')document.getElementById('userMenu').classList.remove('on'); if(except!=='notif')document.getElementById('notifMenu').classList.remove('on'); }
 document.addEventListener('click',function(){ hideMenus(); });
 
@@ -2409,7 +2417,7 @@ window.reassignPick=function(id){ var a=null; for(var i=0;i<archive.length;i++){
 
 /* ---------- PROFILE ---------- */
 var curProfile=null;
-window.openProfile=function(mid){ var m=members[mid]; if(!m)return; curProfile=mid;
+function paintProfile(mid){ var m=members[mid]; if(!m)return false; curProfile=mid;
   var av=document.getElementById('pfAva'); av.textContent=personInit(mid); av.style.background=personColor(mid);
   document.getElementById('pfName').textContent=m.name;
   var leads=isLeaderOfMid(mid), isCeo=(company.ceoMemberId===mid), dn=(m.functionId&&fns[m.functionId])?fns[m.functionId].name:'';
@@ -2422,6 +2430,9 @@ window.openProfile=function(mid){ var m=members[mid]; if(!m)return; curProfile=m
   var pa=document.getElementById('pfAdmin'); if(pa){ if(ME.isSuper && activeCid && m.uid && m.uid!==ME.uid){ var _ca=(company.adminUids||[]).indexOf(m.uid)>=0; pa.style.display='inline-flex'; pa.textContent=_ca?'✓ Admin':'Make admin'; pa.style.background=_ca?'#0f8a6b':''; pa.style.color=_ca?'#fff':''; pa.style.borderColor=_ca?'#0f8a6b':''; } else { pa.style.display='none'; } }
   renderProfileIssues(mid);
   renderProfileRel(mid);
+  return true;
+}
+window.openProfile=function(mid){ if(!paintProfile(mid))return;
   clearTabs(); var t=document.getElementById('tabTeam'); if(t)t.classList.add('active');
   show('profile');
 };
@@ -2443,7 +2454,7 @@ function renderProfileIssues(mid){
     return '<div class="pf-issue" onclick="openIssue(\''+i.id+'\')"><span class="fpill" style="background:'+fc+'">'+esc(i.functionName||'')+'</span><span class="pfi-t">'+esc(i.title)+'</span><span class="pfi-role">'+role+'</span><span class="st '+sm[i.status][0]+'"><span class="d"></span>'+sm[i.status][1]+'</span></div>';
   }).join('');
 }
-function refreshAux(){ var tm=document.getElementById('team'),am=document.getElementById('admin'); if((tm&&tm.classList.contains('active'))||(am&&am.classList.contains('active')))renderTeam(); var pf=document.getElementById('profile'); if(pf&&pf.classList.contains('active')&&curProfile)renderProfileIssues(curProfile); }
+function refreshAux(){ var tm=document.getElementById('team'),am=document.getElementById('admin'); if((tm&&tm.classList.contains('active'))||(am&&am.classList.contains('active')))renderTeam(); var pf=document.getElementById('profile'); if(pf&&pf.classList.contains('active')&&curProfile)paintProfile(curProfile); }
 
 /* ---------- SEED TEST DATA ---------- */
 function seedCompany(def){
