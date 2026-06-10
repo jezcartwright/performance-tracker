@@ -693,13 +693,13 @@ tr.rowdone:hover td{opacity:.78}
       <div class="fld">
         <label>Who can see this issue?</label>
         <select id="ri-vis" onchange="visChange(this)">
+          <option value="teamleader">The department leader only — just them &amp; you</option>
           <option value="participants">Just those involved — you &amp; anyone tagged in</option>
-          <option value="teamleader">Team leader only — just the tagged leader &amp; you</option>
+          <option value="dept">Team — the whole department</option>
           <option value="leader">Leaders — all leaders, the CEO &amp; you</option>
-          <option value="dept">Team — the tagged department</option>
           <option value="team">Whole org — everyone in the company</option>
         </select>
-        <p class="note">The leader you tag and anyone added always sees it — this sets who <em>else</em> can.</p>
+        <p class="note" id="ri-vis-note">The leader you tag and anyone added always sees it — this sets who <em>else</em> can.</p>
       </div>
       <div class="fld" style="margin-bottom:0">
         <label id="ri-spoken-lbl">Spoken to someone in that function already?</label>
@@ -1835,11 +1835,30 @@ function renderFnSelect(){
   var of=document.getElementById('ri-others-fld'); if(of)of.style.display='';
   riSetMode('fn');
 }
+function renderVisOptions(mode, ensureValue){
+  var sel=document.getElementById('ri-vis'); if(!sel)return;
+  var prev=ensureValue||sel.value;
+  var vals=(mode==='person')?['teamleader','participants','leader','team']:['teamleader','participants','dept','leader','team'];
+  if(ensureValue && vals.indexOf(ensureValue)<0) vals=vals.concat([ensureValue]);
+  var labels={
+    teamleader:(mode==='person')?'Private — just them &amp; you':'The department leader only — just them &amp; you',
+    participants:'Just those involved — you &amp; anyone tagged in',
+    dept:(mode==='person')?'Their whole department':'Team — the whole department',
+    leader:'Leaders — all leaders, the CEO &amp; you',
+    team:'Whole org — everyone in the company'
+  };
+  sel.innerHTML=vals.map(function(v){return '<option value="'+v+'">'+(labels[v]||v)+'</option>';}).join('');
+  var want=(vals.indexOf(prev)>=0)?prev:(vals.indexOf('participants')>=0?'participants':vals[0]);
+  sel.value=want; visPrev=want;
+  var note=document.getElementById('ri-vis-note'); if(note)note.innerHTML=(mode==='person'?'The person you tag':'The leader you tag')+' and anyone added always sees it — this sets who <em>else</em> can.';
+  var of=document.getElementById('ri-others-fld'); if(of)of.style.display=(want==='teamleader')?'none':'';
+}
 window.riSetMode=function(mode){
   riMode=mode;
   var btns=document.querySelectorAll('#ri-mode button'); if(btns[0])btns[0].classList.toggle('sel',mode==='fn'); if(btns[1])btns[1].classList.toggle('sel',mode==='person');
   var fs=document.getElementById('fs'), pw=document.getElementById('ps-wrap'); if(fs)fs.style.display=(mode==='fn')?'':'none'; if(pw)pw.style.display=(mode==='person')?'':'none';
   var lbl=document.getElementById('ri-spoken-lbl'); if(lbl)lbl.textContent=(mode==='person')?'Spoken to them already?':'Spoken to someone in that function already?';
+  renderVisOptions(mode);
   showTag();
 };
 window.riRemoveOther=function(m){ riOthers=riOthers.filter(function(x){return x!==m;}); renderChips(); };
@@ -1928,7 +1947,7 @@ window.editIssue=function(){
   if(mode==='person'){ riSetMode('person'); psMid=i.leaderMid||null; var pin=document.getElementById('ps-input'); if(pin)pin.value=i.leaderMid?personName(i.leaderMid):''; }
   else { riSetMode('fn'); var fs=document.getElementById('fs'); if(fs)fs.value=i.functionId||''; }
   showTag();
-  var vs=document.getElementById('ri-vis'); if(vs)vs.value=i.visibility||'leader'; visPrev=i.visibility||'leader';
+  renderVisOptions(mode, i.visibility||'leader');
   var of=document.getElementById('ri-others-fld'); if(of)of.style.display='none'; riOthers=[]; renderChips();
   raiseConv=!!i.conversationHad;
   var yn=document.querySelectorAll('#raise .yn button'); if(yn.length>=2){ yn[0].classList.toggle('sel',i.conversationHad===true); yn[1].classList.toggle('sel',i.conversationHad===false); }
