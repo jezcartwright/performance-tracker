@@ -2314,7 +2314,7 @@ window.asPick=function(mid){
 };
 window.asAddNew=function(){
   if(!asCtx)return; var f=((document.getElementById('asFirst')||{}).value||'').trim(); if(!f)return;
-  var l=((document.getElementById('asLast')||{}).value||'').trim(); var em=((document.getElementById('asEmail')||{}).value||'').trim();
+  var l=((document.getElementById('asLast')||{}).value||'').trim(); var em = ((document.getElementById('asEmail') || {}).value || '').trim().toLowerCase();
   var name=(f+' '+l).trim(); var ref=membersRef().doc();
   var data={first:f,last:l,name:name,initials:initials(name),email:em,uid:null,isLeader:false,managerMid:null,functionId:null,pid:newPid()};
   if(asCtx.type==='ceo'){ var b=db.batch(); b.set(ref,data); b.update(cRef(),{ceoMemberId:ref.id}); b.commit().then(refreshAux).catch(asErr); }
