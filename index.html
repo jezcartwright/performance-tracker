@@ -1227,9 +1227,21 @@ function loadCompanies(){
     }});
     return Promise.all(aw);
   }).catch(function(e){ console.warn('membership lookup (index may be needed):',e); }).then(function(){
+    var emails=[]; var raw=(ME.email||'').trim(); if(raw){emails.push(raw);} var low=raw.toLowerCase(); if(low&&low!==raw){emails.push(low);}
+    if(!emails.length){return;}
+    return Promise.all(emails.map(function(addr){ return db.collectionGroup('members').where('email','==',addr).get().catch(function(){return {forEach:function(){}};}); })).then(function(snaps){
+      var claims=[], seen={};
+      snaps.forEach(function(snap){ snap.forEach(function(m){
+        if(seen[m.ref.path]){return;} seen[m.ref.path]=1;
+        var md=m.data(); if(md.uid&&md.uid!==ME.uid){return;}
+        var p=m.ref.parent.parent; if(!p){return;} cids[p.id]=1;
+        if(!md.uid){ claims.push(m.ref.update({uid:ME.uid}).catch(function(e){console.warn('seat claim',e);})); }
+        claims.push(p.collection('access').doc(ME.uid).set({mid:m.id,role:(md.isLeader?'leader':'member'),functionId:md.functionId||null,email:ME.email||null},{merge:true}).then(function(){accessEnsured[p.id]=true;}).catch(function(){}));
+      }); });
+      return Promise.all(claims);
+    }).catch(function(e){ console.warn('email seat discovery (index may be needed):',e); });
+  }).then(function(){
     return companiesCol.where('adminUids','array-contains',ME.uid).get().catch(function(){return {forEach:function(){}};});
-  }).then(function(asnap){
-    asnap.forEach(function(d){ cids[d.id]=1; });
     return Promise.all(Object.keys(cids).map(function(id){ return companiesCol.doc(id).get(); }));
   }).then(function(docs){
     docs.forEach(function(d){ if(d.exists) companies[d.id]=Object.assign({id:d.id},d.data()); });
