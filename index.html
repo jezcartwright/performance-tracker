@@ -524,6 +524,25 @@ tbody td{padding:14px 16px;vertical-align:middle}
 .pf-ava.editable{cursor:pointer}
 .pf-cam{position:absolute;right:-2px;bottom:-2px;width:23px;height:23px;border-radius:50%;background:var(--strip);color:#fff;display:grid;place-items:center;font-size:12px;font-weight:400;border:2px solid var(--card);cursor:pointer}
 .pf-photo-rm{font-size:11px;font-weight:600;color:var(--t3);background:none;border:none;cursor:pointer;margin-top:5px;padding:0;text-decoration:underline}
+.cam-modal{position:fixed;inset:0;background:rgba(20,18,16,.55);display:grid;place-items:center;z-index:1000;padding:18px}
+.cam-sheet{background:var(--card);border:1px solid var(--b);border-radius:18px;padding:18px;width:300px;max-width:100%;box-shadow:0 18px 50px rgba(0,0,0,.3)}
+.cam-title{font-family:var(--display);font-size:22px;font-weight:600;text-align:center;margin-bottom:14px}
+.cam-opt{display:flex;align-items:center;gap:12px;width:100%;background:#fff;border:1px solid var(--b);border-radius:12px;padding:13px 14px;margin-bottom:10px;font-family:var(--ui);font-size:14px;font-weight:600;color:var(--t);cursor:pointer;text-align:left}
+.cam-opt.cam-primary{background:var(--strip-soft);border-color:var(--strip-mid);color:var(--strip-ink)}
+.cam-oic{width:34px;height:34px;border-radius:9px;background:#f3efea;display:grid;place-items:center;flex:0 0 auto;color:var(--t2)}
+.cam-opt.cam-primary .cam-oic{background:#fff;color:var(--strip-ink)}
+.cam-oic svg{width:19px;height:19px}
+.cam-cancel{text-align:center;font-size:13px;font-weight:600;color:var(--t3);margin-top:8px;cursor:pointer}
+.cam-view{position:relative;width:100%;aspect-ratio:1/1;border-radius:14px;overflow:hidden;background:#1c1c1c;display:grid;place-items:center}
+.cam-view video,.cam-view canvas{width:100%;height:100%;object-fit:cover;display:block}
+.cam-crop{position:absolute;inset:9%;border:2px dashed rgba(255,255,255,.7);border-radius:50%;pointer-events:none}
+.cam-flip{position:absolute;top:9px;right:9px;width:34px;height:34px;border-radius:50%;background:rgba(0,0,0,.45);color:#fff;border:none;display:grid;place-items:center;cursor:pointer}
+.cam-flip svg{width:18px;height:18px}
+.cam-shutterrow{display:flex;justify-content:center;margin:15px 0 5px}
+.cam-shutter{width:56px;height:56px;border-radius:50%;background:#fff;border:3px solid var(--strip);box-shadow:0 0 0 3px #fff inset;cursor:pointer}
+.cam-btnrow{display:flex;gap:9px;margin-top:14px}
+.cam-prim{flex:1;background:var(--strip);color:#fff;border:none;border-radius:10px;padding:11px;font-family:var(--ui);font-weight:700;font-size:13.5px;cursor:pointer}
+.cam-ghost{flex:1;background:#fff;color:var(--t2);border:1px solid var(--b);border-radius:10px;padding:11px;font-family:var(--ui);font-weight:700;font-size:13.5px;cursor:pointer}
 .pf-name{font-family:var(--display);font-size:30px;font-weight:600;margin:0}
 .pf-sub{font-size:13.5px;color:var(--t2);font-weight:600;margin-top:3px}
 .pf-email{font-size:12.5px;color:var(--t3);margin-top:2px}
@@ -791,6 +810,32 @@ tr.rowdone:hover td{opacity:.78}
     <h3 class="pf-h3">Issues they're dealing with</h3>
     <div id="pfIssues"></div>
   </section>
+
+  <div id="camModal" class="cam-modal" style="display:none" onclick="camBackdrop(event)">
+    <div class="cam-sheet">
+      <div id="camChoose">
+        <div class="cam-title">Add a photo</div>
+        <button class="cam-opt cam-primary" id="camTakeBtn" onclick="photoStartCamera()"><span class="cam-oic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9a2 2 0 0 1 2-2h2l1.5-2h7L17 7h2a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><circle cx="12" cy="13" r="3.4"/></svg></span>Take photo</button>
+        <button class="cam-opt" onclick="photoChooseFile()"><span class="cam-oic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="8.5" cy="10" r="1.6"/><path d="M21 16l-5-4-9 7"/></svg></span>Choose from files</button>
+        <div class="cam-cancel" onclick="closePhotoSheet()">Cancel</div>
+      </div>
+      <div id="camLive" style="display:none">
+        <div class="cam-title">Take a photo</div>
+        <div class="cam-view">
+          <video id="camVideo" playsinline webkit-playsinline muted autoplay></video>
+          <span class="cam-crop"></span>
+          <button class="cam-flip" id="camFlip" style="display:none" onclick="photoFlip()" title="Switch camera"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.6-6.4"/><path d="M21 3v5h-5"/></svg></button>
+        </div>
+        <div class="cam-shutterrow"><button class="cam-shutter" onclick="photoCapture()" aria-label="Capture"></button></div>
+        <div class="cam-cancel" onclick="closePhotoSheet()">Cancel</div>
+      </div>
+      <div id="camReview" style="display:none">
+        <div class="cam-title">Use this photo?</div>
+        <div class="cam-view"><canvas id="camCanvas"></canvas><span class="cam-crop"></span></div>
+        <div class="cam-btnrow"><button class="cam-prim" onclick="photoUseShot()">Use photo</button><button class="cam-ghost" onclick="photoRetake()">Retake</button></div>
+      </div>
+    </div>
+  </div>
 
   <!-- COMPANY OVERVIEW (drill-down) -->
   <section class="screen" id="overview">
@@ -1343,7 +1388,28 @@ function renderLogoPrev(){ var p=document.getElementById('logoPrev'); var rm=doc
 window.uploadLogo=function(file){ if(!isAdmin||!activeCid||!file)return; var rd=new FileReader(); rd.onload=function(){ var img=new Image(); img.onload=function(){ var max=128, sc=Math.min(max/img.width,max/img.height,1); var w=Math.max(1,Math.round(img.width*sc)),h=Math.max(1,Math.round(img.height*sc)); var cv=document.createElement('canvas'); cv.width=w; cv.height=h; cv.getContext('2d').drawImage(img,0,0,w,h); var url; try{url=cv.toDataURL('image/png');}catch(e){url=rd.result;} if(url.length>900000){ alert('That logo is large after processing — try a smaller or simpler image.'); return; } cRef().update({logo:url}).catch(function(e){alert('Could not save logo: '+e.message);}); }; img.onerror=function(){alert('Could not read that image file.');}; img.src=rd.result; }; rd.readAsDataURL(file); };
 function canEditPhoto(mid){ return !!(activeCid && mid && members[mid] && (isAdmin || mid===ME.mid)); }
 window.pfPhotoPick=function(){ if(!canEditPhoto(curProfile))return; var f=document.getElementById('pfPhotoFile'); if(f){ f.value=''; f.click(); } };
-window.savePhoto=function(file){ if(!canEditPhoto(curProfile)||!file){return;} var tgt=curProfile; var rd=new FileReader(); rd.onload=function(){ var img=new Image(); img.onload=function(){ var max=256, sc=Math.min(max/img.width,max/img.height,1); var w=Math.max(1,Math.round(img.width*sc)),h=Math.max(1,Math.round(img.height*sc)); var cv=document.createElement('canvas'); cv.width=w; cv.height=h; cv.getContext('2d').drawImage(img,0,0,w,h); var url; try{url=cv.toDataURL('image/jpeg',0.82);}catch(e){url=rd.result;} if(url.length>900000){ alert('That photo is large after processing — try a smaller image.'); return; } membersRef().doc(tgt).update({photo:url}).catch(function(e){alert('Could not save photo: '+e.message);}); }; img.onerror=function(){alert('Could not read that image file.');}; img.src=rd.result; }; rd.readAsDataURL(file); };
+function saveScaledPhoto(source, sw, sh){ if(!canEditPhoto(curProfile))return; var tgt=curProfile; var max=256, sc=Math.min(max/sw,max/sh,1); var w=Math.max(1,Math.round(sw*sc)),h=Math.max(1,Math.round(sh*sc)); var cv=document.createElement('canvas'); cv.width=w; cv.height=h; cv.getContext('2d').drawImage(source,0,0,w,h); var url; try{url=cv.toDataURL('image/jpeg',0.82);}catch(e){alert('Could not process that image.');return;} if(url.length>900000){ alert('That photo is large after processing — try a smaller image.'); return; } membersRef().doc(tgt).update({photo:url}).catch(function(e){alert('Could not save photo: '+e.message);}); }
+window.savePhoto=function(file){ if(!canEditPhoto(curProfile)||!file){return;} var rd=new FileReader(); rd.onload=function(){ var img=new Image(); img.onload=function(){ saveScaledPhoto(img,img.width,img.height); }; img.onerror=function(){alert('Could not read that image file.');}; img.src=rd.result; }; rd.readAsDataURL(file); };
+var camStream=null, camFacing='user';
+function showCamPane(id){ ['camChoose','camLive','camReview'].forEach(function(p){ var el=document.getElementById(p); if(el)el.style.display=(p===id)?'':'none'; }); }
+function stopCam(){ if(camStream){ camStream.getTracks().forEach(function(t){try{t.stop();}catch(e){}}); camStream=null; } var v=document.getElementById('camVideo'); if(v)v.srcObject=null; }
+window.openPhotoSheet=function(){ if(!canEditPhoto(curProfile))return; var sup=!!(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia); var tb=document.getElementById('camTakeBtn'); if(tb)tb.style.display=sup?'':'none'; showCamPane('camChoose'); document.getElementById('camModal').style.display='grid'; };
+window.closePhotoSheet=function(){ stopCam(); var m=document.getElementById('camModal'); if(m)m.style.display='none'; };
+window.camBackdrop=function(e){ if(e&&e.target&&e.target.id==='camModal')closePhotoSheet(); };
+window.photoChooseFile=function(){ closePhotoSheet(); var f=document.getElementById('pfPhotoFile'); if(f){ f.value=''; f.click(); } };
+window.photoStartCamera=function(){ if(!(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia)){ photoChooseFile(); return; } camFacing='user'; startCamStream(); };
+function startCamStream(){
+  stopCam();
+  navigator.mediaDevices.getUserMedia({video:{facingMode:camFacing},audio:false}).then(function(s){
+    camStream=s; var v=document.getElementById('camVideo'); if(v){ v.srcObject=s; var pp=v.play(); if(pp&&pp.catch)pp.catch(function(){}); }
+    showCamPane('camLive'); document.getElementById('camModal').style.display='grid';
+    if(navigator.mediaDevices.enumerateDevices){ navigator.mediaDevices.enumerateDevices().then(function(ds){ var cams=ds.filter(function(d){return d.kind==='videoinput';}); var fb=document.getElementById('camFlip'); if(fb)fb.style.display=(cams.length>1)?'grid':'none'; }).catch(function(){}); }
+  }).catch(function(e){ var nm=e&&e.name; if(nm==='NotAllowedError'||nm==='SecurityError'){ alert('Camera access was blocked. You can allow it in your browser settings, or choose a file instead.'); } else { alert('No camera available — choose a file instead.'); } closePhotoSheet(); photoChooseFile(); });
+}
+window.photoFlip=function(){ camFacing=(camFacing==='user')?'environment':'user'; startCamStream(); };
+window.photoCapture=function(){ var v=document.getElementById('camVideo'); var cv=document.getElementById('camCanvas'); if(!v||!cv||!v.videoWidth)return; cv.width=v.videoWidth; cv.height=v.videoHeight; cv.getContext('2d').drawImage(v,0,0,cv.width,cv.height); showCamPane('camReview'); };
+window.photoRetake=function(){ showCamPane('camLive'); };
+window.photoUseShot=function(){ var cv=document.getElementById('camCanvas'); if(!cv||!cv.width)return; saveScaledPhoto(cv,cv.width,cv.height); stopCam(); var m=document.getElementById('camModal'); if(m)m.style.display='none'; };
 window.removePhoto=function(){ if(!canEditPhoto(curProfile))return; membersRef().doc(curProfile).update({photo:null}).catch(function(e){alert('Could not remove photo: '+e.message);}); };
 window.removeLogo=function(){ if(!isAdmin||!activeCid)return; if(!confirm('Remove this client logo? The top-left mark will fall back to the company code.'))return; cRef().update({logo:FV.delete()}).catch(function(e){alert('Could not remove: '+e.message);}); };
 
@@ -2437,7 +2503,7 @@ window.reassignPick=function(id){ var a=null; for(var i=0;i<archive.length;i++){
 /* ---------- PROFILE ---------- */
 var curProfile=null;
 function paintProfile(mid){ var m=members[mid]; if(!m)return false; curProfile=mid;
-  var av=document.getElementById('pfAva'); var canPh=canEditPhoto(mid); av.innerHTML=avBody(mid)+(canPh?'<span class="pf-cam" title="Add or change photo">✎</span>':''); av.style.background=(m.photo)?'transparent':personColor(mid); av.classList.toggle('editable',canPh); av.onclick=canPh?pfPhotoPick:null;
+  var av=document.getElementById('pfAva'); var canPh=canEditPhoto(mid); av.innerHTML=avBody(mid)+(canPh?'<span class="pf-cam" title="Add or change photo">✎</span>':''); av.style.background=(m.photo)?'transparent':personColor(mid); av.classList.toggle('editable',canPh); av.onclick=canPh?openPhotoSheet:null;
   var prm=document.getElementById('pfPhotoRm'); if(prm)prm.style.display=(canPh&&m.photo)?'inline-block':'none';
   document.getElementById('pfName').textContent=m.name;
   var leads=isLeaderOfMid(mid), isCeo=(company.ceoMemberId===mid), dn=(m.functionId&&fns[m.functionId])?fns[m.functionId].name:'';
