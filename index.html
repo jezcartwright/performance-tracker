@@ -98,11 +98,12 @@ input,textarea,select{font-family:inherit;font-size:inherit}
 
 /* Button row */
 .navbar{display:flex;align-items:center;gap:9px;margin:18px 0 22px;flex-wrap:wrap}
-.tg{font-family:var(--ui);font-weight:700;font-size:13px;display:inline-flex;align-items:center;gap:7px;background:var(--strip-soft);border:1px solid var(--strip-mid);color:var(--strip-ink);border-radius:5px;padding:9px 14px;transition:.14s}
+.tg{font-family:var(--ui);font-weight:700;font-size:13px;display:inline-flex;align-items:center;gap:7px;background:#fff;border:1px solid var(--strip-mid);color:#ff6600;border-radius:5px;padding:9px 14px;transition:.14s}
 .tg:hover{border-color:var(--strip)}
 .tg.active{background:var(--strip);border-color:var(--strip);color:#fff}
 .tg .ct{background:rgba(255,255,255,.28);font-size:11px;font-weight:700;padding:0 7px;border-radius:20px;line-height:1.6}
 .tg:not(.active) .ct{background:var(--strip);color:#fff}
+.navbar .tg:not(.active){background:var(--strip-soft);color:var(--strip-ink)}
 .grow{flex:1}
 .primary{font-family:var(--ui);font-weight:700;font-size:13.5px;display:inline-flex;align-items:center;gap:8px;background:var(--strip);color:#fff;border-radius:5px;padding:10px 16px;box-shadow:0 2px 9px color-mix(in srgb,var(--strip) 32%,transparent);transition:.14s}
 .primary:hover{background:var(--strip-ink)}
@@ -287,7 +288,7 @@ tbody td{padding:14px 16px;vertical-align:middle}
 .ghost:hover{border-color:var(--t3)}
 
 /* Admin */
-.flag{display:inline-flex;align-items:center;gap:6px;font-family:var(--ui);font-size:10.5px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:var(--strip-ink);background:var(--strip-soft);padding:5px 11px;border-radius:6px;margin-bottom:16px}
+.flag{display:inline-flex;align-items:center;gap:6px;font-family:var(--ui);font-size:10.5px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:#ff6600;background:#fff;border:1px solid var(--strip-mid);padding:5px 11px;border-radius:6px;margin-bottom:16px}
 .agrid{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:start}
 .panel{background:var(--card);border:1px solid var(--b);border-radius:7px;padding:19px}
 .panel h3{font-family:var(--display);font-size:21px;font-weight:600;letter-spacing:.01em}
@@ -371,7 +372,7 @@ tbody td{padding:14px 16px;vertical-align:middle}
 .adm-input{width:100%;border:1.5px solid var(--b);border-radius:6px;padding:8px 10px;outline:none;font-size:13px;margin-bottom:8px}
 .adm-input:focus{border-color:var(--strip)}
 .lead-sel,.fn-sel{border:1px solid var(--b);border-radius:6px;padding:5px 8px;font-size:12px;font-family:var(--ui);font-weight:600;background:#fff;outline:none;max-width:140px}
-.tinybtn{font-size:11px;font-weight:700;color:var(--strip-ink);background:var(--strip-soft);border:1px solid var(--strip-mid);border-radius:6px;padding:4px 9px}
+.tinybtn{font-size:11px;font-weight:700;color:#ff6600;background:#fff;border:1px solid var(--strip-mid);border-radius:6px;padding:4px 9px}
 .tinybtn.on{background:var(--strip);color:#fff;border-color:var(--strip)}
 .cpick{display:inline-block;width:22px;height:22px;border-radius:6px;cursor:pointer;border:2px solid transparent}
 .cpick.sel{border-color:var(--t)}
