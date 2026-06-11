@@ -1496,13 +1496,14 @@ function renderOverview(){
   var head='<div class="ov-head"><div class="ov-clogo" style="background:'+(c.logo?'#fff':th)+'">'+ovLogoHTML()+'</div>'
     +'<div class="ov-htext"><h2>'+esc(c.name||c.id)+'</h2><div class="ov-row2">'+(c.code?('<span class="ov-code" style="background:'+ths+';color:'+thi+'">'+esc(String(c.code).toUpperCase())+'</span><span>·</span>'):'')+webLine+'</div></div>'
     +'<button class="tg" style="white-space:nowrap" onclick="openFullCompany(\''+c.id+'\')">Open this company →</button></div>';
+  var ceoClick=(c.ceoMemberId&&ovMembers[c.ceoMemberId])?("ovOpenPerson('"+c.ceoMemberId+"')"):("openFullChart('"+c.id+"')");
   var stats='<div class="ov-panel"><h3>At a glance</h3><div class="ov-stats">'
-    +'<div class="ov-stat" onclick="openFullChart(\''+c.id+'\')"><div class="n">'+deps+'</div><div class="l">Departments</div></div>'
-    +'<div class="ov-stat" onclick="openFullChart(\''+c.id+'\')"><div class="n">'+ppl+'</div><div class="l">People</div></div>'
-    +'<div class="ov-stat" onclick="openFullChart(\''+c.id+'\')"><div class="n">'+leaders+'</div><div class="l">Leaders</div></div>'
-    +'<div class="ov-stat" onclick="openFullChart(\''+c.id+'\')"><div class="n" style="font-size:14px;padding-top:5px">'+esc(ceoName)+'</div><div class="l">CEO</div></div>'
+    +'<div class="ov-stat" onclick="openFullList(\''+c.id+'\',\'fn\')"><div class="n">'+deps+'</div><div class="l">Departments</div></div>'
+    +'<div class="ov-stat" onclick="openFullList(\''+c.id+'\',\'line\')"><div class="n">'+ppl+'</div><div class="l">People</div></div>'
+    +'<div class="ov-stat" onclick="openFullList(\''+c.id+'\',\'fn\')"><div class="n">'+leaders+'</div><div class="l">Leaders</div></div>'
+    +'<div class="ov-stat" onclick="'+ceoClick+'"><div class="n" style="font-size:14px;padding-top:5px">'+esc(ceoName)+'</div><div class="l">CEO</div></div>'
     +'<div class="ov-stat" onclick="openFullCompany(\''+c.id+'\')"><div class="n">'+openN+'</div><div class="l">Open issues</div></div>'
-    +'<div class="ov-stat"><div class="n">'+admN+'</div><div class="l">Admins</div></div></div></div>';
+    +'<div class="ov-stat" onclick="openFullAdmin(\''+c.id+'\')"><div class="n">'+admN+'</div><div class="l">Admins</div></div></div></div>';
   var weblogo='<div class="ov-panel"><h3>Website &amp; logo</h3>'
     +(canEdit?'<div style="display:flex;gap:8px"><input class="adm-input" id="ovWebIn" style="margin:0" placeholder="companyname.com" value="'+esc(c.web||'')+'"><button class="tinybtn" onclick="ovPullLogo()">Pull logo</button></div>':'')
     +'<div style="display:flex;align-items:center;gap:12px;margin-top:13px"><div class="ov-clogo" style="width:46px;height:46px;font-size:15px;background:'+(c.logo?'#fff':th)+'">'+ovLogoHTML()+'</div><div class="psub" style="margin:0">'+(c.logo?('Logo set'+(c.web?(' · from '+esc(c.web)):'')):'Monogram (no logo set)')+'</div></div>'
@@ -1536,7 +1537,9 @@ window.ovOpenPerson=function(mid){ window.pendingProfileMid=mid; openFullCompany
 window.ovOpenWeb=function(){ var w=ovCompany.web; if(w) window.open(/^https?:/.test(w)?w:('https://'+w),'_blank'); };
 window.backToAdmin=function(){ goCompaniesHome(); };
 window.openFullCompany=function(cid){ switchCompany(cid); };
-window.openFullChart=function(cid){ switchCompany(cid); window.goTeam(); };
+window.openFullChart=function(cid){ ORGVIEW='chart'; switchCompany(cid); window.goTeam(); };
+window.openFullList=function(cid,lens){ ORGVIEW='list'; ORGLIST=lens||'line'; switchCompany(cid); window.goTeam(); };
+window.openFullAdmin=function(cid){ switchCompany(cid); window.goAdmin(); };
 window.ovAddCEO=function(cid){ if(activeCid===cid){ goTeam(); openAddSheet({type:'ceo'}); return; } window.pendingAppoint={type:'ceo'}; switchCompany(cid); };
 window.ovAddLeader=function(cid,fid){ if(activeCid===cid){ goTeam(); openAddSheet({type:'leader',fid:fid}); return; } window.pendingAppoint={type:'leader',fid:fid}; switchCompany(cid); };
 window.ovAddPerson=function(cid){ if(activeCid===cid){ goTeam(); openPerson(); return; } window.pendingAppoint={type:'person'}; switchCompany(cid); };
