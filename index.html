@@ -1040,7 +1040,7 @@ tr.rowdone:hover td{opacity:.78}
 
   <!-- ADMIN -->
   <section class="screen" id="admin">
-    <div class="adm-top"><span class="flag" id="admCoLabel">● Setup</span><span id="adminFlag" class="adminflag" style="display:none">ADMIN</span></div>
+    <div class="adm-top" id="admTop" style="display:none"><span id="adminFlag" class="adminflag" style="display:none">ADMIN</span></div>
     <div class="agrid">
       <div class="panel" id="coPanel" style="display:none;grid-column:1/-1">
         <h3>Companies <span class="superflag">SUPER ADMIN</span></h3>
@@ -1609,7 +1609,7 @@ function startApp(){
     applyTheme(company.theme||DEFAULT_THEME);
     renderClientLogo();
     document.getElementById('tabAdmin').style.display=isAdmin?'':'none';
-    var af=document.getElementById('adminFlag'); if(af)af.style.display=(isAdmin&&!ME.isSuper)?'inline-block':'none';
+    var af=document.getElementById('adminFlag'); var afShow=(isAdmin&&!ME.isSuper); if(af)af.style.display=afShow?'inline-block':'none'; var at=document.getElementById('admTop'); if(at)at.style.display=afShow?'flex':'none';
     renderAdmin();
     if(curProfile){ var _pe=document.getElementById('profile'); if(_pe&&_pe.classList.contains("active"))paintProfile(curProfile); }
     themeSeen=true; maybeReveal();
@@ -2224,7 +2224,6 @@ function memberOptions(sel){ return Object.keys(members).map(function(mid){ retu
 function fnOptions(sel){ return Object.keys(fns).map(function(fid){ return '<option value="'+fid+'"'+(sel===fid?' selected':'')+'>'+esc(fns[fid].name)+'</option>'; }).join(''); }
 
 function renderAdmin(){
-  var lbl=document.getElementById('admCoLabel'); if(lbl)lbl.textContent='● '+((company&&company.name)||(activeCid?'Company':'No company selected'));
   // companies (super)
   var ce=document.getElementById('admCompanies');
   if(ce && ME.isSuper){ var cids=Object.keys(companies).sort(function(a,b){return (companies[a].name||'').localeCompare(companies[b].name||'');});
