@@ -446,11 +446,49 @@ body:has(#cohome.active){background:#fff}
 .orgchart{padding-top:8px}
 .orgbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:0 2px 4px;padding-bottom:14px}
 .orgcrumb{font-weight:800;font-size:14px;color:var(--t2)}
-.orgctrls{margin-left:auto;display:flex;gap:8px}
+.orgctrls{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
 .orgbtn{border:1px solid var(--b);background:var(--card);border-radius:9px;padding:8px 12px;font-weight:700;font-size:12.5px;color:var(--t2);cursor:pointer}
 .orgbtn:hover{border-color:var(--strip)}
+.orgview-tg{display:inline-flex;background:#fff;border:1px solid var(--b);border-radius:10px;padding:3px;margin-right:2px}
+.orgview-tg .ovt{border:0;background:transparent;font:700 12.5px var(--ui);color:var(--t2);padding:6px 13px;border-radius:7px;cursor:pointer}
+.orgview-tg .ovt.on{background:var(--strip);color:#fff}
+.ollwrap{margin:0 2px}
+.ollens{display:flex;gap:8px;margin:0 0 14px;flex-wrap:wrap}
+.ollens .oll{background:#fff;border:1px solid var(--b);color:var(--strip-ink);font:700 12.5px var(--ui);padding:7px 14px;border-radius:999px;cursor:pointer}
+.ollens .oll.on{border-color:var(--strip-mid);background:var(--strip-soft)}
+.ollpanel{background:var(--card);border:1px solid var(--b);border-radius:14px;padding:10px 12px}
+.olnode>.olrow,.olmrow{display:flex;align-items:center;gap:11px;padding:9px 10px;border-radius:11px;cursor:pointer}
+.olnode>.olrow:hover,.olmrow:hover{background:var(--strip-soft)}
+.olav{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font:700 12px var(--ui);flex:0 0 auto;overflow:hidden}
+.olav .av-img{width:100%;height:100%;object-fit:cover;border-radius:50%}
+.olav.empty{background:#e7e1d8;color:#a59a8c}
+.olwho{display:flex;flex-direction:column;min-width:0}
+.olnm{font:700 14px var(--ui);color:var(--t)}
+.olrl{font:500 12px var(--ui);color:var(--t2)}
+.olsp{flex:1}
+.olchip{font:700 11px var(--ui);color:var(--strip-ink);background:var(--strip-soft);border:1px solid var(--strip-mid);padding:3px 10px;border-radius:999px;white-space:nowrap}
+.olcaret{width:16px;text-align:center;color:var(--t3);font-size:11px;transition:transform .15s;flex:0 0 auto}
+.olnode.leaf>.olrow .olcaret{visibility:hidden}
+.olnode.open>.olrow .olcaret{transform:rotate(90deg)}
+.olkids{margin-left:16px;padding-left:15px;border-left:1.5px solid var(--b);display:none}
+.olnode.open>.olkids{display:block}
+.oltag{font:700 10px var(--ui);letter-spacing:.05em;text-transform:uppercase;color:var(--strip-ink);background:var(--strip-soft);border:1px solid var(--strip-mid);padding:2px 7px;border-radius:6px;margin-left:5px;white-space:nowrap}
+.olopen{width:30px;height:30px;border-radius:50%;border:1px solid var(--b);background:#fff;color:var(--strip-ink);font:700 15px var(--ui);display:flex;align-items:center;justify-content:center;cursor:pointer;flex:0 0 auto;transition:.12s}
+.olopen:hover{background:var(--strip);color:#fff;border-color:var(--strip)}
+.olfn{border-bottom:1px solid var(--b)}
+.olfn:last-child{border-bottom:0}
+.olfnrow{display:flex;align-items:center;gap:11px;padding:13px 8px;cursor:pointer;user-select:none}
+.olfnrow:hover{background:var(--strip-soft);border-radius:10px}
+.olfndot{width:10px;height:10px;border-radius:50%;flex:0 0 auto}
+.olfnname{font:600 16px var(--serif)}
+.olfnkids{display:none;padding:2px 0 10px 6px}
+.olfn.open .olfnkids{display:block}
+.olfn.open>.olfnrow .olcaret{transform:rotate(90deg)}
+.olmrow.muted{cursor:default}
+.olmrow.muted:hover{background:transparent}
+.ol-empty{padding:18px;color:var(--t2);font:500 13px var(--ui)}
 .orgbtn.on{background:var(--strip);color:#fff;border-color:var(--strip)}
-.mgbanner{display:flex;gap:8px;background:var(--strip-soft);border:1px solid var(--strip-mid);border-radius:10px;padding:11px 14px;margin:0 2px 12px;font-size:12.5px;color:var(--strip-ink);font-weight:600}
+.mgbanner{background:var(--strip-soft);border:1px solid var(--strip-mid);border-radius:10px;padding:11px 14px;margin:0 2px 12px;font-size:12.5px;line-height:1.55;color:var(--strip-ink);font-weight:600}
 .pcard.ceoc{border-color:var(--ink);background:#fff;box-shadow:0 6px 16px rgba(0,0,0,.08)}
 .pcard.ceoc .pr{color:var(--ink)}
 .pcard.empty{border-style:dashed;background:#fff;cursor:pointer}
@@ -980,8 +1018,6 @@ tr.rowdone:hover td{opacity:.78}
     <div class="cohome-grid" id="cohomeGrid"></div>
     <div class="cohome-tools">
       <button class="tg" onclick="openNewClient()">+ New client</button>
-      <span class="grow"></span>
-      <button class="tg" onclick="seedTestData()">⚙ Seed demo clients</button>
     </div>
     <div class="gps">
       <div class="gps-head">Find a person</div>
@@ -1002,8 +1038,6 @@ tr.rowdone:hover td{opacity:.78}
         <div style="margin-top:13px;display:flex;gap:10px;flex-wrap:wrap;align-items:center">
           <input class="adm-input" id="newCoName" placeholder="New company name" style="margin:0;max-width:220px">
           <button class="tg" onclick="addCompany()">+ Add company</button>
-          <span class="grow"></span>
-          <button class="tg" onclick="seedTestData()">⚙ Seed demo clients</button>
         </div>
       </div>
       <div class="panel" style="grid-column:1/-1">
@@ -1272,6 +1306,7 @@ var sortKey='newest', asc=false, boardMode='active', showCompleted=false;
 var curId=null, curIssue=null, msgsUnsub=null, lastSeenAt=0, newFnColor=PALETTE[0];
 var subC=null, subF=null, subM=null, subI=null, subA=null;
 var MANAGING=false, archive=[], archiveCount=0, archiveOpen=false;
+var ORGVIEW='chart', ORGLIST='line';
 
 function esc(s){return (s==null?'':String(s)).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 function initials(n){return (n||'').split(' ').filter(Boolean).map(function(w){return w[0];}).join('').slice(0,2).toUpperCase()||'?';}
@@ -2281,14 +2316,15 @@ function leaderNode(fid,seen){
   return h+'</li>';
 }
 function controlsBar(){
-  if(!isAdmin) return '<div class="orgbar"><div class="orgcrumb">'+esc(company.name||'Organisation')+'</div></div>';
-  var mg='<button class="orgbtn'+(MANAGING?' on':'')+'" onclick="toggleManageOrg()">✎ Manage Org</button>';
+  var toggle='<div class="orgview-tg"><button class="ovt'+(ORGVIEW==='chart'?' on':'')+'" onclick="setOrgView(\'chart\')">Chart</button><button class="ovt'+(ORGVIEW==='list'?' on':'')+'" onclick="setOrgView(\'list\')">List</button></div>';
+  if(!isAdmin) return '<div class="orgbar"><div class="orgcrumb">'+esc(company.name||'Organisation')+'</div><div class="orgctrls">'+toggle+'</div></div>';
+  var mg=(ORGVIEW==='chart')?'<button class="orgbtn'+(MANAGING?' on':'')+'" onclick="toggleManageOrg()">✎ Manage Org</button>':'';
   var addp='<button class="orgbtn primary-org" onclick="openPerson()">+ Add person</button>';
   var addt='<button class="orgbtn" onclick="addTeam()">+ Add team</button>';
   var setceo=(!(company.ceoMemberId&&members[company.ceoMemberId]))?'<button class="orgbtn" onclick="appointCEOPick()">♛ Set a CEO</button>':'';
   var arch='<button class="orgbtn" onclick="openArchive()">🗄 Archive <span id="archCount">'+archiveCount+'</span></button>';
-  var banner=MANAGING?'<div class="mgbanner">✎ Manage Org on — <strong>drag a card onto another</strong> to change who they report to (their team moves too); <strong>drop on a card’s left/right edge</strong> to reorder. Tap a leader slot to set them, or use a card’s ⋯ menu. Tap anyone to view them.</div>':'';
-  return '<div class="orgbar"><div class="orgcrumb">'+esc(company.name||'Organisation')+'</div><div class="orgctrls">'+mg+addp+addt+setceo+arch+'</div></div>'+banner;
+  var banner=(ORGVIEW==='chart'&&MANAGING)?'<div class="mgbanner">✎ Manage Org on — <strong>drag a card onto another</strong> to change who they report to (their team moves too); <strong>drop on a card’s left/right edge</strong> to reorder. Tap a leader slot to set them, or use a card’s ⋯ menu. Tap anyone to view them.</div>':'';
+  return '<div class="orgbar"><div class="orgcrumb">'+esc(company.name||'Organisation')+'</div><div class="orgctrls">'+toggle+mg+addp+addt+setceo+arch+'</div></div>'+banner;
 }
 function renderTeam(){
   var onAdmin=(function(){var a=document.getElementById('admin');return !!(a&&a.classList.contains('active'));})();
@@ -2305,6 +2341,7 @@ function renderTeam(){
     var sc0=wrap.querySelector('.orgchart'); if(sc0){ sc0.scrollLeft=Math.max(0,(sc0.scrollWidth-sc0.clientWidth)/2); }
     return;
   }
+  if(ORGVIEW==='list'){ wrap.innerHTML=controlsBar()+orgListHtml(); return; }
   var seen={};
   var leaderLis=deptList().map(function(fid){return leaderNode(fid,seen);}).join('');
   var ceo=company.ceoMemberId;
@@ -2314,6 +2351,77 @@ function renderTeam(){
   wrap.innerHTML=controlsBar()+'<div class="dept orgchart'+(MANAGING?' managing':'')+'">'+tree+'</div>';
   var sc=wrap.querySelector('.orgchart'); if(sc){ sc.scrollLeft=Math.max(0,(sc.scrollWidth-sc.clientWidth)/2); }
 }
+function orgListHtml(){
+  var lens='<div class="ollens">'+
+    '<button class="oll'+(ORGLIST==='line'?' on':'')+'" onclick="setOrgList(\'line\')">By reporting line</button>'+
+    '<button class="oll'+(ORGLIST==='fn'?' on':'')+'" onclick="setOrgList(\'fn\')">By function</button>'+
+  '</div>';
+  var body=(ORGLIST==='fn')?orgListFn():orgListLine();
+  return '<div class="ollwrap">'+lens+'<div class="ollpanel">'+body+'</div></div>';
+}
+function olNode(mid,depth){
+  var kids=siblingsUnder(mid);
+  var leaf=!kids.length;
+  var open=(depth===0);
+  var isCeo=(mid===company.ceoMemberId);
+  var cnt=isCeo?teamCount(mid):kids.length;
+  var chip=leaf?'':'<span class="olchip">'+cnt+(isCeo?(cnt===1?' person':' people'):' direct')+'</span>';
+  var role=roleLabelFor(mid)||'Team member';
+  var rowClick=leaf?("openProfile('"+mid+"')"):"this.parentNode.classList.toggle('open')";
+  var kidsHtml=leaf?'':'<div class="olkids">'+kids.map(function(k){return olNode(k,depth+1);}).join('')+'</div>';
+  return '<div class="olnode'+(leaf?' leaf':'')+(open?' open':'')+'">'+
+    '<div class="olrow" onclick="'+rowClick+'">'+
+      '<span class="olcaret">▶</span>'+
+      '<span class="olav" style="'+avBg(mid)+'">'+avBody(mid)+'</span>'+
+      '<span class="olwho"><span class="olnm">'+esc(personName(mid))+'</span><span class="olrl">'+esc(role)+'</span></span>'+
+      '<span class="olsp"></span>'+chip+
+      '<button class="olopen" title="Open '+esc(personName(mid))+'" onclick="event.stopPropagation();openProfile(\''+mid+'\')">→</button>'+
+    '</div>'+kidsHtml+
+  '</div>';
+}
+function orgListLine(){
+  var ceo=company.ceoMemberId;
+  if(ceo&&members[ceo]) return olNode(ceo,0);
+  var roots=deptList().map(fnsLeader).filter(function(x){return x&&members[x];});
+  if(!roots.length) return '<div class="ol-empty">No people yet.</div>';
+  return roots.map(function(l){return olNode(l,0);}).join('');
+}
+function olMemberRow(mid,tagLabel,subText){
+  var tag=tagLabel?(' <span class="oltag">'+esc(tagLabel)+'</span>'):'';
+  return '<div class="olmrow" onclick="openProfile(\''+mid+'\')">'+
+    '<span class="olav" style="'+avBg(mid)+'">'+avBody(mid)+'</span>'+
+    '<span class="olwho"><span class="olnm">'+esc(personName(mid))+tag+'</span><span class="olrl">'+esc(subText||'')+'</span></span>'+
+    '<span class="olsp"></span>'+
+    '<button class="olopen" title="Open '+esc(personName(mid))+'" onclick="event.stopPropagation();openProfile(\''+mid+'\')">→</button>'+
+  '</div>';
+}
+function orgListFn(){
+  var ceo=company.ceoMemberId;
+  var ceoName=(ceo&&members[ceo])?personName(ceo):'';
+  var rows=deptList().map(function(fid){
+    var f=fns[fid]; var lid=fnsLeader(fid);
+    var mem=Object.keys(members).filter(function(m){return members[m].functionId===fid && m!==ceo;});
+    var total=mem.length;
+    var others=mem.filter(function(m){return m!==lid;}).sort(function(a,b){var oa=ordOf(a),ob=ordOf(b); if(oa!==ob)return oa-ob; return personName(a).localeCompare(personName(b));});
+    var head='<div class="olfnrow" onclick="this.parentNode.classList.toggle(\'open\')">'+
+      '<span class="olcaret">▶</span><span class="olfndot" style="background:'+(f.color||'var(--strip)')+'"></span>'+
+      '<span class="olfnname">'+esc(f.name)+'</span><span class="olsp"></span>'+
+      '<span class="olchip">'+total+(total===1?' person':' people')+'</span></div>';
+    var leadRow=(lid&&members[lid])
+      ? olMemberRow(lid,'Lead',ceoName?('Reports to '+ceoName):'Function lead')
+      : '<div class="olmrow muted"><span class="olav empty">?</span><span class="olwho"><span class="olnm">No leader set</span><span class="olrl">'+esc(f.name)+'</span></span></div>';
+    var memRows=others.map(function(m){return olMemberRow(m,null,lid?('Reports to '+personName(lid)):(roleLabelFor(m)||f.name));}).join('');
+    return '<div class="olfn">'+head+'<div class="olfnkids">'+leadRow+memRows+'</div></div>';
+  }).join('');
+  var unassigned=Object.keys(members).filter(function(m){return m!==ceo && (!members[m].functionId || !fns[members[m].functionId]);});
+  if(unassigned.length){
+    var ur=unassigned.sort(function(a,b){return personName(a).localeCompare(personName(b));}).map(function(m){return olMemberRow(m,null,'No function');}).join('');
+    rows+='<div class="olfn"><div class="olfnrow" onclick="this.parentNode.classList.toggle(\'open\')"><span class="olcaret">▶</span><span class="olfndot" style="background:#bbb"></span><span class="olfnname">Unassigned</span><span class="olsp"></span><span class="olchip">'+unassigned.length+(unassigned.length===1?' person':' people')+'</span></div><div class="olfnkids">'+ur+'</div></div>';
+  }
+  return rows||'<div class="ol-empty">No functions yet.</div>';
+}
+window.setOrgView=function(v){ ORGVIEW=v; if(v==='list'&&MANAGING){ MANAGING=false; } if(openOcm){openOcm.classList.remove('on');openOcm=null;} renderTeam(); };
+window.setOrgList=function(l){ ORGLIST=l; renderTeam(); };
 window.toggleManageOrg=function(){ MANAGING=!MANAGING; if(openOcm){openOcm.classList.remove('on');openOcm=null;} renderTeam(); };
 var openOcm=null;
 window.toggleCardMenu=function(mid){ var el=document.getElementById('ocm_'+mid); if(!el)return; if(openOcm&&openOcm!==el)openOcm.classList.remove('on'); el.classList.toggle('on'); openOcm=el.classList.contains('on')?el:null; };
@@ -2548,47 +2656,6 @@ function renderProfileIssues(mid){
 }
 function refreshAux(){ var tm=document.getElementById('team'),am=document.getElementById('admin'); if((tm&&tm.classList.contains('active'))||(am&&am.classList.contains('active')))renderTeam(); var pf=document.getElementById('profile'); if(pf&&pf.classList.contains('active')&&curProfile)paintProfile(curProfile); }
 
-/* ---------- SEED TEST DATA ---------- */
-function seedCompany(def){
-  var ref=companiesCol.doc(def.id);
-  return ref.get().then(function(s){
-    if(s.exists){ return ref.update({name:def.name,code:def.code,theme:def.theme,logo:def.logo||null}); }
-    return ref.set({name:def.name,code:def.code,visibility:'leader',theme:def.theme,logo:def.logo||null,adminUids:[ME.uid],createdAt:FV.serverTimestamp()}).then(function(){
-      var batch=db.batch();
-      def.fns.forEach(function(fn){
-        var fref=ref.collection('functions').doc();
-        var leaderMid=null, leaderName='';
-        fn.people.forEach(function(p,idx){
-          var mref=ref.collection('members').doc();
-          var nm=p[0]+' '+p[1];
-          batch.set(mref,{first:p[0],last:p[1],name:nm,initials:initials(nm),email:p[2],functionId:fref.id,isLeader:idx===0,uid:null,pid:newPid()});
-          if(idx===0){ leaderMid=mref.id; leaderName=nm; }
-        });
-        batch.set(fref,{name:fn.name,color:fn.color,leaderMid:leaderMid,leaderName:leaderName});
-      });
-      return batch.commit();
-    });
-  });
-}
-window.seedTestData=function(){
-  if(!ME.isSuper)return;
-  if(!confirm('Create / refresh two demo clients — Northwind and Lumen Health — each with its own logo, brand colour, 5 departments, a leader and 2 members per department?'))return;
-  var c123={ id:'co123', name:'Northwind', code:'NW', logo:'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZD0iTTEyIDEgTDEzLjggMTAuMiBMMjMgMTIgTDEzLjggMTMuOCBMMTIgMjMgTDEwLjIgMTMuOCBMMSAxMiBMMTAuMiAxMC4yIFoiIGZpbGw9IiMwZTJhNDciLz48Y2lyY2xlIGN4PSIxMiIgY3k9IjEyIiByPSIyLjMiIGZpbGw9IiNmMmE5M2IiLz48L3N2Zz4=', theme:{strip:'#0e2a47',ink:'#1c4a78',soft:'#eef2f7',mid:'#cdd9e8'}, fns:[
-    {name:'Operations',color:'#1d4ed8',people:[['Priya','Nair','priya.nair@123.test'],['Liam','Frost','liam.frost@123.test'],['Hannah','Reed','hannah.reed@123.test']]},
-    {name:'Finance',color:'#0d9488',people:[['Tom','Becker','tom.becker@123.test'],['Grace','Lim','grace.lim@123.test'],['Owen','Hart','owen.hart@123.test']]},
-    {name:'People & Culture',color:'#db2777',people:[['Sadé','Okoro','sade.okoro@123.test'],['Maya','Singh','maya.singh@123.test'],['Daniel','Cole','daniel.cole@123.test']]},
-    {name:'Technology',color:'#7c3aed',people:[['Marcus','Lin','marcus.lin@123.test'],['Ava','Romano','ava.romano@123.test'],['Noah','Pierce','noah.pierce@123.test']]},
-    {name:'Sales',color:'#c2410c',people:[['Elena','Vos','elena.vos@123.test'],['Jack','Mercer','jack.mercer@123.test'],['Zoe','Adler','zoe.adler@123.test']]}
-  ]};
-  var cABC={ id:'coABC', name:'Lumen Health', code:'LMN', logo:'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PGNpcmNsZSBjeD0iMTIiIGN5PSIxMiIgcj0iOSIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMGU4ZjhhIiBzdHJva2Utd2lkdGg9IjIuNiIvPjxjaXJjbGUgY3g9IjEyIiBjeT0iMTIiIHI9IjMuNCIgZmlsbD0iI2ZmYzk0ZCIvPjwvc3ZnPg==', theme:{strip:'#0e8f8a',ink:'#0b6b67',soft:'#e6f4f3',mid:'#bfe4e1'}, fns:[
-    {name:'Operations',color:'#1d4ed8',people:[['Raj','Patel','raj.patel@abc.test'],['Chloe','Dunn','chloe.dunn@abc.test'],['Felix','Wong','felix.wong@abc.test']]},
-    {name:'Finance',color:'#0d9488',people:[['Sara','Klein','sara.klein@abc.test'],['Ben','Ortiz','ben.ortiz@abc.test'],['Iris','Lund','iris.lund@abc.test']]},
-    {name:'People & Culture',color:'#db2777',people:[['Nadia','Haqq','nadia.haqq@abc.test'],['Leo','Marsh','leo.marsh@abc.test'],['Tara','Bose','tara.bose@abc.test']]},
-    {name:'Technology',color:'#7c3aed',people:[['Ivan','Petrov','ivan.petrov@abc.test'],['Mia','Chen','mia.chen@abc.test'],['Sam','Doyle','sam.doyle@abc.test']]},
-    {name:'Sales',color:'#c2410c',people:[['George','Hale','george.hale@abc.test'],['Ruby','Shaw','ruby.shaw@abc.test'],['Theo','Park','theo.park@abc.test']]}
-  ]};
-  Promise.all([seedCompany(c123),seedCompany(cABC)]).then(function(){ return loadCompanies(); }).then(function(){ renderCoSwitch(); if(ME.isSuper){ goCompaniesHome(); } else { activeCid='co123'; startApp(); goDash(); } alert('Seeded Northwind and Lumen Health — each with its own logo and brand colour. Open one to see it in the banner.'); }).catch(function(e){ alert('Seed error: '+e.message); });
-};
 </script>
 </body>
 </html>
