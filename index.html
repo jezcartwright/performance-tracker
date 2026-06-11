@@ -62,21 +62,22 @@ input,textarea,select{font-family:inherit;font-size:inherit}
 .cohome-head{margin:4px 0 22px}
 .cohome-h1{font-family:var(--display);font-size:34px;font-weight:600;letter-spacing:.005em;margin:10px 0 7px;color:var(--t)}
 .cohome-sub{color:var(--t2);font-size:14px;max-width:580px;margin:0;line-height:1.5}
-.cohome-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:14px}
-.cohome-card{position:relative;display:flex;flex-direction:column;text-align:left;background:var(--card);border:1px solid var(--b);border-left:4px solid var(--ac);border-radius:10px;padding:15px 16px;cursor:pointer;transition:.14s;width:100%;font-family:var(--ui)}
-.cohome-card:hover{box-shadow:0 7px 20px rgba(0,0,0,.09);transform:translateY(-1px);border-color:var(--ac)}
+.cohome-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+@media(max-width:760px){.cohome-grid{grid-template-columns:1fr}}
+.cohome-card{position:relative;display:flex;flex-direction:column;text-align:left;background:var(--card);border:1px solid var(--b);border-radius:16px;padding:18px 18px 14px;cursor:pointer;transition:.14s;width:100%;font-family:var(--ui)}
+.cohome-card:hover{box-shadow:0 10px 30px -18px rgba(217,88,0,.45);border-color:var(--strip-mid);transform:translateY(-1px)}
 .coh-top{display:flex;align-items:center;gap:14px}
-.coh-enter{margin-left:auto;font-size:12.5px;font-weight:700;color:var(--ac);opacity:.5;transition:.14s;white-space:nowrap}
+.coh-enter{margin-left:auto;align-self:center;font-size:12.5px;font-weight:700;color:var(--strip-ink);opacity:0;transition:.14s;white-space:nowrap}
 .cohome-card:hover .coh-enter{opacity:1}
-.coh-info{position:absolute;top:10px;right:12px;width:22px;height:22px;border-radius:50%;border:1px solid var(--b);background:#fff;color:var(--t3);font-family:var(--serif);font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;line-height:1;cursor:pointer;z-index:2}
+.coh-info{position:absolute;top:13px;right:14px;width:24px;height:24px;border-radius:50%;border:1px solid var(--b);background:#fff;color:var(--t3);font-family:var(--serif);font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;line-height:1;cursor:pointer;z-index:2}
 .coh-info:hover{border-color:var(--strip-mid);color:var(--strip-ink)}
-.cohome-logo{width:46px;height:46px;border-radius:7px;background:#fff;box-sizing:border-box;display:grid;place-items:center;flex-shrink:0;overflow:hidden}
+.cohome-logo{width:52px;height:52px;border-radius:13px;background:#fff;box-sizing:border-box;display:grid;place-items:center;flex-shrink:0;overflow:hidden}
 .cohome-body{display:flex;flex-direction:column;flex:1;min-width:0}
-.cohome-nm{font-family:var(--serif);font-weight:600;font-size:17px;color:var(--t);line-height:1.2}
-.cohome-code{font-size:11px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--t3);margin-top:4px}
-.coh-stats{display:flex;align-items:center;gap:20px;margin-top:13px;padding-top:12px;border-top:1px solid var(--b2)}
+.cohome-nm{font-family:var(--display);font-weight:600;font-size:23px;color:var(--t);line-height:1.05}
+.cohome-code{font-family:var(--ui);font-size:12px;font-weight:600;color:var(--strip-ink);margin-top:2px}
+.coh-stats{display:flex;align-items:center;gap:22px;margin-top:15px;padding-top:13px;border-top:1px solid var(--b)}
 .coh-stat{display:flex;flex-direction:column}
-.coh-stat .n{font-family:var(--serif);font-weight:600;font-size:17px;line-height:1;color:var(--t)}
+.coh-stat .n{font-family:var(--serif);font-weight:600;font-size:19px;line-height:1;color:var(--t)}
 .coh-stat .l{font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--t3);margin-top:3px}
 .coh-brand{margin-left:auto;display:flex;align-items:center;gap:6px;font-size:11px;font-weight:700;color:var(--t2)}
 .coh-brand .dot{width:8px;height:8px;border-radius:50%;background:var(--green)}
@@ -1676,17 +1677,19 @@ function renderCoHome(){
   var cids=Object.keys(companies).sort(function(a,b){return (companies[a].name||'').localeCompare(companies[b].name||'');});
   box.innerHTML = cids.length ? cids.map(function(id){ var c=companies[id]; var th=(c.theme&&c.theme.strip)||'#ff6600';
     var mono=String((c.code||initials(c.name||'')||'•')).toUpperCase().slice(0,3);
-    var logo=c.logo?('<img src="'+c.logo+'" alt="" style="width:100%;height:100%;object-fit:cover;display:block">'):('<span style="font-family:var(--display);font-weight:700;color:'+th+';font-size:'+(mono.length>=3?'16px':'21px')+'">'+esc(mono)+'</span>');
+    var hasLogo=!!c.logo;
+    var logoInner=hasLogo?('<img src="'+c.logo+'" alt="" style="width:100%;height:100%;object-fit:cover;display:block">'):('<span style="font-family:var(--display);font-weight:700;color:#fff;font-size:'+(mono.length>=3?'18px':'24px')+'">'+esc(mono)+'</span>');
+    var logoTile='<span class="cohome-logo"'+(hasLogo?'':(' style="background:'+th+'"'))+'>'+logoInner+'</span>';
     var ppl=peopleIndex?peopleIndex.filter(function(p){return p.cid===id;}).length:null;
     var ldr=peopleIndex?peopleIndex.filter(function(p){return p.cid===id&&p.isLeader;}).length:null;
     var opn=(coOpen&&coOpen[id]!=null)?coOpen[id]:null;
     function statH(n,l){ return '<span class="coh-stat"><span class="n">'+(n==null?'·':n)+'</span><span class="l">'+l+'</span></span>'; }
     var branded=!!c.logo;
     var brand='<span class="coh-brand"><span class="dot'+(branded?'':' warn')+'"></span>'+(branded?'Branded':'Add logo')+'</span>';
-    var stats='<span class="coh-stats">'+statH(ppl,'People')+statH(ldr,'Leaders')+statH(opn,'Open')+brand+'</span>';
+    var stats='<span class="coh-stats">'+statH(ppl,'People')+statH(ldr,'Leaders')+statH(opn,'Open issues')+brand+'</span>';
     var info='<span class="coh-info" title="Company details" onclick="event.stopPropagation();openCompanyOverview(\''+id+'\')">i</span>';
-    var top='<span class="coh-top"><span class="cohome-logo">'+logo+'</span><span class="cohome-body"><span class="cohome-nm">'+esc(c.name||id)+'</span><span class="cohome-code">'+(c.web?esc(c.web):(c.code?esc(String(c.code).toUpperCase()):''))+'</span></span><span class="coh-enter">Open →</span></span>';
-    return '<button class="cohome-card" style="--ac:'+th+'" onclick="openFullCompany(\''+id+'\')">'+info+top+stats+'</button>';
+    var top='<span class="coh-top">'+logoTile+'<span class="cohome-body"><span class="cohome-nm">'+esc(c.name||id)+'</span><span class="cohome-code">'+(c.web?esc(c.web):(c.code?esc(String(c.code).toUpperCase()):''))+'</span></span><span class="coh-enter">Open →</span></span>';
+    return '<button class="cohome-card" onclick="openFullCompany(\''+id+'\')">'+info+top+stats+'</button>';
   }).join('') : '<div class="psub">No companies yet — add one below.</div>';
 }
 window.addCompanyHome=function(){ if(!ME.isSuper)return; var n=(prompt('New company name:')||'').trim(); if(!n)return; var ref=companiesCol.doc(); ref.set({name:n,visibility:'team',theme:DEFAULT_THEME,adminUids:[ME.uid],createdAt:FV.serverTimestamp()}).then(function(){ return loadCompanies(); }).then(function(){ renderCoHome(); renderCoSwitch(); }).catch(function(e){ alert('Could not add company: '+e.message); }); };
