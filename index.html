@@ -287,6 +287,9 @@ tbody td{padding:14px 16px;vertical-align:middle}
 .dr label:last-child{border-bottom:none}.dr input{width:auto!important;margin:0}
 .ps-foot{display:flex;gap:10px;padding:14px 20px;border-top:1px solid var(--b2);background:#fdfcfa}
 .ps-foot button{flex:1;padding:12px;border-radius:8px;font-weight:700;font-size:14px;cursor:pointer;font-family:var(--ui);justify-content:center}
+.ps-adminrow{display:flex;align-items:center;gap:9px;font:600 14px var(--ui);color:var(--t);cursor:pointer}
+.ps-adminrow input{width:17px;height:17px;accent-color:var(--strip);cursor:pointer;flex:0 0 auto}
+.ps-adminrow.disabled{opacity:.55;cursor:default}
 .orgbtn.primary-org{background:var(--strip);border-color:var(--strip);color:#fff}
 .agr-l{display:block;font-size:11px;font-weight:700;letter-spacing:.3px;text-transform:uppercase;color:var(--t3);margin-bottom:4px}
 .agr-ok{display:flex;gap:11px;align-items:flex-start;background:#f3faf6;border:1px solid #bfe6d6;border-radius:9px;padding:12px 13px}
@@ -975,6 +978,10 @@ tr.rowdone:hover td{opacity:.78}
           <div class="ps-repsel" id="ps-repSel"><label style="font-size:12px;font-weight:600;color:var(--t2);margin-bottom:5px;display:block" id="ps-repLbl"></label><select id="ps-repList" onchange="psPickMgr()"></select></div>
           <div class="ps-fld" id="ps-drBlock" style="margin-top:12px;margin-bottom:0;display:none"><label>Who already works under them? (optional)</label><div class="dr" id="ps-drList"></div><p class="ps-hint">Tick people already in this department to move them under this leader.</p></div>
         </div>
+        <div class="ps-grp" id="ps-adminGrp" style="display:none"><div class="ps-l">Access</div>
+          <label class="ps-adminrow" id="ps-adminLabel"><input type="checkbox" id="ps-admin"> <span>Make this person a company admin</span></label>
+          <p class="ps-hint" id="ps-adminHint">Admins can manage people, structure and settings for this company.</p>
+        </div>
       </div>
       <div class="ps-foot"><button class="ghost" onclick="closePerson()">Cancel</button><button class="primary" id="ps-go" onclick="savePerson()" disabled>Add person</button></div>
     </div>
@@ -1061,6 +1068,12 @@ tr.rowdone:hover td{opacity:.78}
         <h3>People &amp; structure</h3>
         <p class="psub">Add, move, promote or remove anyone right here — drag a card to change who reports to whom, use a card's ⋯ menu to promote, or tap a person to view, invite or make them an admin.</p>
         <div id="admOrgWrap"></div>
+      </div>
+
+      <div class="panel">
+        <h3>Admins</h3>
+        <p class="psub">People who can manage this company. Grant or remove admin when editing a person, or from their profile.</p>
+        <div id="admAdminsWrap"></div>
       </div>
 
       <div class="panel">
@@ -1781,6 +1794,16 @@ window.openPerson=function(opts){ if(!isAdmin)return; opts=opts||{};
     if(opts.managerMid){ psMgrOverride=opts.managerMid; }
   }
   var h=document.getElementById('psHeading'); if(h) h.textContent=em?'Edit person':'Add a person';
+  var ag=document.getElementById('ps-adminGrp'), acb=document.getElementById('ps-admin'), ahint=document.getElementById('ps-adminHint'), albl=document.getElementById('ps-adminLabel');
+  if(ag&&acb){
+    if(ME.isSuper && em){ ag.style.display='';
+      var hasUid=!!em.uid;
+      acb.disabled=!hasUid;
+      acb.checked=hasUid && (company.adminUids||[]).indexOf(em.uid)>=0;
+      if(albl)albl.classList.toggle('disabled',!hasUid);
+      if(ahint)ahint.textContent=hasUid?'Admins can manage people, structure and settings for this company.':'They need to sign in once before they can be made an admin.';
+    } else { ag.style.display='none'; acb.checked=false; acb.disabled=true; }
+  }
   var go=document.getElementById('ps-go'); go.textContent=em?'Save changes':'Add person'; go.disabled=em?false:true;
   document.getElementById('ps-repSel').classList.remove('on');
   psUpd();
@@ -1846,6 +1869,12 @@ window.savePerson=function(){ if(!isAdmin)return;
         tasks.push(fnsRef().doc(fid).update({leaderMid:mid,leaderName:name}));
         if(prevLeaderFid&&prevLeaderFid!==fid) tasks.push(fnsRef().doc(prevLeaderFid).update({leaderMid:null,leaderName:''}));
       } else if(prevLeaderFid){ tasks.push(fnsRef().doc(prevLeaderFid).update({leaderMid:null,leaderName:''})); }
+      if(ME.isSuper){ var acb=document.getElementById('ps-admin'); var m0=members[mid];
+        if(m0 && m0.uid && acb && !acb.disabled){ var isA=(company.adminUids||[]).indexOf(m0.uid)>=0;
+          if(acb.checked && !isA) tasks.push(companiesCol.doc(activeCid).update({adminUids:FV.arrayUnion(m0.uid)}));
+          else if(!acb.checked && isA) tasks.push(companiesCol.doc(activeCid).update({adminUids:FV.arrayRemove(m0.uid)}));
+        }
+      }
       return Promise.all(tasks);
     }
     var mdoc={ first:first, last:last, name:name, initials:initials(name), email:email||null, functionId:fid, title:title||null, isLeader:!!psLeads, managerMid:mgr||null, uid:null, pid:newPid() };
@@ -2241,6 +2270,7 @@ function memberOptions(sel){ return Object.keys(members).map(function(mid){ retu
 function fnOptions(sel){ return Object.keys(fns).map(function(fid){ return '<option value="'+fid+'"'+(sel===fid?' selected':'')+'>'+esc(fns[fid].name)+'</option>'; }).join(''); }
 
 function renderAdmin(){
+  renderAdminsList();
   // companies (super)
   var ce=document.getElementById('admCompanies');
   if(ce && ME.isSuper){ var cids=Object.keys(companies).sort(function(a,b){return (companies[a].name||'').localeCompare(companies[b].name||'');});
@@ -2615,6 +2645,20 @@ window.toggleCompanyAdmin=function(mid){ if(!ME.isSuper||!activeCid)return; var 
   var admins=(company.adminUids||[]); var on=admins.indexOf(m.uid)>=0;
   companiesCol.doc(activeCid).update({adminUids: on?FV.arrayRemove(m.uid):FV.arrayUnion(m.uid)}).catch(function(e){ alert('Could not update: '+e.message); });
 };
+function renderAdminsList(){
+  var box=document.getElementById('admAdminsWrap'); if(!box)return;
+  var uids=(company&&company.adminUids)?company.adminUids:[];
+  if(!uids.length){ box.innerHTML='<div class="psub">No admins yet — edit a person (or open their profile) to grant admin.</div>'; return; }
+  box.innerHTML=uids.map(function(u){
+    var mid=null; Object.keys(members).forEach(function(m){ if(members[m].uid===u) mid=m; });
+    var avatar,name,sub;
+    if(mid){ avatar='<span class="olav" style="'+avBg(mid)+'">'+avBody(mid)+'</span>'; name=esc(personName(mid)); sub=esc(roleLabelFor(mid)||'Team member'); }
+    else { avatar='<span class="olav empty">★</span>'; name=(u===ME.uid?'You':'External admin'); sub=(u===ME.uid?'Super admin':'Not a member of this company'); }
+    var rm=ME.isSuper?'<button class="tinybtn" onclick="removeAdminUid(\''+u+'\')">Remove</button>':'';
+    return '<div class="olmrow" style="cursor:default">'+avatar+'<span class="olwho"><span class="olnm">'+name+'</span><span class="olrl">'+sub+'</span></span><span class="olsp"></span>'+rm+'</div>';
+  }).join('');
+}
+window.removeAdminUid=function(u){ if(!ME.isSuper||!activeCid)return; if(u===ME.uid && !confirm('Remove your own admin access to this company?'))return; companiesCol.doc(activeCid).update({adminUids:FV.arrayRemove(u)}).catch(function(e){ alert('Could not remove admin: '+e.message); }); };
 window.removeFromOrg=function(mid){ if(!isAdmin)return; var m=members[mid]; if(!m)return;
   if(company.ceoMemberId===mid){ alert('Appoint a new CEO before removing the current one.'); return; }
   var fid=m.functionId; var isLead=fnsLeader(fid)===mid;
