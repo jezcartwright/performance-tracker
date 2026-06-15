@@ -2022,7 +2022,7 @@ window.showTag=function(){
 window.pickYN=function(b){ b.parentElement.querySelectorAll('button').forEach(function(x){x.classList.remove('sel');}); b.classList.add('sel'); raiseConv=(b.textContent.trim().toLowerCase()==='yes'); };
 window.raiseIssue=function(){
   if(!activeCid){ alert('No company selected.'); return; }
-  if(!ME.mid){ if(confirm('You’re not yet a member of this company. Join it so you can raise issues?')){ joinCompany().then(function(){ alert('Joined this company — tap “Raise issue” again.'); renderAdmin(); }); } return; }
+  if(!ME.mid && !ME.isSuper){ if(confirm('You’re not yet a member of this company. Join it so you can raise issues?')){ joinCompany().then(function(){ alert('Joined this company — tap “Raise issue” again.'); renderAdmin(); }); } return; }
   var title=document.getElementById('ri-title').value.trim();
   var desc=document.getElementById('ri-desc').value.trim();
   if(!title){ alert('Please add a title.'); return; }
@@ -2039,8 +2039,8 @@ window.raiseIssue=function(){
     if(!fid){ alert('Please choose a function or a person.'); return; }
     var f=fns[fid]; fName=f.name; color=f.color; leaderMid=f.leaderMid||null; leaderName=f.leaderName||(leaderMid?personName(leaderMid):''); leaderUid=(leaderMid&&members[leaderMid]&&members[leaderMid].uid)||null;
   }
-  var parts=[ME.mid]; if(leaderMid&&leaderMid!==ME.mid)parts.push(leaderMid);
-  if(vis!=='teamleader'){ riOthers.forEach(function(m){ if(parts.indexOf(m)<0)parts.push(m); }); }
+  var parts=[]; if(ME.mid)parts.push(ME.mid); if(leaderMid&&parts.indexOf(leaderMid)<0)parts.push(leaderMid);
+  if(vis!=='teamleader'){ riOthers.forEach(function(m){ if(m&&parts.indexOf(m)<0)parts.push(m); }); }
   if(riEditId){
     var upd={ title:title, description:desc, functionId:fid, functionName:fName, color:color, leaderMid:leaderMid, leaderName:leaderName, leaderUid:leaderUid, conversationHad:!!raiseConv, visibility:vis, targetType:riMode, updatedAt:FV.serverTimestamp() };
     if(leaderMid) upd.participants=FV.arrayUnion(leaderMid);
