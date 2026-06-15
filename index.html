@@ -748,12 +748,12 @@ tr.rowdone:hover td{opacity:.78}
       <div class="fld" id="ri-from-fld" style="display:none">
         <label>Raised by <span style="font-weight:400;text-transform:none;letter-spacing:0;color:#999">(who it's from)</span></label>
         <div class="ta">
-          <input id="ri-from-input" class="ta-input" type="text" placeholder="Search for who raised it…" autocomplete="off" oninput="fromSearch(this)" onfocus="fromSearch(this)" onblur="taBlur('ri-from-list')">
+          <input id="ri-from-input" class="ta-input" type="text" placeholder="Search for the person it's from…" autocomplete="off" oninput="fromSearch(this)" onfocus="fromSearch(this)" onblur="taBlur('ri-from-list')">
           <div id="ri-from-list" class="ta-list" style="display:none"></div>
         </div>
       </div>
       <div class="fld">
-        <label>Raise against</label>
+        <label>Raised for</label>
         <div class="seg" id="ri-mode" style="margin-bottom:10px">
           <button type="button" class="sel" onclick="riSetMode('fn')">Function / department</button>
           <button type="button" onclick="riSetMode('person')">A person</button>
@@ -1980,7 +1980,7 @@ function renderFnSelect(){
   var s=document.getElementById('fs'); if(s){ var opts='<option value="">Select…</option>'; Object.keys(fns).forEach(function(fid){ opts+='<option value="'+fid+'">'+esc(fns[fid].name)+'</option>'; }); s.innerHTML=opts; s.value=''; }
   psMid=null; var pin=document.getElementById('ps-input'); if(pin)pin.value=''; var ain=document.getElementById('ri-add-input'); if(ain)ain.value=''; hideTa('ps-list'); hideTa('ri-add-list');
   var ff=document.getElementById('ri-from-fld'); if(ff)ff.style.display=isAdmin?'':'none';
-  riFromMid=(isAdmin&&ME.mid)?ME.mid:null; var fin=document.getElementById('ri-from-input'); if(fin)fin.value=(riFromMid&&members[riFromMid])?personName(riFromMid):''; hideTa('ri-from-list');
+  riFromMid=null; var fin=document.getElementById('ri-from-input'); if(fin)fin.value=''; hideTa('ri-from-list');
   var t=document.getElementById('ri-title'); if(t)t.value=''; var d=document.getElementById('ri-desc'); if(d)d.value='';
   var p=document.getElementById('tp'); if(p)p.classList.remove('show');
   document.querySelectorAll('#raise .yn button').forEach(function(b){b.classList.remove('sel');});
@@ -2051,6 +2051,7 @@ window.raiseIssue=function(){
     var f=fns[fid]; fName=f.name; color=f.color; leaderMid=f.leaderMid||null; leaderName=f.leaderName||(leaderMid?personName(leaderMid):''); leaderUid=(leaderMid&&members[leaderMid]&&members[leaderMid].uid)||null;
   }
   var fromMid=(isAdmin&&riFromMid)?riFromMid:ME.mid;
+  if(!fromMid){ alert('Choose who this issue is from — use the “Raised by” field.'); return; }
   var rMid=fromMid||null, rUid, rName, rInit;
   if(rMid && members[rMid]){ rUid=members[rMid].uid||null; rName=personName(rMid); rInit=members[rMid].initials||initials(rName); }
   else { rMid=null; rUid=ME.uid; rName=ME.name; rInit=ME.initials; }
