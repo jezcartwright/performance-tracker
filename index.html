@@ -745,6 +745,13 @@ tr.rowdone:hover td{opacity:.78}
       <p class="lead">Whoever you tag — a department's leader or a specific person — is notified automatically.</p>
       <div class="fld"><label>Title</label><input id="ri-title" placeholder="Short summary of the issue"></div>
       <div class="fld"><label>Description</label><textarea id="ri-desc" placeholder="What's happening, and what's the impact?"></textarea></div>
+      <div class="fld" id="ri-from-fld" style="display:none">
+        <label>Raised by <span style="font-weight:400;text-transform:none;letter-spacing:0;color:#999">(who it's from)</span></label>
+        <div class="ta">
+          <input id="ri-from-input" class="ta-input" type="text" placeholder="Search for who raised it…" autocomplete="off" oninput="fromSearch(this)" onfocus="fromSearch(this)" onblur="taBlur('ri-from-list')">
+          <div id="ri-from-list" class="ta-list" style="display:none"></div>
+        </div>
+      </div>
       <div class="fld">
         <label>Raise against</label>
         <div class="seg" id="ri-mode" style="margin-bottom:10px">
@@ -1951,7 +1958,7 @@ function render(){
 document.querySelectorAll('.schip').forEach(function(c){ c.addEventListener('click',function(){ var k=c.dataset.k; if(k===sortKey)asc=!asc; else {sortKey=k;asc=false;} document.querySelectorAll('.schip').forEach(function(x){x.classList.toggle('on',x.dataset.k===sortKey);}); var car=c.querySelector('.car'); if(car)car.textContent=asc?'↑':'↓'; render(); }); });
 
 /* ---------- RAISE ---------- */
-var raiseConv=null, riMode='fn', riOthers=[], riEditId=null, psMid=null;
+var raiseConv=null, riMode='fn', riOthers=[], riEditId=null, psMid=null, riFromMid=null;
 function peopleMatches(q, exclude){ q=(q||'').trim().toLowerCase(); var ids=Object.keys(members).filter(function(m){ if(exclude&&exclude.indexOf(m)>=0)return false; if(!q)return true; var nm=personName(m).toLowerCase(); var em=((members[m]||{}).email||'').toLowerCase(); return nm.indexOf(q)>=0||em.indexOf(q)>=0; }); ids.sort(function(a,b){return personName(a).localeCompare(personName(b));}); return ids.slice(0,8); }
 function renderTaList(listId, q, exclude, pickFn){
   var el=document.getElementById(listId); if(!el)return;
@@ -1964,12 +1971,16 @@ function hideTa(listId){ var el=document.getElementById(listId); if(el){ el.inne
 window.taBlur=function(listId){ setTimeout(function(){ hideTa(listId); },150); };
 window.psSearch=function(inp){ psMid=null; showTag(); renderTaList('ps-list', inp.value, [], 'psPick'); };
 window.psPick=function(m){ psMid=m; var inp=document.getElementById('ps-input'); if(inp)inp.value=personName(m); hideTa('ps-list'); showTag(); };
+window.fromSearch=function(inp){ riFromMid=null; renderTaList('ri-from-list', inp.value, [], 'fromPick'); };
+window.fromPick=function(m){ riFromMid=m; var inp=document.getElementById('ri-from-input'); if(inp)inp.value=personName(m); hideTa('ri-from-list'); };
 window.addSearch=function(inp){ renderTaList('ri-add-list', inp.value, riOthers.concat([ME.mid]), 'addPick'); };
 window.addPick=function(m){ if(m!==ME.mid && riOthers.indexOf(m)<0){ riOthers.push(m); renderChips(); } var inp=document.getElementById('ri-add-input'); if(inp)inp.value=''; hideTa('ri-add-list'); };
 function renderChips(){ var c=document.getElementById('ri-chips'); if(!c)return; c.innerHTML=riOthers.map(function(m){ return '<span class="rchip"><span class="mini" style="'+avBg(m)+';width:22px;height:22px;font-size:9px">'+avBody(m)+'</span>'+esc(personName(m))+'<button type="button" onclick="riRemoveOther(\''+m+'\')">×</button></span>'; }).join(''); }
 function renderFnSelect(){
   var s=document.getElementById('fs'); if(s){ var opts='<option value="">Select…</option>'; Object.keys(fns).forEach(function(fid){ opts+='<option value="'+fid+'">'+esc(fns[fid].name)+'</option>'; }); s.innerHTML=opts; s.value=''; }
   psMid=null; var pin=document.getElementById('ps-input'); if(pin)pin.value=''; var ain=document.getElementById('ri-add-input'); if(ain)ain.value=''; hideTa('ps-list'); hideTa('ri-add-list');
+  var ff=document.getElementById('ri-from-fld'); if(ff)ff.style.display=isAdmin?'':'none';
+  riFromMid=(isAdmin&&ME.mid)?ME.mid:null; var fin=document.getElementById('ri-from-input'); if(fin)fin.value=(riFromMid&&members[riFromMid])?personName(riFromMid):''; hideTa('ri-from-list');
   var t=document.getElementById('ri-title'); if(t)t.value=''; var d=document.getElementById('ri-desc'); if(d)d.value='';
   var p=document.getElementById('tp'); if(p)p.classList.remove('show');
   document.querySelectorAll('#raise .yn button').forEach(function(b){b.classList.remove('sel');});
@@ -2039,7 +2050,11 @@ window.raiseIssue=function(){
     if(!fid){ alert('Please choose a function or a person.'); return; }
     var f=fns[fid]; fName=f.name; color=f.color; leaderMid=f.leaderMid||null; leaderName=f.leaderName||(leaderMid?personName(leaderMid):''); leaderUid=(leaderMid&&members[leaderMid]&&members[leaderMid].uid)||null;
   }
-  var parts=[]; if(ME.mid)parts.push(ME.mid); if(leaderMid&&parts.indexOf(leaderMid)<0)parts.push(leaderMid);
+  var fromMid=(isAdmin&&riFromMid)?riFromMid:ME.mid;
+  var rMid=fromMid||null, rUid, rName, rInit;
+  if(rMid && members[rMid]){ rUid=members[rMid].uid||null; rName=personName(rMid); rInit=members[rMid].initials||initials(rName); }
+  else { rMid=null; rUid=ME.uid; rName=ME.name; rInit=ME.initials; }
+  var parts=[]; if(rMid)parts.push(rMid); if(leaderMid&&parts.indexOf(leaderMid)<0)parts.push(leaderMid);
   if(vis!=='teamleader'){ riOthers.forEach(function(m){ if(m&&parts.indexOf(m)<0)parts.push(m); }); }
   if(riEditId){
     var upd={ title:title, description:desc, functionId:fid, functionName:fName, color:color, leaderMid:leaderMid, leaderName:leaderName, leaderUid:leaderUid, conversationHad:!!raiseConv, visibility:vis, targetType:riMode, updatedAt:FV.serverTimestamp() };
@@ -2051,11 +2066,13 @@ window.raiseIssue=function(){
     }).catch(function(e){ alert('Could not save changes: '+e.message); });
     return;
   }
-  issuesRef().add({ title:title, description:desc, functionId:fid, functionName:fName, color:color, leaderMid:leaderMid, leaderName:leaderName, leaderUid:leaderUid, raiserMid:ME.mid, raiserUid:ME.uid, raiserName:ME.name, raiserInitials:ME.initials, conversationHad:!!raiseConv, visibility:vis, targetType:riMode, status:'open', participants:parts, createdAt:FV.serverTimestamp(), updatedAt:FV.serverTimestamp() })
+  issuesRef().add({ title:title, description:desc, functionId:fid, functionName:fName, color:color, leaderMid:leaderMid, leaderName:leaderName, leaderUid:leaderUid, raiserMid:rMid, raiserUid:rUid, raiserName:rName, raiserInitials:rInit, conversationHad:!!raiseConv, visibility:vis, targetType:riMode, status:'open', participants:parts, createdAt:FV.serverTimestamp(), updatedAt:FV.serverTimestamp() })
   .then(function(ref){
     var who=leaderMid?('tagged '+(leaderName||personName(leaderMid))):(riMode==='person'?'tagged that person':'no leader is set for this function yet');
     var extra=(vis!=='teamleader'&&riOthers.length)?(' and '+riOthers.length+' other'+(riOthers.length>1?'s':'')):'';
-    ref.collection('messages').add({type:'system',text:ME.first+' raised this and '+who+extra+'.',authorMid:ME.mid,authorUid:ME.uid,authorName:ME.name,createdAt:FV.serverTimestamp()});
+    var byName=(rMid&&members[rMid])?(members[rMid].first||rName):(ME.first||rName);
+    var loggedNote=(rMid&&ME.mid&&rMid!==ME.mid)?(' (logged by '+ME.first+')'):'';
+    ref.collection('messages').add({type:'system',text:byName+' raised this and '+who+extra+loggedNote+'.',authorMid:ME.mid,authorUid:ME.uid,authorName:ME.name,createdAt:FV.serverTimestamp()});
     goDash();
   }).catch(function(e){ alert('Could not raise issue: '+e.message); });
 };
