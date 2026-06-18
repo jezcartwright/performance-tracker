@@ -1733,11 +1733,42 @@ window.createClient=function(){
     .catch(function(e){ alert('Could not create client: '+e.message); if(go){go.disabled=false;go.textContent='Create client \u2192';} });
 };
 function brandFromWeb(cid, domain){
+  if(!domain) return;
   fetchLogoUrl(domain, function(url){
-    if(!url) return; var up={logo:url, web:domain};
-    sampleColor(url, function(theme){ if(theme) up.theme=theme; companiesCol.doc(cid).update(up).then(function(){ if(activeCid===cid && theme) applyTheme(theme); }).catch(function(){}); });
+    var up={ web:domain }; if(url) up.logo=url;
+    var nm=(companies[cid]&&companies[cid].name)||domain;
+    brandColor(domain, nm, function(theme){
+      if(theme) up.theme=theme;
+      companiesCol.doc(cid).update(up).then(function(){ if(activeCid===cid){ if(theme) applyTheme(theme); renderClientLogo(); } }).catch(function(){});
+    });
   });
 }
+/* Brand colour: sample a CORS-clean icon source so the canvas read is allowed; if every
+   cross-origin read is blocked, fall back to a stable, tasteful accent derived from the
+   domain so the colour always differs from the default rather than silently staying orange. */
+var BRAND_FALLBACK=[
+  {strip:'#2563eb',ink:'#1d4ed8',soft:'#eef3fe',mid:'#cfddfb'},
+  {strip:'#0e9f6e',ink:'#0a7d57',soft:'#e8f6f0',mid:'#c4e9da'},
+  {strip:'#7c3aed',ink:'#6427c7',soft:'#f4eefe',mid:'#e0cdfb'},
+  {strip:'#e11d48',ink:'#be123c',soft:'#fff0f3',mid:'#fbd0da'},
+  {strip:'#0e8f8a',ink:'#0a706c',soft:'#e6f5f4',mid:'#c2e7e5'},
+  {strip:'#b5651d',ink:'#915016',soft:'#fbf2e8',mid:'#f0dcc2'}
+];
+function themeFromKey(k){ k=(k||'').toLowerCase(); var h=0; for(var i=0;i<k.length;i++){ h=(h*31+k.charCodeAt(i))>>>0; } return BRAND_FALLBACK[h%BRAND_FALLBACK.length]; }
+function brandColor(domain, key, cb){
+  var srcs=['https://icons.duckduckgo.com/ip3/'+domain+'.ico','https://www.google.com/s2/favicons?domain='+domain+'&sz=128'];
+  var i=0;
+  (function next(){
+    if(i>=srcs.length){ cb(themeFromKey(key||domain)); return; }
+    sampleColor(srcs[i++], function(theme){ if(theme){ cb(theme); } else { next(); } });
+  })();
+}
+window.rebrandCurrent=function(){
+  if(!ME.isSuper||!activeCid)return;
+  var dom=(company&&company.web)||domainFrom((prompt('Company website (e.g. sgs.com) to pull branding from:')||''));
+  if(!dom)return;
+  brandFromWeb(activeCid, dom);
+};
 function themeFromRGB(r,g,b){
   function hx(x){ return ('0'+Math.max(0,Math.min(255,Math.round(x))).toString(16)).slice(-2); }
   function mix(a,bb,t){ return a+(bb-a)*t; }
@@ -2394,8 +2425,9 @@ function controlsBar(){
   var addt='<button class="orgbtn" onclick="addTeam()">+ Add team</button>';
   var setceo=(!(company.ceoMemberId&&members[company.ceoMemberId]))?'<button class="orgbtn" onclick="appointCEOPick()">♛ Set a CEO</button>':'';
   var arch='<button class="orgbtn" onclick="openArchive()">🗄 Archive <span id="archCount">'+archiveCount+'</span></button>';
+  var reb=ME.isSuper?'<button class="orgbtn" onclick="rebrandCurrent()" title="Pull logo &amp; accent colour from the company website">🎨 Brand</button>':'';
   var banner=(ORGVIEW==='chart'&&MANAGING)?'<div class="mgbanner">✎ Manage Org on — <strong>drag a card onto another</strong> to change who they report to (their team moves too); <strong>drop on a card’s left/right edge</strong> to reorder. Tap a leader slot to set them, or use a card’s ⋯ menu. Tap anyone to view them.</div>':'';
-  return '<div class="orgbar"><div class="orgcrumb">'+esc(company.name||'Organisation')+'</div><div class="orgctrls">'+toggle+mg+addp+addt+setceo+arch+'</div></div>'+banner;
+  return '<div class="orgbar"><div class="orgcrumb">'+esc(company.name||'Organisation')+'</div><div class="orgctrls">'+toggle+mg+addp+addt+setceo+arch+reb+'</div></div>'+banner;
 }
 function renderTeam(){
   var onAdmin=(function(){var a=document.getElementById('admin');return !!(a&&a.classList.contains('active'));})();
