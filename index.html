@@ -476,6 +476,20 @@ body:has(#cohome.active){background:#fff}
 .ozb.ozp{font-size:12px;min-width:48px;border-left:1px solid var(--b);border-right:1px solid var(--b)}
 .teamsel{font:600 13px var(--ui);color:var(--t);background:var(--card);border:1px solid var(--b);border-radius:9px;padding:7px 10px;cursor:pointer;max-width:180px;vertical-align:middle}
 .teamsel:focus{outline:none;border-color:var(--strip)}
+.orgsearch-wrap{position:relative;display:inline-block;vertical-align:middle}
+.oss-ico{position:absolute;left:9px;top:50%;transform:translateY(-50%);font-size:12px;opacity:.55;pointer-events:none}
+.orgsearch{font:500 13px var(--ui);color:var(--t);background:var(--card);border:1px solid var(--b);border-radius:9px;padding:7px 10px 7px 28px;width:170px;outline:none;transition:width .15s ease,border-color .15s ease}
+.orgsearch:focus{border-color:var(--strip);width:210px}
+.orgsearch-res{position:absolute;top:calc(100% + 5px);right:0;z-index:60;width:290px;max-width:78vw;max-height:344px;overflow:auto;background:var(--card);border:1px solid var(--b);border-radius:12px;box-shadow:0 12px 32px rgba(0,0,0,.16);padding:5px;display:none;text-align:left}
+.orgsearch-res.on{display:block}
+.osr{display:flex;align-items:center;gap:9px;padding:7px 9px;border-radius:8px;cursor:pointer}
+.osr:hover{background:var(--strip-soft)}
+.osr-av{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font:700 11px var(--ui);color:#fff;flex:0 0 auto;overflow:hidden}
+.osr-av .av-img{width:100%;height:100%;object-fit:cover;border-radius:50%}
+.osr-who{display:flex;flex-direction:column;min-width:0}
+.osr-nm{font:600 13px var(--ui);color:var(--t);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.osr-rl{font:500 11px var(--ui);color:var(--t2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.osr-empty{padding:11px 11px;color:var(--t2);font:500 12.5px var(--ui)}
 .orgbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:0 2px 4px;padding-bottom:14px}
 .orgcrumb{font-weight:800;font-size:14px;color:var(--t2)}
 .orgctrls{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
@@ -2546,7 +2560,8 @@ function controlsBar(){
     var fopts='<option value="">\uD83D\uDC65 Whole org</option>'+deptList().filter(function(fid){return fnsLeader(fid)!==company.ceoMemberId;}).map(function(fid){return '<option value="'+fid+'"'+(FOCUSFID===fid?' selected':'')+'>'+esc(fns[fid].name||'Team')+'</option>';}).join('');
     teamSel='<select class="teamsel" onchange="setFocusTeam(this.value)" title="Show just one team">'+fopts+'</select>';
   }
-  if(!isAdmin) return '<div class="orgbar"><div class="orgcrumb">'+esc(company.name||'Organisation')+'</div><div class="orgctrls">'+toggle+oz+teamSel+'</div></div>';
+  var search='<div class="orgsearch-wrap"><span class="oss-ico">\uD83D\uDD0D</span><input id="orgSearch" class="orgsearch" type="search" placeholder="Search people\u2026" autocomplete="off" oninput="orgSearchInput(this.value)" onkeydown="if(event.key===\'Enter\'){event.preventDefault();orgSearchEnter();}" onblur="setTimeout(orgSearchClose,160)"><div class="orgsearch-res" id="orgSearchResults"></div></div>';
+  if(!isAdmin) return '<div class="orgbar"><div class="orgcrumb">'+esc(company.name||'Organisation')+'</div><div class="orgctrls">'+search+toggle+oz+teamSel+'</div></div>';
   var mg=(ORGVIEW==='chart')?'<button class="orgbtn'+(MANAGING?' on':'')+'" onclick="toggleManageOrg()">✎ Manage Org</button>':'';
   var addp='<button class="orgbtn primary-org" onclick="openPerson()">+ Add person</button>';
   var addt='<button class="orgbtn" onclick="addTeam()">+ Add team</button>';
@@ -2555,7 +2570,7 @@ function controlsBar(){
   var arch='<button class="orgbtn" onclick="openArchive()">🗄 Archive <span id="archCount">'+archiveCount+'</span></button>';
   var reb=ME.isSuper?'<button class="orgbtn" onclick="rebrandCurrent()" title="Pull logo &amp; accent colour from the company website">🎨 Brand</button>':'';
   var banner=(ORGVIEW==='chart'&&MANAGING)?'<div class="mgbanner">✎ Manage Org on — <strong>drag a card onto another</strong> to change who they report to (their team moves too); <strong>drop on a card’s left/right edge</strong> to reorder. Tap a leader slot to set them, or use a card’s ⋯ menu. Tap anyone to view them.</div>':'';
-  return '<div class="orgbar"><div class="orgcrumb">'+esc(company.name||'Organisation')+'</div><div class="orgctrls">'+toggle+oz+teamSel+mg+addp+addt+imp+setceo+arch+reb+'</div></div>'+banner;
+  return '<div class="orgbar"><div class="orgcrumb">'+esc(company.name||'Organisation')+'</div><div class="orgctrls">'+search+toggle+oz+teamSel+mg+addp+addt+imp+setceo+arch+reb+'</div></div>'+banner;
 }
 var ORGZOOM=1;
 function applyOrgZoom(){ var tree=document.querySelector('.orgchart .tree'); if(tree){ try{ tree.style.zoom=ORGZOOM; }catch(e){ tree.style.transform='scale('+ORGZOOM+')'; tree.style.transformOrigin='top center'; } } var pct=document.getElementById('ozPct'); if(pct)pct.textContent=Math.round(ORGZOOM*100)+'%'; }
@@ -2663,6 +2678,27 @@ function orgListFn(){
 }
 window.setOrgView=function(v){ ORGVIEW=v; if(v==='list'&&MANAGING){ MANAGING=false; } if(openOcm){openOcm.classList.remove('on');openOcm=null;} renderTeam(); };
 window.setFocusTeam=function(fid){ FOCUSFID=fid||null; if(FOCUSFID&&ORGVIEW!=='chart')ORGVIEW='chart'; if(openOcm){openOcm.classList.remove('on');openOcm=null;} renderTeam(); };
+window.orgSearchInput=function(q){
+  q=(q||'').trim().toLowerCase();
+  var box=document.getElementById('orgSearchResults'); if(!box)return;
+  if(!q){ box.innerHTML=''; box.classList.remove('on'); return; }
+  var hits=Object.keys(members).filter(function(mid){
+    var m=members[mid]; if(!m)return false;
+    var fn=fns[m.functionId]; var team=fn?(fn.name||''):'';
+    return ((personName(mid)||'')+' '+(m.title||'')+' '+team).toLowerCase().indexOf(q)>=0;
+  }).sort(function(a,b){ return (personName(a)||'').localeCompare(personName(b)||''); }).slice(0,14);
+  if(!hits.length){ box.innerHTML='<div class="osr-empty">No one matches \u201c'+esc(q)+'\u201d.</div>'; box.classList.add('on'); return; }
+  box.innerHTML=hits.map(function(mid){
+    var m=members[mid]; var role=roleLabelFor(mid)||'Team member';
+    var fn=fns[m.functionId]; var team=fn?(fn.name||''):'';
+    var sub=role+((team&&team.toLowerCase()!==role.toLowerCase())?(' \u00b7 '+team):'');
+    return '<div class="osr" onmousedown="event.preventDefault()" onclick="orgSearchPick(\''+mid+'\')"><span class="osr-av" style="'+avBg(mid)+'">'+avBody(mid)+'</span><span class="osr-who"><span class="osr-nm">'+esc(personName(mid))+'</span><span class="osr-rl">'+esc(sub)+'</span></span></div>';
+  }).join('');
+  box.classList.add('on');
+};
+window.orgSearchPick=function(mid){ orgSearchClose(); var inp=document.getElementById('orgSearch'); if(inp)inp.value=''; openProfile(mid); };
+window.orgSearchEnter=function(){ var f=document.querySelector('#orgSearchResults .osr'); if(f)f.click(); };
+window.orgSearchClose=function(){ var box=document.getElementById('orgSearchResults'); if(box){ box.innerHTML=''; box.classList.remove('on'); } };
 window.setOrgList=function(l){ ORGLIST=l; renderTeam(); };
 window.toggleManageOrg=function(){ MANAGING=!MANAGING; if(openOcm){openOcm.classList.remove('on');openOcm=null;} renderTeam(); };
 var openOcm=null;
