@@ -2452,7 +2452,7 @@ function renderStepper(st){
   var html=order.map(function(o,n){
     var cls='step'+(n<idx?' done':'')+(n===idx?' cur':''); var oc='', cur='';
     if(o[0]==='done'){ if(canResolve && st!=='done'){ oc='onclick="resolveIssue()"'; cur='cursor:pointer'; } }
-    else { if(canMove && o[0]!==st){ oc='onclick="setStatus(\''+o[0]+'\')"'; cur='cursor:pointer'; } }
+    else { if(canMove && n>idx){ oc='onclick="setStatus(\''+o[0]+'\')"'; cur='cursor:pointer'; } }
     return '<div class="'+cls+'" style="'+cur+'" '+oc+'>'+o[1]+'</div>';
   }).join('');
   document.getElementById('dSteps').innerHTML=html;
