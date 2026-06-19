@@ -823,16 +823,10 @@ input,textarea,select{font-family:inherit}
     <button class="tg" data-s="team" id="tabTeam">Team</button>
     <button class="tg" data-s="admin" id="tabAdmin" style="display:none">Admin &amp; Setup</button>
     <span class="grow"></span>
-    <div class="addmenu-wrap">
-      <button class="primary" onclick="toggleAddMenu(event)">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
-        New
-      </button>
-      <div class="addmenu" id="addMenu">
-        <button onclick="addMenuPick('priority')"><span class="am-ic">&#9733;</span><span><span class="am-t">Add a priority</span><span class="am-s">Something you're driving</span></span></button>
-        <button onclick="addMenuPick('issue')"><span class="am-ic">&#9873;</span><span><span class="am-t">Raise an issue</span><span class="am-s">Hand something to a person or team</span></span></button>
-      </div>
-    </div>
+    <button class="primary" id="newBtn" onclick="newBtnAction()" style="display:none">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+      <span id="newBtnLabel">New</span>
+    </button>
   </nav>
 
   <!-- DASHBOARD -->
@@ -1884,7 +1878,7 @@ window.joinCompanyBtn=function(){ joinCompany().then(function(){ renderAdmin(); 
 function applyTheme(t){ if(!t)return; var r=document.documentElement; r.style.setProperty('--strip',t.strip); r.style.setProperty('--strip-ink',t.ink); r.style.setProperty('--strip-soft',t.soft); r.style.setProperty('--strip-mid',t.mid); var mt=document.querySelector('meta[name=theme-color]'); if(mt)mt.setAttribute('content',t.strip); document.querySelectorAll('#sws .sw').forEach(function(x){x.classList.toggle('sel',x.dataset.c===t.strip);}); var bc=document.getElementById('brandCustom'); if(bc&&t.strip&&t.strip.charAt(0)==='#')bc.value=t.strip; try{localStorage.setItem('ptTheme',JSON.stringify({strip:t.strip,ink:t.ink,soft:t.soft,mid:t.mid}));}catch(e){} }
 
 /* ---------- NAV ---------- */
-function show(id){ document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active');}); var el=document.getElementById(id); if(el)el.classList.add('active'); window.scrollTo(0,0); }
+function show(id){ document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active');}); var el=document.getElementById(id); if(el)el.classList.add('active'); window.scrollTo(0,0); syncNewBtn(id); }
 function clearTabs(){ document.querySelectorAll('.tg[data-s]').forEach(function(n){n.classList.remove('active');}); }
 document.querySelectorAll('.tg[data-s]').forEach(function(b){ b.addEventListener('click',function(){ clearTabs(); b.classList.add('active'); if(b.dataset.s==='priorities'){ show('priorities'); renderPriorities(); return; } if(b.dataset.s==='admin'){ show('admin'); renderAdmin(); renderTeam(); return; } if(b.dataset.s==='team'){ show('team'); renderTeam(); return; } boardMode='active'; updateSortbarUI(); show('dashboard'); setIssueSegUI(); render(); }); });
 window.goTeam=function(){ setHome(false); clearTabs(); var t=document.getElementById('tabTeam'); if(t)t.classList.add('active'); show('team'); renderTeam(); };
@@ -3242,10 +3236,15 @@ function priCardHTML(p,canDrag,canEdit,canAgree){
   var note=p.note?('<div class="pri-noteline">'+esc(p.note)+'</div>'):'';
   return '<li class="pri-card" data-pri="'+p.id+'">'+handle+'<span class="pri-rank"></span><div class="pri-main"><div class="pri-title"'+titleClick+'>'+esc(p.title||'Untitled priority')+'</div>'+note+'<div class="pri-meta"><span class="pri-involves"'+invClick+'>Involves '+priInvolvesHTML(p)+'</span></div></div><div class="pri-right">'+statusBtn+agree+del+'</div></li>';
 }
-/* "+ New" menu */
-window.toggleAddMenu=function(e){ if(e){e.stopPropagation();} var m=document.getElementById('addMenu'); if(m)m.classList.toggle('on'); };
-window.addMenuPick=function(kind){ var m=document.getElementById('addMenu'); if(m)m.classList.remove('on'); if(kind==='priority')openRaisePriority(null); else openRaise(); };
-document.addEventListener('click',function(){ var m=document.getElementById('addMenu'); if(m)m.classList.remove('on'); });
+/* contextual "+ New" button — label + action follow the active screen */
+function syncNewBtn(screen){
+  var btn=document.getElementById('newBtn'); if(!btn)return;
+  var lbl=document.getElementById('newBtnLabel');
+  if(screen==='priorities'){ btn.style.display=''; btn.dataset.act='priority'; if(lbl)lbl.textContent='Add priority'; }
+  else if(screen==='dashboard'){ btn.style.display=''; btn.dataset.act='issue'; if(lbl)lbl.textContent='Raise an issue'; }
+  else { btn.style.display='none'; }
+}
+window.newBtnAction=function(){ var btn=document.getElementById('newBtn'); var act=btn?btn.dataset.act:''; if(act==='priority')openRaisePriority(null); else if(act==='issue')openRaise(); };
 
 </script>
 </body>
