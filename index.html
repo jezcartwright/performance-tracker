@@ -237,6 +237,16 @@ tbody td{padding:14px 16px;vertical-align:middle}
 .tagp.show{display:flex}
 .chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px}
 .rchip{display:inline-flex;align-items:center;gap:6px;background:var(--strip-soft);border:1px solid var(--strip-mid);border-radius:999px;padding:3px 5px 3px 4px;font-size:12.5px;font-weight:600;color:#333}
+.doclist{display:flex;flex-direction:column;gap:8px}
+.doc-row{display:flex;align-items:center}
+.doc-chip{display:flex;align-items:center;gap:9px;flex:1;min-width:0;padding:8px 11px;border:1px solid var(--b);border-radius:8px;text-decoration:none;color:var(--t);font-size:13.5px;background:#fff}
+.doc-chip:hover{border-color:var(--strip-mid);background:var(--strip-soft)}
+.doc-chip .doc-ic{color:var(--strip);display:flex;flex-shrink:0}
+.doc-chip .doc-nm{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.doc-chip .doc-by{color:var(--t3);font-size:11px;margin-left:auto;white-space:nowrap;flex-shrink:0}
+.doc-x{margin-left:6px;border:none;background:none;color:var(--t3);cursor:pointer;font-size:16px;line-height:1;flex-shrink:0}
+.doc-x:hover{color:#c0392b}
+.pri-docs{display:inline-flex;align-items:center;gap:3px;margin-left:8px;color:var(--t3);font-size:11.5px;font-weight:600;vertical-align:middle}
 .rchip button{border:none;background:none;cursor:pointer;font-size:15px;line-height:1;color:#999;padding:0 3px}
 .rchip button:hover{color:#d33}
 .ta{position:relative}
@@ -966,6 +976,11 @@ tr.rowdone:hover td{opacity:.78}
         </div>
         <div class="chips" id="pr-chips"></div>
       </div>
+      <div class="fld">
+        <label>Documents <span style="font-weight:400;text-transform:none;letter-spacing:0;color:#999">(optional)</span></label>
+        <div style="display:flex;gap:8px;margin-bottom:8px"><input id="pr-doc-url" class="ta-input" type="url" placeholder="Paste a link (Google Doc, Drive, PDF…)" style="flex:1"><button type="button" class="ghost" onclick="prDocAdd()">Add</button></div>
+        <div class="chips" id="pr-doc-chips"></div>
+      </div>
       <div class="form-foot">
         <button class="ghost" onclick="goPriorities()">Cancel</button>
         <button class="primary" id="pr-submit" onclick="savePriority()">Add priority</button>
@@ -991,6 +1006,7 @@ tr.rowdone:hover td{opacity:.78}
         <div class="ballbox" id="dBallWrap"></div>
         <div class="ta" id="ball-ta" style="display:none;margin:-6px 0 14px"><div id="ball-back"></div><input id="ball-input" class="ta-input" type="text" placeholder="Pass the ball to…" autocomplete="off" oninput="ballSearch(this)" onfocus="ballSearch(this)" onblur="taBlur('ball-list')"><div id="ball-list" class="ta-list" style="display:none"></div></div>
         <div class="sec"><h3>Description</h3><p id="dDesc">—</p></div>
+        <div class="sec" id="docsSec"><h3>Documents</h3><div id="dDocs"></div></div>
         <div class="sec">
           <h3>Status</h3>
           <div class="steps" id="dSteps"></div>
@@ -2388,6 +2404,7 @@ function fillDetail(i){
   document.getElementById('dR').textContent=i.raiserName||personName(i.raiserMid);
   var cv=document.getElementById('dConv'); if(cv) cv.innerHTML=spokenToggle(i);
   document.getElementById('dDesc').textContent=i.description||'—';
+  var _dd=document.getElementById('dDocs'); if(_dd)renderDocs(i);
   var bw=document.getElementById('dBallWrap'); if(bw) bw.innerHTML=ballBoxHTML(i);
   var bta=document.getElementById('ball-ta'); if(bta) bta.style.display='none';
   renderStepper(i.status);
@@ -2546,6 +2563,18 @@ function subscribeMsgs(id){
   });
 }
 window.sendMsg=function(){ var t=document.getElementById('mi'); var v=t.value.trim(); if(!v||!curId)return; issuesRef().doc(curId).collection('messages').add({type:'msg',text:v,authorMid:ME.mid,authorUid:ME.uid,authorName:ME.name,createdAt:FV.serverTimestamp()}); issuesRef().doc(curId).update({updatedAt:FV.serverTimestamp()}); t.value=''; };
+/* ---- document attachments (links) — issues + priorities ---- */
+var DOC_SVG='<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>';
+var CLIP_SVG='<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>';
+function normUrl(u){ u=(u||'').trim(); if(!u)return ''; if(!/^https?:\/\//i.test(u)){ if(/^[\w.-]+\.[a-z]{2,}/i.test(u)){ u='https://'+u; } else { return ''; } } try{ return new URL(u).href; }catch(e){ return ''; } }
+function docNameFromUrl(u){ try{ var x=new URL(u); var seg=x.pathname.split('/').filter(Boolean).pop(); return decodeURIComponent(seg||x.hostname).slice(0,60); }catch(e){ return 'Document'; } }
+function priDocsBadge(p){ var n=((p&&p.attachments)||[]).length; if(!n)return ''; return '<span class="pri-docs" title="'+n+' document'+(n===1?'':'s')+' attached">'+CLIP_SVG+n+'</span>'; }
+function docChipHTML(d, rmIdx){ var by=d.byName?('<span class="doc-by">'+esc(d.byName)+'</span>'):''; var x=(rmIdx>=0)?'<button type="button" class="doc-x" title="Remove link" onclick="docRemove('+rmIdx+')">\u00d7</button>':''; return '<a class="doc-chip" href="'+esc(d.url)+'" target="_blank" rel="noopener"><span class="doc-ic">'+DOC_SVG+'</span><span class="doc-nm">'+esc(d.name||d.url)+'</span>'+by+'</a>'+x; }
+function renderDocs(i){ var host=document.getElementById('dDocs'); if(!host)return; var list=(i&&i.attachments)||[]; var canEdit=!!(i&&i.status!=='done'&&(isAdmin||i.raiserMid===ME.mid||i.leaderMid===ME.mid||(i.participants||[]).indexOf(ME.mid)>=0)); var rows=list.map(function(d,idx){ return '<div class="doc-row">'+docChipHTML(d, canEdit?idx:-1)+'</div>'; }).join(''); if(!rows){ rows='<p class="note" style="margin:0 0 6px">No documents linked yet.</p>'; } var add=''; if(canEdit){ add='<div id="docAddRow" style="display:none;margin-top:8px"><input id="docUrl" class="ta-input" type="url" placeholder="Paste a link (Google Doc, Drive, PDF…)" style="margin-bottom:6px"><input id="docName" class="ta-input" type="text" placeholder="Name (optional)" style="margin-bottom:6px"><div style="display:flex;gap:8px"><button class="dact" onclick="docAdd()">Add link</button><button class="dact" onclick="docAddCancel()">Cancel</button></div></div><button class="dact" id="docAddBtn" style="margin-top:8px" onclick="docAddOpen()">+ Add document</button>'; } host.innerHTML='<div class="doclist">'+rows+'</div>'+add; }
+window.docAddOpen=function(){ var r=document.getElementById('docAddRow'),b=document.getElementById('docAddBtn'); if(r)r.style.display='block'; if(b)b.style.display='none'; var u=document.getElementById('docUrl'); if(u)u.focus(); };
+window.docAddCancel=function(){ var r=document.getElementById('docAddRow'),b=document.getElementById('docAddBtn'); if(r){ r.style.display='none'; var u=document.getElementById('docUrl'),n=document.getElementById('docName'); if(u)u.value=''; if(n)n.value=''; } if(b)b.style.display=''; };
+window.docAdd=function(){ if(!curIssue||!curId)return; var u=normUrl(document.getElementById('docUrl').value); if(!u){ alert('That doesn\'t look like a valid web link.'); return; } var nm=(document.getElementById('docName').value||'').trim()||docNameFromUrl(u); var arr=(curIssue.attachments||[]).slice(); arr.push({name:nm, url:u, by:(ME.mid||ME.uid||null), byName:(ME.name||ME.first||''), at:new Date().toISOString()}); curIssue.attachments=arr; renderDocs(curIssue); issuesRef().doc(curId).update({attachments:arr, updatedAt:FV.serverTimestamp()}).catch(function(e){ alert('Could not attach: '+e.message); }); issuesRef().doc(curId).collection('messages').add({type:'system',event:'doc',text:(ME.first||ME.name||'Someone')+' attached a document: '+nm,authorMid:ME.mid,authorUid:ME.uid,authorName:ME.name,createdAt:FV.serverTimestamp()}); };
+window.docRemove=function(idx){ if(!curIssue||!curId)return; var arr=(curIssue.attachments||[]).slice(); if(idx<0||idx>=arr.length)return; if(!confirm('Remove this document link? This only unlinks it here — the file itself is untouched.'))return; arr.splice(idx,1); curIssue.attachments=arr; renderDocs(curIssue); issuesRef().doc(curId).update({attachments:arr, updatedAt:FV.serverTimestamp()}).catch(function(e){ alert('Could not remove: '+e.message); }); };
 document.getElementById('mi').addEventListener('keydown',function(e){ if(e.key==='Enter'&&!e.shiftKey){ e.preventDefault(); sendMsg(); } });
 
 /* ---------- NOTIFICATIONS ---------- */
@@ -3188,7 +3217,7 @@ window.setIssueFilter=function(mode){ boardMode=(mode==='mine')?'mine':'active';
 function setIssueSegUI(){ var seg=document.getElementById('issSeg'); if(!seg)return; var btns=seg.querySelectorAll('button'); if(btns[0])btns[0].setAttribute('aria-pressed', boardMode==='mine'?'false':'true'); if(btns[1])btns[1].setAttribute('aria-pressed', boardMode==='mine'?'true':'false'); requestAnimationFrame(function(){ var ind=seg.querySelector('.iss-ind'); var act=(boardMode==='mine')?btns[1]:btns[0]; if(ind&&act){ ind.style.left=act.offsetLeft+'px'; ind.style.width=act.offsetWidth+'px'; } }); }
 
 /* ===================== ADD/EDIT PRIORITY FORM + "+ New" MENU ===================== */
-var prInvolves=[], prEditId=null;
+var prInvolves=[], prEditId=null, prDocs=[];
 function openRaisePriority(editId){
   if(!activeCid){alert('No company selected.');return;}
   if(!ME.mid){ alert('You need a person record in this company before you can own priorities. Ask an admin to add you in Team.'); return; }
@@ -3198,8 +3227,10 @@ function openRaisePriority(editId){
   document.getElementById('pr-note').value=p?(p.note||''):'';
   document.getElementById('pr-status').value=(p&&p.status)?p.status:'Scoping';
   prInvolves=p?((p.involves||[]).slice()):[];
-  renderPrChips();
+  prDocs=p?((p.attachments||[]).slice()):[];
+  renderPrChips(); renderPrDocs();
   var ai=document.getElementById('pr-add-input'); if(ai)ai.value=''; hideTa('pr-add-list');
+  var du=document.getElementById('pr-doc-url'); if(du)du.value='';
   document.getElementById('pr-h1').textContent=p?'Edit priority':'Add a priority';
   document.getElementById('pr-submit').textContent=p?'Save changes':'Add priority';
   clearTabs(); var t=document.getElementById('tabPri'); if(t)t.classList.add('active');
@@ -3213,6 +3244,9 @@ window.prAddSearch=function(inp){ renderTaList('pr-add-list', inp.value, prInvol
 window.prAddPick=function(m){ if(m && m!==ME.mid && prInvolves.indexOf(m)<0)prInvolves.push(m); renderPrChips(); var inp=document.getElementById('pr-add-input'); if(inp)inp.value=''; hideTa('pr-add-list'); };
 window.prRemoveInvolve=function(m){ prInvolves=prInvolves.filter(function(x){return x!==m;}); renderPrChips(); };
 function renderPrChips(){ var c=document.getElementById('pr-chips'); if(!c)return; c.innerHTML=prInvolves.map(function(m){ return '<span class="rchip"><span class="mini" style="'+avBg(m)+';width:22px;height:22px;font-size:9px">'+avBody(m)+'</span>'+esc(personName(m))+'<button type="button" onclick="prRemoveInvolve(\''+m+'\')">\u00d7</button></span>'; }).join(''); }
+function renderPrDocs(){ var c=document.getElementById('pr-doc-chips'); if(!c)return; c.innerHTML=prDocs.map(function(d,idx){ return '<span class="rchip"><a href="'+esc(d.url)+'" target="_blank" rel="noopener" style="color:inherit;text-decoration:none;display:inline-flex;align-items:center;gap:6px">'+DOC_SVG+esc(d.name||d.url)+'</a><button type="button" onclick="prDocRemove('+idx+')">\u00d7</button></span>'; }).join(''); }
+window.prDocAdd=function(){ var el=document.getElementById('pr-doc-url'); if(!el)return; var u=normUrl(el.value); if(!u){ alert('That doesn\'t look like a valid web link.'); return; } prDocs.push({name:docNameFromUrl(u), url:u, by:(ME.mid||ME.uid||null), byName:(ME.name||ME.first||''), at:new Date().toISOString()}); el.value=''; renderPrDocs(); };
+window.prDocRemove=function(idx){ if(idx<0||idx>=prDocs.length)return; prDocs.splice(idx,1); renderPrDocs(); };
 window.savePriority=function(){
   if(!activeCid||!ME.mid)return;
   var title=(document.getElementById('pr-title').value||'').trim();
@@ -3222,10 +3256,10 @@ window.savePriority=function(){
   var inv=prInvolves.slice();
   if(prEditId){
     var p=priById(prEditId); if(!p||!canEditPriority(p)){ goPriorities(); return; }
-    prioritiesRef().doc(prEditId).update({title:title, note:note, status:status, involves:inv, updatedAt:FV.serverTimestamp()}).then(function(){ goPriorities(); }).catch(function(e){alert(e.message);});
+    prioritiesRef().doc(prEditId).update({title:title, note:note, status:status, involves:inv, attachments:prDocs.slice(), updatedAt:FV.serverTimestamp()}).then(function(){ goPriorities(); }).catch(function(e){alert(e.message);});
   } else {
     var max=-1; myPriorities().forEach(function(q){ if((q.order||0)>max)max=(q.order||0); });
-    prioritiesRef().add({ownerMid:ME.mid, ownerName:ME.name, title:title, note:note, involves:inv, status:status, agreed:false, agreedBy:null, order:max+1, createdAt:FV.serverTimestamp(), updatedAt:FV.serverTimestamp()}).then(function(){ goPriorities(); }).catch(function(e){alert('Could not add: '+e.message);});
+    prioritiesRef().add({ownerMid:ME.mid, ownerName:ME.name, title:title, note:note, involves:inv, status:status, attachments:prDocs.slice(), agreed:false, agreedBy:null, order:max+1, createdAt:FV.serverTimestamp(), updatedAt:FV.serverTimestamp()}).then(function(){ goPriorities(); }).catch(function(e){alert('Could not add: '+e.message);});
   }
 };
 /* surface the optional detail line on the card */
@@ -3238,7 +3272,7 @@ function priCardHTML(p,canDrag,canEdit,canAgree){
   var titleClick=canEdit?(' onclick="priEditTitle(\''+p.id+'\')" style="cursor:pointer"'):'';
   var invClick=canEdit?(' onclick="priEditInvolves(\''+p.id+'\')" title="Edit who is involved"'):'';
   var note=p.note?('<div class="pri-noteline">'+esc(p.note)+'</div>'):'';
-  return '<li class="pri-card" data-pri="'+p.id+'">'+handle+'<span class="pri-rank"></span><div class="pri-main"><div class="pri-title"'+titleClick+'>'+esc(p.title||'Untitled priority')+'</div>'+note+'<div class="pri-meta"><span class="pri-involves"'+invClick+'>Involves '+priInvolvesHTML(p)+'</span></div></div><div class="pri-right">'+statusBtn+agree+del+'</div></li>';
+  return '<li class="pri-card" data-pri="'+p.id+'">'+handle+'<span class="pri-rank"></span><div class="pri-main"><div class="pri-title"'+titleClick+'>'+esc(p.title||'Untitled priority')+'</div>'+note+'<div class="pri-meta"><span class="pri-involves"'+invClick+'>Involves '+priInvolvesHTML(p)+'</span>'+priDocsBadge(p)+'</div></div><div class="pri-right">'+statusBtn+agree+del+'</div></li>';
 }
 /* contextual "+ New" button — label + action follow the active screen */
 function syncNewBtn(screen){
