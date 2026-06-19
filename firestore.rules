@@ -1,126 +1,232 @@
 rules_version = '2';
+
+// =============================================================================
+// Progress Tracker — Firestore security rules  (Stage 1, reconciled to app)
+// =============================================================================
+// The client is UNTRUSTED. These rules are the ONLY real boundary.
+//
+// Tiers (low -> high): signed-out -> signed-in -> member -> company admin -> super.
+//
+// Escalation guards:
+//   #1  platform/config (super-admin registry) created once by the first user
+//       (self only), then console-only — never client-writable afterwards.
+//   #2  companies.adminUids changes ONLY via a super admin; a company admin can
+//       edit everything else but cannot add/remove admins.
+//   #3  members docs are admin-created. A user may CLAIM an unlinked seat that
+//       already carries their email (setting only `uid`); cannot forge a member,
+//       flip isLeader, or change functionId. No self-made seats.
+//
+// App-behaviour notes:
+//   - Issue reads are COMPANY level; the 5 visibility levels filter client side.
+//   - Status tokens: open/prog/DONE. "Completed" = 'done'.
+//   - Messages carry authorUid; types 'msg' and 'system'.
+//   - access/{uid} is a membership INDEX; users self-write their own entry.
+//
+// CRITICAL — collection-group reads (the cause of the 1229 denial):
+//   Login runs collectionGroup('members').where('uid','==',uid); the invite flow
+//   filters by email. A collection-group query is allowed ONLY if the matched
+//   read condition contains NO get()/exists() — and crucially, if a nested rule's
+//   `allow read` ORs a clean branch with a get()/exists() branch, the WHOLE
+//   condition is treated as impure and the CG query is DENIED. The clean branch
+//   does not rescue it.
+//   Fix: a DEDICATED top-level collection-group match for `members` whose read is
+//   ONLY the pure field test (ownMemberDoc). Firestore UNIONS rule grants, so the
+//   nested company-scoped match still serves in-app roster reads via
+//   canReadCompany. The two never share a condition, so the CG query validates.
+//
+//   Null-safety: every get().data access is gated by exists() (ternary -> null),
+//   and no `in` is applied to a possibly-null list (inList checks `is list`).
+//
+// Anything not matched below is denied (v2 default + explicit catch-all).
+// =============================================================================
+
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // ---- helpers ----
+    // ------------------------------- helpers ---------------------------------
     function signedIn() { return request.auth != null; }
-    function uid() { return request.auth.uid; }
-
-    function teamDoc(teamId) {
-      return get(/databases/$(database)/documents/teams/$(teamId)).data;
+    function uid()      { return request.auth.uid; }
+    function tokenEmail() {
+      return request.auth != null ? request.auth.token.email : null;
     }
-    function isMember(teamId) {
-      return signedIn() &&
-        exists(/databases/$(database)/documents/teams/$(teamId)/members/$(uid()));
-    }
-    function isAdmin(teamId) {
-      return signedIn() && teamDoc(teamId).adminUids.hasAny([uid()]);
+    function inList(list, u) {
+      return list is list && u in list;
     }
 
-    // ---- per-user identity ----
-    match /users/{userId} {
-      allow read, write: if signedIn() && userId == uid();
+    function isSuper() {
+      return signedIn()
+        && exists(/databases/$(database)/documents/platform/config)
+        && inList(get(/databases/$(database)/documents/platform/config).data.superAdminUids, uid());
+    }
+    function companyAdminUids(cid) {
+      return exists(/databases/$(database)/documents/companies/$(cid))
+        ? get(/databases/$(database)/documents/companies/$(cid)).data.adminUids
+        : null;
+    }
+    function companyAdmin(cid) {
+      return signedIn() && ( isSuper() || inList(companyAdminUids(cid), uid()) );
+    }
+    function isMember(cid) {
+      return signedIn()
+        && exists(/databases/$(database)/documents/companies/$(cid)/access/$(uid()));
+    }
+    function canReadCompany(cid) {
+      return isMember(cid) || companyAdmin(cid);
+    }
+    // Priorities: ownership is by member seat. memberUid() reads a seat's uid
+    // (null-safe). ownsPriority / ownsNewPriority check the signed-in user owns
+    // the seat named by ownerMid on the existing / incoming doc respectively.
+    function memberUid(cid, mid) {
+      return exists(/databases/$(database)/documents/companies/$(cid)/members/$(mid))
+        ? get(/databases/$(database)/documents/companies/$(cid)/members/$(mid)).data.uid
+        : null;
+    }
+    function ownsPriority(cid) {
+      return signedIn() && memberUid(cid, resource.data.ownerMid) == uid();
+    }
+    function ownsNewPriority(cid) {
+      return signedIn() && memberUid(cid, request.resource.data.ownerMid) == uid();
+    }
+    // PURE field-only test — NO get()/exists(). Used by the collection-group match.
+    function ownMemberDoc() {
+      return signedIn()
+        && ( resource.data.uid == uid()
+             || resource.data.email == tokenEmail() );
     }
 
-    // ---- team ----
-    match /teams/{teamId} {
+    // =========================================================================
+    // COLLECTION-GROUP read for members (login + invite discovery).
+    // This match's condition is PURE (ownMemberDoc only), so the collection-group
+    // queries `where('uid','==',uid)` and `where('email','==',email)` validate.
+    // It grants READ only; writes/claims are handled by the nested match below.
+    // =========================================================================
+    match /{path=**}/members/{mid} {
+      allow read: if ownMemberDoc();
+    }
 
-      // Read: any member of the team.
-      allow read: if isMember(teamId);
-
-      // Create (bootstrap): first user may create the team only if they
-      // list themselves as an admin. Functions/members are created after.
+    // -------------------- platform/config (super-admin registry) -------------
+    match /platform/config {
+      allow read:   if signedIn();
       allow create: if signedIn()
-        && request.resource.data.adminUids.hasAny([uid()]);
+                    && request.resource.data.superAdminUids == [uid()];
+      allow update, delete: if false;
+    }
+    match /platform/{other} {
+      allow read:  if isSuper();
+      allow write: if false;
+    }
 
-      // Update: only admins. The adminUids list itself is admin-managed.
-      allow update: if isAdmin(teamId);
-      allow delete: if false;
+    // ------------------------------ companies --------------------------------
+    match /companies/{cid} {
+      allow read: if isSuper()
+                  || (signedIn() && inList(resource.data.adminUids, uid()))
+                  || isMember(cid);
 
-      // ---- functions / departments ----
-      match /functions/{functionId} {
-        allow read: if isMember(teamId);
-        // Admins manage the function list and leader assignments.
-        // (also allow create during bootstrap by the team's admin)
-        allow create, update, delete: if isAdmin(teamId);
+      allow create: if isSuper();
+      allow delete: if isSuper();
+
+      // Guard #2: super changes anything; company admin only if adminUids UNCHANGED.
+      allow update: if isSuper()
+                    || ( companyAdmin(cid)
+                         && request.resource.data.adminUids == resource.data.adminUids );
+
+      // ----- membership index ------------------------------------------------
+      match /access/{accessUid} {
+        allow read:  if signedIn() && ( accessUid == uid() || companyAdmin(cid) );
+        allow write: if signedIn() && ( accessUid == uid() || companyAdmin(cid) );
       }
 
-      // ---- members / roles ----
-      match /members/{memberId} {
-        allow read: if isMember(teamId);
-
-        // A user may create / update ONLY their own membership record,
-        // and may not grant themselves a role here (admin lives on the
-        // team's adminUids, which only an admin can edit).
-        allow create, update: if signedIn() && memberId == uid()
-          && !('role' in request.resource.data);
-
-        // Admins may edit any member (e.g. assign a functionId).
-        allow create, update, delete: if isAdmin(teamId);
+      // ----- departments / functions ----------------------------------------
+      match /functions/{fid} {
+        allow read:  if canReadCompany(cid);
+        allow write: if companyAdmin(cid);
       }
 
-      // ---- issues ----
+      // ----- members / org chart (DIRECT-PATH reads + all writes) ------------
+      // Collection-group READ is granted by the top-level match above; this nested
+      // match adds in-app roster reads (canReadCompany) plus create/update/delete.
+      match /members/{mid} {
+        allow read: if canReadCompany(cid);
+
+        allow create: if companyAdmin(cid);
+        allow delete: if companyAdmin(cid);
+
+        // Update: admins freely; otherwise ONLY a self-claim of an unlinked seat
+        // that already bears this user's email, changing nothing but `uid`.
+        allow update: if companyAdmin(cid)
+          || ( signedIn()
+               && resource.data.uid == null
+               && request.resource.data.uid == uid()
+               && resource.data.email == tokenEmail()
+               && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['uid']) );
+      }
+
+      // ----- issues ----------------------------------------------------------
       match /issues/{issueId} {
+        allow read: if canReadCompany(cid);
 
-        function existing() { return resource.data; }
-        function incoming() { return request.resource.data; }
-        function isRaiser() { return signedIn() && existing().raiserUid == uid(); }
-        function isLeader() { return signedIn() && existing().leaderUid == uid(); }
-        function isParticipant() {
-          return signedIn() && existing().participants.hasAny([uid()]);
-        }
+        allow create: if companyAdmin(cid)
+                      || ( isMember(cid) && request.resource.data.raiserUid == uid() );
 
-        // V1 read floor: any team member can read issues. Finer per-issue
-        // visibility (participants-only / leader-scoped) is applied in the
-        // client for V1 and is scheduled to move into rules in Phase 1.1.
-        allow read: if isMember(teamId);
+        allow update: if companyAdmin(cid) || isMember(cid);
 
-        // Create: a member raises their own issue; status starts 'open'
-        // and the raiser must be a participant.
-        allow create: if isMember(teamId)
-          && incoming().raiserUid == uid()
-          && incoming().status == 'open'
-          && incoming().participants.hasAny([uid()]);
+        allow delete: if companyAdmin(cid)
+                      || ( resource.data.raiserUid == uid()
+                           && resource.data.status != 'done' );
 
-        // Update rules:
-        //  - Marking 'done' (Resolved) is RAISER-ONLY.
-        //  - Any other change (status open/prog, adding participants, chat
-        //    bumps to updatedAt) is allowed for the raiser, the tagged
-        //    leader, a participant, or an admin.
-        //  - The raiserUid can never be changed.
-        allow update: if isMember(teamId)
-          && incoming().raiserUid == existing().raiserUid
-          && (
-            (incoming().status == 'done' && isRaiser())
-            ||
-            (incoming().status != 'done'
-              && (isRaiser() || isLeader() || isParticipant() || isAdmin(teamId)))
-          );
-
-        allow delete: if isAdmin(teamId);
-
-        // ---- chat messages ----
         match /messages/{msgId} {
-          function parentIssue() {
-            return get(/databases/$(database)/documents/teams/$(teamId)/issues/$(issueId)).data;
-          }
-          allow read: if isMember(teamId);
-
-          // Author must be the sender; participants, leader, raiser or admin
-          // may post. System messages follow the same rule (written by the
-          // user whose action generated them).
-          allow create: if isMember(teamId)
-            && request.resource.data.authorUid == uid()
-            && (
-              parentIssue().raiserUid == uid()
-              || parentIssue().leaderUid == uid()
-              || parentIssue().participants.hasAny([uid()])
-              || isAdmin(teamId)
-            );
-
-          allow update, delete: if false; // chat history is immutable
+          allow read: if canReadCompany(cid);
+          allow create: if companyAdmin(cid)
+                        || ( isMember(cid) && request.resource.data.authorUid == uid() );
+          allow update, delete: if companyAdmin(cid);
         }
       }
+
+      // ----- priorities (My Priorities + org-chart priority view) -----------
+      // Each priority belongs to a member seat (ownerMid). Anyone who can read
+      // the company can see priorities (profile + org chart surface a person's
+      // list). Create: the signing-in user must own the seat named by ownerMid,
+      // so no one can plant priorities under someone else. Update: the owner (or
+      // an admin) edits freely; any OTHER member may change ONLY the agreement
+      // fields and cannot move ownership — this backs the manager "Agree" tick
+      // (the UI shows that control to the line manager only). Delete: owner/admin.
+      match /priorities/{pid} {
+        allow read: if canReadCompany(cid);
+
+        allow create: if companyAdmin(cid)
+                      || ( isMember(cid) && ownsNewPriority(cid) );
+
+        allow update: if companyAdmin(cid)
+                      || ownsPriority(cid)
+                      || ( isMember(cid)
+                           && request.resource.data.ownerMid == resource.data.ownerMid
+                           && request.resource.data.diff(resource.data)
+                                .affectedKeys().hasOnly(['agreed','agreedBy','agreedAt','updatedAt']) );
+
+        allow delete: if companyAdmin(cid) || ownsPriority(cid);
+      }
+    }
+
+    // ------------------------------- users -----------------------------------
+    match /users/{userUid} {
+      allow read, write: if signedIn() && userUid == uid();
+    }
+
+    // ------------------------------ archive ----------------------------------
+    match /archive/{aid} {
+      allow read:   if isSuper()
+                    || ( signedIn() && resource.data.fromCid != null
+                         && companyAdmin(resource.data.fromCid) );
+      allow create: if isSuper() || companyAdmin(request.resource.data.fromCid);
+      allow delete: if isSuper()
+                    || ( signedIn() && resource.data.fromCid != null
+                         && companyAdmin(resource.data.fromCid) );
+      allow update: if isSuper();
+    }
+
+    // ----------------------------- default deny ------------------------------
+    match /{document=**} {
+      allow read, write: if false;
     }
   }
 }

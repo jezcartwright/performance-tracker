@@ -675,6 +675,48 @@ body:has(#cohome.active){background:#fff}
 .showdone input{width:15px;height:15px;accent-color:var(--strip);cursor:pointer;margin:0}
 tr.rowdone td{opacity:.5}
 tr.rowdone:hover td{opacity:.78}
+/* ===== My Priorities ===== */
+.pri-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin:2px 0 18px}
+.pri-h1{font-family:var(--display);font-size:30px;font-weight:600;margin:0}
+.pri-sub{color:var(--t2);font-size:13.5px;margin:5px 0 0;max-width:62ch;line-height:1.5}
+.pri-note{color:var(--t2);font-size:13.5px;background:var(--card);border:1px solid var(--b);border-radius:12px;padding:16px 18px;line-height:1.55}
+.pri-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:11px}
+.pri-card{display:grid;grid-template-columns:auto auto 1fr auto;gap:14px;align-items:center;background:var(--card);border:1px solid var(--b);border-radius:14px;box-shadow:0 1px 2px rgba(26,26,24,.04),0 8px 22px rgba(26,26,24,.05);padding:14px 16px}
+.pri-card.pri-dragging{box-shadow:0 18px 40px rgba(26,26,24,.22);border-color:var(--strip)}
+.pri-placeholder{border:1.5px dashed var(--strip);border-radius:14px;background:var(--strip-soft);list-style:none}
+.pri-handle{cursor:grab;color:var(--t3);display:flex;align-items:center;justify-content:center;width:22px;touch-action:none}
+.pri-handle:active{cursor:grabbing}
+.pri-handle.ro{cursor:default;color:transparent;width:0}
+.pri-rank{font-family:var(--display);font-size:21px;font-weight:700;color:var(--t);width:24px;text-align:center}
+.pri-main{min-width:0}
+.pri-title{font-family:var(--serif);font-weight:600;font-size:15.5px;color:var(--t);margin-bottom:7px;border-radius:6px;display:inline-block;padding:1px 4px;margin-left:-4px}
+.pri-title:hover{background:var(--strip-soft)}
+.pri-meta{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.pri-involves{display:inline-flex;align-items:center;gap:8px;color:var(--t2);font-size:12.5px;border-radius:7px;padding:3px 5px;margin-left:-5px}
+.pri-involves:hover{background:var(--strip-soft)}
+.pri-avs{display:inline-flex}
+.pri-av{width:24px;height:24px;border-radius:50%;border:2px solid var(--card);margin-left:-7px;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#fff;overflow:hidden}
+.pri-av:first-child{margin-left:0}
+.pri-av .av-img{width:100%;height:100%;object-fit:cover;border-radius:50%}
+.pri-names{color:var(--t2);font-size:12.5px}
+.pri-muted{color:var(--t3);font-size:12.5px}
+.pri-right{display:flex;flex-direction:column;align-items:flex-end;gap:9px}
+.pri-status{border:none;border-radius:999px;padding:6px 13px;font-family:var(--ui);font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap}
+.pri-status:disabled{cursor:default;opacity:.9}
+.pri-agree{display:inline-flex;align-items:center;gap:8px;font-size:12px;font-weight:600;color:var(--t3);cursor:pointer;white-space:nowrap;user-select:none}
+.pri-agree.ro{cursor:default}
+.pri-box{width:19px;height:19px;border-radius:6px;border:1.5px solid var(--b);display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:800;background:var(--card)}
+.pri-agree.on .pri-box{background:#12936a;border-color:#12936a}
+.pri-agree.on{color:#0a7d57}
+.pri-del{border:none;background:none;color:var(--t3);font-size:13px;cursor:pointer;padding:2px 5px;border-radius:6px}
+.pri-del:hover{color:#cf3a2e;background:#fbeaea}
+.pri-readonly .pri-card{box-shadow:none}
+/* Issues filter pill */
+.iss-seg{display:inline-flex;position:relative;background:#efece5;border-radius:11px;padding:4px;margin:0 0 16px}
+.iss-seg .iss-ind{position:absolute;top:4px;bottom:4px;border-radius:8px;background:#1a1a1a;transition:left .2s,width .2s;z-index:0}
+.iss-seg button{position:relative;z-index:1;border:none;background:none;font-family:var(--ui);font-weight:700;font-size:13.5px;color:var(--t2);padding:9px 18px;border-radius:8px;cursor:pointer;transition:color .2s}
+.iss-seg button[aria-pressed="true"]{color:#fff}
+@media(max-width:560px){.pri-card{grid-template-columns:auto 1fr;grid-template-areas:'h m' 'r right'}.pri-handle{grid-area:h}.pri-main{grid-area:m}.pri-rank{grid-area:r;justify-self:start}.pri-right{grid-area:right;flex-direction:row;align-items:center;width:100%;justify-content:space-between}}
 </style>
 </head>
 <body>
@@ -764,9 +806,8 @@ tr.rowdone:hover td{opacity:.78}
   <div class="superbar" id="superFlag" style="display:none"><span class="superflag">SUPER ADMIN</span></div>
 
   <nav class="navbar">
-    <button class="tg active" data-s="dashboard" id="tabAll">All Issues <span class="ct" id="allCount">0</span></button>
-    <button class="tg" data-s="dashboard" id="tabMine">Raised by me</button>
-    <button class="tg" data-s="dashboard" id="tabDone">Completed <span class="ct" id="doneCount">0</span></button>
+    <button class="tg active" data-s="priorities" id="tabPri">My Priorities <span class="ct" id="priCount">0</span></button>
+    <button class="tg" data-s="dashboard" id="tabAll">Issues <span class="ct" id="allCount">0</span></button>
     <button class="tg" data-s="team" id="tabTeam">Team</button>
     <button class="tg" data-s="admin" id="tabAdmin" style="display:none">Admin &amp; Setup</button>
     <span class="grow"></span>
@@ -778,6 +819,7 @@ tr.rowdone:hover td{opacity:.78}
 
   <!-- DASHBOARD -->
   <section class="screen active" id="dashboard">
+    <div class="iss-seg" id="issSeg"><span class="iss-ind"></span><button aria-pressed="true" onclick="setIssueFilter('active')">All issues</button><button aria-pressed="false" onclick="setIssueFilter('mine')">Raised by me</button></div>
     <div class="sortbar">
       <span class="lab">Sort</span>
       <button class="schip on" data-k="newest">Newest <span class="car">↓</span></button>
@@ -799,6 +841,16 @@ tr.rowdone:hover td{opacity:.78}
         <tbody id="rows"></tbody>
       </table>
     </div>
+  </section>
+
+  <!-- MY PRIORITIES -->
+  <section class="screen" id="priorities">
+    <div class="pri-head">
+      <div><h1 class="pri-h1">My Priorities</h1><p class="pri-sub">What you're working on, in order. Drag to reorder as things shift, tap a status to update where you are, and your line manager ticks the ones they've agreed.</p></div>
+      <button class="primary" onclick="addPriority()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg> Add priority</button>
+    </div>
+    <div id="priEmpty"></div>
+    <ul class="pri-list" id="priList"></ul>
   </section>
 
   <!-- RAISE (full screen) -->
@@ -949,6 +1001,8 @@ tr.rowdone:hover td{opacity:.78}
       </div>
     </div>
     <div id="pfRel"></div>
+    <h3 class="pf-h3">Priorities</h3>
+    <div id="pfPriorities"></div>
     <h3 class="pf-h3">Issues they're dealing with</h3>
     <div id="pfIssues"></div>
   </section>
@@ -1434,7 +1488,8 @@ var activeCid=null, companies={}, company={}, fns={}, members={}, issues=[];
 var isAdmin=false;
 var sortKey='newest', asc=false, boardMode='active', showCompleted=false;
 var curId=null, curIssue=null, msgsUnsub=null, lastSeenAt=0, newFnColor=PALETTE[0];
-var subC=null, subF=null, subM=null, subI=null, subA=null;
+var subC=null, subF=null, subM=null, subI=null, subA=null, subPri=null;
+var priorities=[];
 var MANAGING=false, archive=[], archiveCount=0, archiveOpen=false, FOCUSFID=null;
 var ORGVIEW='chart', ORGLIST='line';
 
@@ -1701,7 +1756,7 @@ window.pickCo=function(cid){ pushRecent(cid); closeCoMenu(); switchCompany(cid);
 window.toggleCoMenu=function(e){ if(e)e.stopPropagation(); var m=document.getElementById('coMenu'); var open=m.classList.toggle('on'); if(open){ var s=document.getElementById('coSearch'); s.value=''; renderCoList(); setTimeout(function(){try{s.focus();}catch(_){}}, 30); } };
 function closeCoMenu(){ var m=document.getElementById('coMenu'); if(m)m.classList.remove('on'); }
 document.addEventListener('click',function(e){ var w=document.getElementById('coWrap'); if(w && !w.contains(e.target)) closeCoMenu(); });
-window.switchCompany=function(cid){ if(!cid)return; if(cid===activeCid&&!document.getElementById('app').classList.contains('home'))return; setHome(false); try{pushRecent(cid);}catch(e){} activeCid=cid; curId=null; curIssue=null; FOCUSFID=null; ORGZOOM=1; if(msgsUnsub){msgsUnsub();msgsUnsub=null;} boardMode='active'; clearTabs(); var t=document.getElementById('tabAll'); if(t)t.classList.add('active'); updateSortbarUI(); startApp(); show('dashboard'); };
+window.switchCompany=function(cid){ if(!cid)return; if(cid===activeCid&&!document.getElementById('app').classList.contains('home'))return; setHome(false); try{pushRecent(cid);}catch(e){} activeCid=cid; curId=null; curIssue=null; FOCUSFID=null; ORGZOOM=1; if(msgsUnsub){msgsUnsub();msgsUnsub=null;} boardMode='active'; clearTabs(); var t=document.getElementById('tabPri'); if(t)t.classList.add('active'); updateSortbarUI(); startApp(); show('priorities'); renderPriorities(); };
 
 var appShown=false, revealPending=false, themeSeen=false, membersSeen=false, revealTimer=null;
 function revealApp(){ clearTimeout(revealTimer); revealPending=false; appShown=true; var ls=document.getElementById('login-screen'); if(ls)ls.style.display='none'; document.getElementById('app').style.display='block'; setHeader(); }
@@ -1712,7 +1767,7 @@ function startApp(){
   document.getElementById('coPanel').style.display='none';
   var appEl=document.getElementById('app'); if(appEl)appEl.classList.toggle('cansuper',!!ME.isSuper);
   try{ var _t=(activeCid&&companies[activeCid]&&companies[activeCid].theme)?companies[activeCid].theme:JSON.parse(localStorage.getItem('ptTheme')||'null'); if(_t&&_t.strip)applyTheme(_t); }catch(e){}
-  [subC,subF,subM,subI,subA].forEach(function(u){ if(u)u(); }); subC=subF=subM=subI=subA=null;
+  [subC,subF,subM,subI,subA,subPri].forEach(function(u){ if(u)u(); }); subC=subF=subM=subI=subA=subPri=null;
   if(!activeCid){
     isAdmin=ME.isSuper; company={}; fns={}; members={}; issues=[]; ME.mid=null;
     document.getElementById('tabAdmin').style.display=isAdmin?'':'none';
@@ -1745,6 +1800,7 @@ function startApp(){
   },function(e){console.error('issues',e);});
   var aq = ME.isSuper ? db.collection('archive') : db.collection('archive').where('fromCid','==',activeCid);
   subA = aq.onSnapshot(function(qs){ archive=[]; qs.forEach(function(d){ archive.push(Object.assign({id:d.id},d.data())); }); archive.sort(function(a,b){return ms(b.removedAt)-ms(a.removedAt);}); archiveCount=archive.length; var ac=document.getElementById('archCount'); if(ac)ac.textContent=archiveCount; if(archiveOpen)renderArchive(); },function(e){console.warn('archive',e);});
+  ensurePriSub();
 }
 var accessEnsured={};
 function ensureAccess(mid){
@@ -1779,14 +1835,14 @@ function applyTheme(t){ if(!t)return; var r=document.documentElement; r.style.se
 /* ---------- NAV ---------- */
 function show(id){ document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active');}); var el=document.getElementById(id); if(el)el.classList.add('active'); window.scrollTo(0,0); }
 function clearTabs(){ document.querySelectorAll('.tg[data-s]').forEach(function(n){n.classList.remove('active');}); }
-document.querySelectorAll('.tg[data-s]').forEach(function(b){ b.addEventListener('click',function(){ clearTabs(); b.classList.add('active'); if(b.dataset.s==='admin'){ show('admin'); renderAdmin(); renderTeam(); return; } if(b.dataset.s==='team'){ show('team'); renderTeam(); return; } boardMode=(b.id==='tabMine')?'mine':(b.id==='tabDone')?'done':'active'; updateSortbarUI(); show('dashboard'); render(); }); });
+document.querySelectorAll('.tg[data-s]').forEach(function(b){ b.addEventListener('click',function(){ clearTabs(); b.classList.add('active'); if(b.dataset.s==='priorities'){ show('priorities'); renderPriorities(); return; } if(b.dataset.s==='admin'){ show('admin'); renderAdmin(); renderTeam(); return; } if(b.dataset.s==='team'){ show('team'); renderTeam(); return; } boardMode='active'; updateSortbarUI(); show('dashboard'); setIssueSegUI(); render(); }); });
 window.goTeam=function(){ setHome(false); clearTabs(); var t=document.getElementById('tabTeam'); if(t)t.classList.add('active'); show('team'); renderTeam(); };
-window.goDash=function(){ setHome(false); clearTabs(); var t=document.getElementById('tabAll'); if(t)t.classList.add('active'); boardMode='active'; updateSortbarUI(); show('dashboard'); render(); };
+window.goDash=function(){ setHome(false); clearTabs(); var t=document.getElementById('tabAll'); if(t)t.classList.add('active'); boardMode='active'; updateSortbarUI(); show('dashboard'); setIssueSegUI(); render(); };
 window.goAdmin=function(){ setHome(false); clearTabs(); var t=document.getElementById('tabAdmin'); if(t)t.classList.add('active'); show('admin'); renderAdmin(); renderTeam(); };
 function setHome(on){ var a=document.getElementById('app'); if(a)a.classList.toggle('home',!!on); }
 window.homeClick=function(){ if(ME.isSuper) goCompaniesHome(); };
 window.goCompaniesHome=function(){
-  [subC,subF,subM,subI].forEach(function(u){ if(u)u(); }); subC=subF=subM=subI=null;
+  [subC,subF,subM,subI,subPri].forEach(function(u){ if(u)u(); }); subC=subF=subM=subI=subPri=null;
   activeCid=null; curId=null; curIssue=null; if(msgsUnsub){msgsUnsub();msgsUnsub=null;}
   company={}; fns={}; members={}; issues=[]; ME.mid=null; isAdmin=ME.isSuper;
   applyTheme(DEFAULT_THEME); renderClientLogo(); setHeader();
@@ -1929,7 +1985,7 @@ window.tmPick=function(el){ el.parentElement.querySelectorAll('.cpick').forEach(
 window.saveTeam=function(){ if(!isAdmin||!activeCid)return; var n=(document.getElementById('tmName').value||'').trim(); if(!n)return; var go=document.getElementById('tmGo'); go.disabled=true; go.textContent='Adding…';
   fnsRef().add({name:n,color:tmColor,leaderMid:null,leaderName:''}).then(function(){ closeTeam(); go.disabled=false; go.textContent='Add team'; }).catch(function(e){ alert('Could not add team: '+e.message); go.disabled=false; go.textContent='Add team'; });
 };
-function landHome(){ if(ME.isSuper){ goCompaniesHome(); } else { setHome(false); goDash(); } }
+function landHome(){ if(ME.isSuper){ goCompaniesHome(); } else { setHome(false); goPriorities(); } }
 
 /* ---------- add-a-person sheet (person-first builder) ---------- */
 var psLeads=false, psMgrOverride=null, psEditMid=null;
@@ -2997,6 +3053,7 @@ function paintProfile(mid){ var m=members[mid]; if(!m)return false; curProfile=m
   var pv=document.getElementById('pfInvite'); if(pv) pv.style.display=(isAdmin && !m.uid && m.email)?'inline-flex':'none';
   var pa=document.getElementById('pfAdmin'); if(pa){ if(ME.isSuper && activeCid && m.uid && m.uid!==ME.uid){ var _ca=(company.adminUids||[]).indexOf(m.uid)>=0; pa.style.display='inline-flex'; pa.textContent=_ca?'✓ Admin':'Make admin'; pa.style.background=_ca?'#0f8a6b':''; pa.style.color=_ca?'#fff':''; pa.style.borderColor=_ca?'#0f8a6b':''; } else { pa.style.display='none'; } }
   renderProfileIssues(mid);
+  renderProfilePriorities(mid);
   renderProfileRel(mid);
   return true;
 }
@@ -3023,6 +3080,63 @@ function renderProfileIssues(mid){
   }).join('');
 }
 function refreshAux(){ var tm=document.getElementById('team'),am=document.getElementById('admin'); if((tm&&tm.classList.contains('active'))||(am&&am.classList.contains('active')))renderTeam(); var pf=document.getElementById('profile'); if(pf&&pf.classList.contains('active')&&curProfile)paintProfile(curProfile); }
+
+/* ===================== MY PRIORITIES ===================== */
+function prioritiesRef(){ return cRef().collection('priorities'); }
+var PRI_STAGES=['Scoping','Active','Blocked','Review','Done'];
+var PRI_SCOL={Scoping:['#efece5','#6c675d'],Active:['#e7eefa','#2f5fa0'],Blocked:['#fce8e7','#e0413b'],Review:['#fbf0d9','#c98a13'],Done:['#e2f1ea','#2e7d5b']};
+function myPriorities(){ return priorities.filter(function(p){return p.ownerMid===ME.mid;}); }
+function priById(id){ for(var i=0;i<priorities.length;i++){ if(priorities[i].id===id)return priorities[i]; } return null; }
+function lineManagerMid(mid){ return (typeof orgParent==='function')?orgParent(mid):null; }
+function canEditPriority(p){ return !!(activeCid && p && (isAdmin || (ME.mid && p.ownerMid===ME.mid))); }
+function canAgreePriority(p){ if(!activeCid||!p)return false; if(isAdmin)return true; var mgr=lineManagerMid(p.ownerMid); return !!(mgr && mgr===ME.mid); }
+function updatePriCount(){ var el=document.getElementById('priCount'); if(el)el.textContent=myPriorities().length; }
+function ensurePriSub(){ if(subPri||!activeCid)return; subPri=prioritiesRef().onSnapshot(function(qs){ priorities=[]; qs.forEach(function(d){ var p=d.data(); p.id=d.id; priorities.push(p); }); priorities.sort(function(a,b){return (a.order||0)-(b.order||0);}); updatePriCount(); var ps=document.getElementById('priorities'); if(ps&&ps.classList.contains('active'))renderPriorities(); var pf=document.getElementById('profile'); if(pf&&pf.classList.contains('active')&&curProfile)renderProfilePriorities(curProfile); },function(e){console.warn('priorities',e);}); }
+
+function priInvolvesHTML(p){ var ids=(p.involves||[]).filter(function(m){return members[m];}); if(!ids.length)return '<span class="pri-muted">no one yet</span>'; return '<span class="pri-avs">'+ids.map(function(m){return '<span class="pri-av" style="'+avBg(m)+'" title="'+esc(personName(m))+'">'+avBody(m)+'</span>';}).join('')+'</span><span class="pri-names">'+ids.map(function(m){return esc(personName(m));}).join(', ')+'</span>'; }
+function priCardHTML(p,canDrag,canEdit,canAgree){
+  var sc=PRI_SCOL[p.status]||PRI_SCOL.Scoping;
+  var statusBtn='<button class="pri-status" style="background:'+sc[0]+';color:'+sc[1]+'"'+(canEdit?(' onclick="priCycleStatus(\''+p.id+'\')"'):' disabled')+'>'+esc(p.status||'Scoping')+'</button>';
+  var agree='<span class="pri-agree'+(p.agreed?' on':'')+(canAgree?'':' ro')+'"'+(canAgree?(' onclick="priToggleAgree(\''+p.id+'\')"'):'')+'><span class="pri-box">'+(p.agreed?'\u2713':'')+'</span><span class="pri-agree-lbl">'+(p.agreed?'Manager agreed':(canAgree?'Agree priority':'Awaiting manager'))+'</span></span>';
+  var handle=canDrag?'<span class="pri-handle" data-pri="'+p.id+'" title="Drag to reorder"><svg width="13" height="20" viewBox="0 0 14 22" fill="currentColor"><circle cx="3" cy="3" r="2"/><circle cx="11" cy="3" r="2"/><circle cx="3" cy="11" r="2"/><circle cx="11" cy="11" r="2"/><circle cx="3" cy="19" r="2"/><circle cx="11" cy="19" r="2"/></svg></span>':'<span class="pri-handle ro"></span>';
+  var del=canEdit?'<button class="pri-del" title="Remove priority" onclick="priDelete(\''+p.id+'\')">\u2715</button>':'';
+  var titleClick=canEdit?(' onclick="priEditTitle(\''+p.id+'\')" style="cursor:text"'):'';
+  var invClick=canEdit?(' onclick="priEditInvolves(\''+p.id+'\')" title="Edit who is involved"'):'';
+  return '<li class="pri-card" data-pri="'+p.id+'">'+handle+'<span class="pri-rank"></span><div class="pri-main"><div class="pri-title"'+titleClick+'>'+esc(p.title||'Untitled priority')+'</div><div class="pri-meta"><span class="pri-involves"'+invClick+'>Involves '+priInvolvesHTML(p)+'</span></div></div><div class="pri-right">'+statusBtn+agree+del+'</div></li>';
+}
+function priRenumberIn(host){ if(!host)return; Array.prototype.slice.call(host.querySelectorAll('.pri-card')).forEach(function(c,i){ var r=c.querySelector('.pri-rank'); if(r)r.textContent=(i+1); }); }
+function renderPriorities(){
+  ensurePriSub();
+  var host=document.getElementById('priList'); var note=document.getElementById('priEmpty'); if(!host)return;
+  if(!activeCid){ host.innerHTML=''; if(note)note.innerHTML='<div class="pri-note">No company selected.</div>'; return; }
+  if(!ME.mid){ host.innerHTML=''; if(note)note.innerHTML='<div class="pri-note">You don\'t have a person record in this company yet, so there\'s no priority list to own. Open <b>Team</b> and tap anyone to see and agree <i>their</i> priorities.</div>'; return; }
+  if(note)note.innerHTML='';
+  var list=myPriorities();
+  if(!list.length){ host.innerHTML='<li class="pri-note">Nothing here yet \u2014 tap "Add priority" to start your list. Drag to reorder once you have a few.</li>'; return; }
+  host.innerHTML=list.map(function(p){ return priCardHTML(p,true,canEditPriority(p),canAgreePriority(p)); }).join('');
+  priRenumberIn(host); priBindDrag();
+}
+function renderProfilePriorities(mid){ ensurePriSub(); var el=document.getElementById('pfPriorities'); if(!el)return; var list=priorities.filter(function(p){return p.ownerMid===mid;}).sort(function(a,b){return (a.order||0)-(b.order||0);}); if(!list.length){ el.innerHTML='<div class="pf-empty">No priorities listed yet'+(mid===ME.mid?' \u2014 add some from the My Priorities tab.':'.')+'</div>'; return; } el.innerHTML='<ul class="pri-list pri-readonly">'+list.map(function(p){ var mine=(mid===ME.mid); return priCardHTML(p,false,(mine&&canEditPriority(p)),canAgreePriority(p)); }).join('')+'</ul>'; priRenumberIn(el.querySelector('.pri-list')); }
+
+window.goPriorities=function(){ setHome(false); clearTabs(); var t=document.getElementById('tabPri'); if(t)t.classList.add('active'); show('priorities'); renderPriorities(); };
+window.addPriority=function(){ if(!activeCid){alert('No company selected.');return;} if(!ME.mid){ alert('You need a person record in this company before you can own priorities. Ask an admin to add you in Team.'); return; } var title=(prompt('New priority \u2014 what are you working on?')||'').trim(); if(!title)return; var max=-1; myPriorities().forEach(function(p){ if((p.order||0)>max)max=(p.order||0); }); prioritiesRef().add({ownerMid:ME.mid, ownerName:ME.name, title:title, involves:[], status:'Scoping', agreed:false, agreedBy:null, order:max+1, createdAt:FV.serverTimestamp(), updatedAt:FV.serverTimestamp()}).catch(function(e){alert('Could not add: '+e.message);}); };
+window.priEditTitle=function(id){ var p=priById(id); if(!p||!canEditPriority(p))return; var t=(prompt('Edit priority',p.title||'')||'').trim(); if(!t)return; prioritiesRef().doc(id).update({title:t,updatedAt:FV.serverTimestamp()}).catch(function(e){alert(e.message);}); };
+window.priCycleStatus=function(id){ var p=priById(id); if(!p||!canEditPriority(p))return; var i=PRI_STAGES.indexOf(p.status); var nx=PRI_STAGES[(i+1)%PRI_STAGES.length]; prioritiesRef().doc(id).update({status:nx,updatedAt:FV.serverTimestamp()}).catch(function(e){alert(e.message);}); };
+window.priToggleAgree=function(id){ var p=priById(id); if(!p||!canAgreePriority(p))return; var now=!p.agreed; prioritiesRef().doc(id).update({agreed:now, agreedBy:(now?(ME.mid||ME.uid):null), agreedAt:(now?FV.serverTimestamp():null), updatedAt:FV.serverTimestamp()}).catch(function(e){alert(e.message);}); };
+window.priDelete=function(id){ var p=priById(id); if(!p||!canEditPriority(p))return; if(!confirm('Remove this priority?'))return; prioritiesRef().doc(id).delete().catch(function(e){alert(e.message);}); };
+window.priEditInvolves=function(id){ var p=priById(id); if(!p||!canEditPriority(p))return; var ids=Object.keys(members); if(!ids.length){alert('No people in this company yet.');return;} var cur=(p.involves||[]); var menu=ids.map(function(m,n){ return (n+1)+'. '+(cur.indexOf(m)>=0?'[x] ':'[ ] ')+personName(m); }).join('\n'); var pick=(prompt('Who is involved? Enter a number to toggle them on/off (blank to finish):\n\n'+menu)||'').trim(); if(!pick)return; var idx=parseInt(pick,10)-1; if(isNaN(idx)||idx<0||idx>=ids.length)return; var mid=ids[idx]; var next=(cur.indexOf(mid)>=0)?cur.filter(function(x){return x!==mid;}):cur.concat([mid]); prioritiesRef().doc(id).update({involves:next,updatedAt:FV.serverTimestamp()}).then(function(){ setTimeout(function(){ window.priEditInvolves(id); },150); }).catch(function(e){alert(e.message);}); };
+
+/* drag-sort (mouse + touch) */
+var priDrag=null;
+function priBindDrag(){ var host=document.getElementById('priList'); if(!host)return; Array.prototype.slice.call(host.querySelectorAll('.pri-handle:not(.ro)')).forEach(function(h){ h.onpointerdown=priDown; }); }
+function priDown(e){ e.preventDefault(); var host=document.getElementById('priList'); var card=e.currentTarget.closest('.pri-card'); if(!card||!host)return; var r=card.getBoundingClientRect(); var ph=document.createElement('li'); ph.className='pri-placeholder'; ph.style.height=r.height+'px'; card.after(ph); priDrag={host:host,card:card,ph:ph,offY:e.clientY-r.top}; card.classList.add('pri-dragging'); card.style.position='fixed'; card.style.width=r.width+'px'; card.style.left=r.left+'px'; card.style.top=r.top+'px'; card.style.zIndex=2000; card.style.margin='0'; document.addEventListener('pointermove',priMove); document.addEventListener('pointerup',priUp,{once:true}); }
+function priMove(e){ if(!priDrag)return; priDrag.card.style.top=(e.clientY-priDrag.offY)+'px'; var others=Array.prototype.slice.call(priDrag.host.querySelectorAll('.pri-card:not(.pri-dragging)')); var placed=false; for(var i=0;i<others.length;i++){ var rr=others[i].getBoundingClientRect(); if(e.clientY<rr.top+rr.height/2){ priDrag.host.insertBefore(priDrag.ph,others[i]); placed=true; break; } } if(!placed)priDrag.host.appendChild(priDrag.ph); }
+function priUp(){ document.removeEventListener('pointermove',priMove); if(!priDrag)return; var c=priDrag.card; priDrag.ph.replaceWith(c); c.classList.remove('pri-dragging'); c.removeAttribute('style'); priDrag=null; priRenumberIn(document.getElementById('priList')); priPersistOrder(); }
+function priPersistOrder(){ var host=document.getElementById('priList'); if(!host)return; var ids=Array.prototype.slice.call(host.querySelectorAll('.pri-card')).map(function(c){return c.getAttribute('data-pri');}); var batch=db.batch(); ids.forEach(function(id,i){ if(id)batch.update(prioritiesRef().doc(id),{order:i}); }); batch.commit().catch(function(e){console.warn('order',e);}); }
+
+/* Issues filter pill */
+window.setIssueFilter=function(mode){ boardMode=(mode==='mine')?'mine':'active'; setIssueSegUI(); render(); };
+function setIssueSegUI(){ var seg=document.getElementById('issSeg'); if(!seg)return; var btns=seg.querySelectorAll('button'); if(btns[0])btns[0].setAttribute('aria-pressed', boardMode==='mine'?'false':'true'); if(btns[1])btns[1].setAttribute('aria-pressed', boardMode==='mine'?'true':'false'); requestAnimationFrame(function(){ var ind=seg.querySelector('.iss-ind'); var act=(boardMode==='mine')?btns[1]:btns[0]; if(ind&&act){ ind.style.left=act.offsetLeft+'px'; ind.style.width=act.offsetWidth+'px'; } }); }
 
 </script>
 </body>
