@@ -716,6 +716,16 @@ tr.rowdone:hover td{opacity:.78}
 .iss-seg .iss-ind{position:absolute;top:4px;bottom:4px;border-radius:8px;background:#1a1a1a;transition:left .2s,width .2s;z-index:0}
 .iss-seg button{position:relative;z-index:1;border:none;background:none;font-family:var(--ui);font-weight:700;font-size:13.5px;color:var(--t2);padding:9px 18px;border-radius:8px;cursor:pointer;transition:color .2s}
 .iss-seg button[aria-pressed="true"]{color:#fff}
+.addmenu-wrap{position:relative;display:inline-block}
+.addmenu{position:absolute;right:0;top:calc(100% + 8px);background:var(--card);border:1px solid var(--b);border-radius:12px;box-shadow:0 16px 40px rgba(26,26,24,.18);min-width:272px;z-index:80;overflow:hidden;display:none}
+.addmenu.on{display:block}
+.addmenu button{display:flex;align-items:flex-start;gap:12px;width:100%;border:none;background:none;text-align:left;padding:13px 15px;cursor:pointer;border-top:1px solid var(--b2)}
+.addmenu button:first-child{border-top:none}
+.addmenu button:hover{background:var(--strip-soft)}
+.addmenu .am-ic{width:30px;height:30px;border-radius:8px;background:var(--strip-soft);color:var(--strip-ink);display:flex;align-items:center;justify-content:center;font-size:15px;flex:0 0 auto}
+.addmenu .am-t{display:block;font-weight:700;font-size:14px;color:var(--t)}
+.addmenu .am-s{display:block;font-size:12px;color:var(--t3);margin-top:1px}
+.pri-noteline{font-size:12.5px;color:var(--t3);margin:-3px 0 7px;line-height:1.45}
 @media(max-width:560px){.pri-card{grid-template-columns:auto 1fr;grid-template-areas:'h m' 'r right'}.pri-handle{grid-area:h}.pri-main{grid-area:m}.pri-rank{grid-area:r;justify-self:start}.pri-right{grid-area:right;flex-direction:row;align-items:center;width:100%;justify-content:space-between}}
 </style>
 </head>
@@ -811,10 +821,17 @@ tr.rowdone:hover td{opacity:.78}
     <button class="tg" data-s="team" id="tabTeam">Team</button>
     <button class="tg" data-s="admin" id="tabAdmin" style="display:none">Admin &amp; Setup</button>
     <span class="grow"></span>
-    <button class="primary" onclick="openRaise()">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
-      Raise an issue
-    </button>
+    <div class="addmenu-wrap">
+      <button class="primary" onclick="toggleAddMenu(event)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+        New
+        <svg viewBox="0 0 24 24" width="14" fill="none" stroke="currentColor" stroke-width="2.4" style="margin-left:1px"><path d="m6 9 6 6 6-6"/></svg>
+      </button>
+      <div class="addmenu" id="addMenu">
+        <button onclick="addMenuPick('priority')"><span class="am-ic">&#9733;</span><span><span class="am-t">Add a priority</span><span class="am-s">Something you're driving</span></span></button>
+        <button onclick="addMenuPick('issue')"><span class="am-ic">&#9873;</span><span><span class="am-t">Raise an issue</span><span class="am-s">Hand something to a person or team</span></span></button>
+      </div>
+    </div>
   </nav>
 
   <!-- DASHBOARD -->
@@ -921,6 +938,40 @@ tr.rowdone:hover td{opacity:.78}
       <div class="form-foot">
         <button class="ghost" onclick="riCancel()">Cancel</button>
         <button class="primary" id="ri-submit" onclick="raiseIssue()">Raise issue</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ADD / EDIT PRIORITY -->
+  <section class="screen" id="raisePriority">
+    <button class="back" onclick="goPriorities()">
+      <svg viewBox="0 0 24 24" width="15" fill="none" stroke="currentColor" stroke-width="2"><path d="m15 18-6-6 6-6"/></svg> My Priorities
+    </button>
+    <div class="form-card">
+      <h1 id="pr-h1">Add a priority</h1>
+      <p class="lead">Something you're driving. Set where you are with it and who it involves — your line manager confirms it from their side once it's added.</p>
+      <div class="fld"><label>Title</label><input id="pr-title" placeholder="Short summary of the priority"></div>
+      <div class="fld"><label>Detail <span style="font-weight:400;text-transform:none;letter-spacing:0;color:#999">(optional)</span></label><textarea id="pr-note" placeholder="What does done look like, and why does it matter?"></textarea></div>
+      <div class="fld"><label>Where are you with it?</label>
+        <select id="pr-status">
+          <option value="Scoping">Scoping — still working it out</option>
+          <option value="Active">Active — underway</option>
+          <option value="Blocked">Blocked — waiting on something</option>
+          <option value="Review">Review — nearly there</option>
+          <option value="Done">Done — finished</option>
+        </select>
+      </div>
+      <div class="fld">
+        <label>Who's involved <span style="font-weight:400;text-transform:none;letter-spacing:0;color:#999">(optional)</span></label>
+        <div class="ta">
+          <input id="pr-add-input" class="ta-input" type="text" placeholder="Search to add someone…" autocomplete="off" oninput="prAddSearch(this)" onfocus="prAddSearch(this)" onblur="taBlur('pr-add-list')">
+          <div id="pr-add-list" class="ta-list" style="display:none"></div>
+        </div>
+        <div class="chips" id="pr-chips"></div>
+      </div>
+      <div class="form-foot">
+        <button class="ghost" onclick="goPriorities()">Cancel</button>
+        <button class="primary" id="pr-submit" onclick="savePriority()">Add priority</button>
       </div>
     </div>
   </section>
@@ -3137,6 +3188,64 @@ function priPersistOrder(){ var host=document.getElementById('priList'); if(!hos
 /* Issues filter pill */
 window.setIssueFilter=function(mode){ boardMode=(mode==='mine')?'mine':'active'; setIssueSegUI(); render(); };
 function setIssueSegUI(){ var seg=document.getElementById('issSeg'); if(!seg)return; var btns=seg.querySelectorAll('button'); if(btns[0])btns[0].setAttribute('aria-pressed', boardMode==='mine'?'false':'true'); if(btns[1])btns[1].setAttribute('aria-pressed', boardMode==='mine'?'true':'false'); requestAnimationFrame(function(){ var ind=seg.querySelector('.iss-ind'); var act=(boardMode==='mine')?btns[1]:btns[0]; if(ind&&act){ ind.style.left=act.offsetLeft+'px'; ind.style.width=act.offsetWidth+'px'; } }); }
+
+/* ===================== ADD/EDIT PRIORITY FORM + "+ New" MENU ===================== */
+var prInvolves=[], prEditId=null;
+function openRaisePriority(editId){
+  if(!activeCid){alert('No company selected.');return;}
+  if(!ME.mid){ alert('You need a person record in this company before you can own priorities. Ask an admin to add you in Team.'); return; }
+  prEditId=editId||null;
+  var p=prEditId?priById(prEditId):null;
+  document.getElementById('pr-title').value=p?(p.title||''):'';
+  document.getElementById('pr-note').value=p?(p.note||''):'';
+  document.getElementById('pr-status').value=(p&&p.status)?p.status:'Scoping';
+  prInvolves=p?((p.involves||[]).slice()):[];
+  renderPrChips();
+  var ai=document.getElementById('pr-add-input'); if(ai)ai.value=''; hideTa('pr-add-list');
+  document.getElementById('pr-h1').textContent=p?'Edit priority':'Add a priority';
+  document.getElementById('pr-submit').textContent=p?'Save changes':'Add priority';
+  clearTabs(); var t=document.getElementById('tabPri'); if(t)t.classList.add('active');
+  show('raisePriority');
+  setTimeout(function(){ var el=document.getElementById('pr-title'); if(el)el.focus(); },40);
+}
+window.addPriority=function(){ openRaisePriority(null); };
+window.priEditTitle=function(id){ var p=priById(id); if(!p||!canEditPriority(p))return; openRaisePriority(id); };
+window.priEditInvolves=function(id){ var p=priById(id); if(!p||!canEditPriority(p))return; openRaisePriority(id); };
+window.prAddSearch=function(inp){ renderTaList('pr-add-list', inp.value, prInvolves.concat([ME.mid]), 'prAddPick'); };
+window.prAddPick=function(m){ if(m && m!==ME.mid && prInvolves.indexOf(m)<0)prInvolves.push(m); renderPrChips(); var inp=document.getElementById('pr-add-input'); if(inp)inp.value=''; hideTa('pr-add-list'); };
+window.prRemoveInvolve=function(m){ prInvolves=prInvolves.filter(function(x){return x!==m;}); renderPrChips(); };
+function renderPrChips(){ var c=document.getElementById('pr-chips'); if(!c)return; c.innerHTML=prInvolves.map(function(m){ return '<span class="rchip"><span class="mini" style="'+avBg(m)+';width:22px;height:22px;font-size:9px">'+avBody(m)+'</span>'+esc(personName(m))+'<button type="button" onclick="prRemoveInvolve(\''+m+'\')">\u00d7</button></span>'; }).join(''); }
+window.savePriority=function(){
+  if(!activeCid||!ME.mid)return;
+  var title=(document.getElementById('pr-title').value||'').trim();
+  if(!title){ alert('Please add a title.'); return; }
+  var note=(document.getElementById('pr-note').value||'').trim();
+  var status=document.getElementById('pr-status').value||'Scoping';
+  var inv=prInvolves.slice();
+  if(prEditId){
+    var p=priById(prEditId); if(!p||!canEditPriority(p)){ goPriorities(); return; }
+    prioritiesRef().doc(prEditId).update({title:title, note:note, status:status, involves:inv, updatedAt:FV.serverTimestamp()}).then(function(){ goPriorities(); }).catch(function(e){alert(e.message);});
+  } else {
+    var max=-1; myPriorities().forEach(function(q){ if((q.order||0)>max)max=(q.order||0); });
+    prioritiesRef().add({ownerMid:ME.mid, ownerName:ME.name, title:title, note:note, involves:inv, status:status, agreed:false, agreedBy:null, order:max+1, createdAt:FV.serverTimestamp(), updatedAt:FV.serverTimestamp()}).then(function(){ goPriorities(); }).catch(function(e){alert('Could not add: '+e.message);});
+  }
+};
+/* surface the optional detail line on the card */
+function priCardHTML(p,canDrag,canEdit,canAgree){
+  var sc=PRI_SCOL[p.status]||PRI_SCOL.Scoping;
+  var statusBtn='<button class="pri-status" style="background:'+sc[0]+';color:'+sc[1]+'"'+(canEdit?(' onclick="priCycleStatus(\''+p.id+'\')"'):' disabled')+'>'+esc(p.status||'Scoping')+'</button>';
+  var agree='<span class="pri-agree'+(p.agreed?' on':'')+(canAgree?'':' ro')+'"'+(canAgree?(' onclick="priToggleAgree(\''+p.id+'\')"'):'')+'><span class="pri-box">'+(p.agreed?'\u2713':'')+'</span><span class="pri-agree-lbl">'+(p.agreed?'Manager agreed':(canAgree?'Agree priority':'Awaiting manager'))+'</span></span>';
+  var handle=canDrag?'<span class="pri-handle" data-pri="'+p.id+'" title="Drag to reorder"><svg width="13" height="20" viewBox="0 0 14 22" fill="currentColor"><circle cx="3" cy="3" r="2"/><circle cx="11" cy="3" r="2"/><circle cx="3" cy="11" r="2"/><circle cx="11" cy="11" r="2"/><circle cx="3" cy="19" r="2"/><circle cx="11" cy="19" r="2"/></svg></span>':'<span class="pri-handle ro"></span>';
+  var del=canEdit?'<button class="pri-del" title="Remove priority" onclick="priDelete(\''+p.id+'\')">\u2715</button>':'';
+  var titleClick=canEdit?(' onclick="priEditTitle(\''+p.id+'\')" style="cursor:pointer"'):'';
+  var invClick=canEdit?(' onclick="priEditInvolves(\''+p.id+'\')" title="Edit who is involved"'):'';
+  var note=p.note?('<div class="pri-noteline">'+esc(p.note)+'</div>'):'';
+  return '<li class="pri-card" data-pri="'+p.id+'">'+handle+'<span class="pri-rank"></span><div class="pri-main"><div class="pri-title"'+titleClick+'>'+esc(p.title||'Untitled priority')+'</div>'+note+'<div class="pri-meta"><span class="pri-involves"'+invClick+'>Involves '+priInvolvesHTML(p)+'</span></div></div><div class="pri-right">'+statusBtn+agree+del+'</div></li>';
+}
+/* "+ New" menu */
+window.toggleAddMenu=function(e){ if(e){e.stopPropagation();} var m=document.getElementById('addMenu'); if(m)m.classList.toggle('on'); };
+window.addMenuPick=function(kind){ var m=document.getElementById('addMenu'); if(m)m.classList.remove('on'); if(kind==='priority')openRaisePriority(null); else openRaise(); };
+document.addEventListener('click',function(){ var m=document.getElementById('addMenu'); if(m)m.classList.remove('on'); });
 
 </script>
 </body>
