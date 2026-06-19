@@ -287,6 +287,7 @@ tbody td{padding:14px 16px;vertical-align:middle}
 .jstop.major .jtick{width:19px;height:19px;border-width:4px;margin-top:0}
 .jbody{min-width:0}
 .jname{font-size:13.5px;font-weight:600;color:var(--t);line-height:1.35}
+.jdesc{margin-top:5px;font-size:13px;color:var(--t2);line-height:1.5;white-space:pre-wrap}
 .jmeta{font-size:11.5px;color:var(--t3);margin-top:3px;display:flex;align-items:center;gap:6px}
 .jav{width:18px;height:18px;font-size:9px}
 .jtoggle{display:inline-flex;align-items:center;gap:6px;cursor:pointer}
@@ -998,9 +999,9 @@ tr.rowdone:hover td{opacity:.78}
       <div>
         <h1 class="dtitle" id="dT">Reporting dashboard data is 48h stale</h1>
         <div class="meta">
-          <div><div class="k">Function</div><div class="v"><span class="fpill" id="dF" style="background:#7c3aed">Technology</span></div></div>
-          <div><div class="k">Leader tagged</div><div class="v"><span class="mini" id="dLav" style="background:#7c3aed">ML</span><span id="dL">Marcus Lin</span></div></div>
           <div><div class="k">Raised by</div><div class="v"><span class="mini" id="dRav" style="background:#db2777">AD</span><span id="dR">Amara Diallo</span></div></div>
+          <div><div class="k">Function</div><div class="v"><span class="fpill" id="dF" style="background:#7c3aed">Technology</span></div></div>
+          <div><div class="k">Person tagged</div><div class="v"><span class="mini" id="dLav" style="background:#7c3aed">ML</span><span id="dL">Marcus Lin</span></div></div>
           <div><div class="k">Spoken</div><div class="v" id="dConv"></div></div>
         </div>
         <div class="ballbox" id="dBallWrap"></div>
@@ -1013,7 +1014,7 @@ tr.rowdone:hover td{opacity:.78}
           <p class="note">Leader or participants move it along. Only the person who raised it can mark it <strong>Resolved</strong>.</p>
         </div>
         <div class="sec" id="journeySec">
-          <h3 class="jhead" onclick="toggleJourney()">Journey <span class="jcount" id="jcount"></span><span class="jcaret">▾</span></h3>
+          <h3 class="jhead" onclick="toggleJourney()">Progress <span class="jcount" id="jcount"></span><span class="jcaret">▾</span></h3>
           <div class="journey jmap" id="journey"></div>
         </div>
       </div>
@@ -2538,10 +2539,11 @@ function renderJourney(arr){
           '<div class="jmeta">'+av+' '+time+'</div>'+
         '</div></div>';
     }
+    var jdesc=(cat==='raise'&&curIssue&&curIssue.description)?('<div class="jdesc">'+esc(curIssue.description)+'</div>'):'';
     return '<div class="jstop'+(def.major?' major':'')+'">'+
       '<span class="jtick" style="border-color:'+def.c+'"></span>'+
       '<div class="jbody">'+
-        '<div class="jname">'+esc(m.text)+'</div>'+
+        '<div class="jname">'+esc(m.text)+'</div>'+jdesc+
         '<div class="jmeta">'+av+' '+time+'</div>'+
       '</div></div>';
   }).join('');
