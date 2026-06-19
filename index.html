@@ -1119,6 +1119,11 @@ tr.rowdone:hover td{opacity:.78}
           <div class="sw" style="background:#7c3aed" data-c="#7c3aed" data-i="#6427c7" data-s="#f4eefe" data-m="#e0cdfb"></div>
           <div class="sw" style="background:#1a1a1a" data-c="#1a1a1a" data-i="#000000" data-s="#efedea" data-m="#d8d4cf"></div>
         </div>
+        <div class="sw-lbl" style="margin-top:13px">Custom brand colour</div>
+        <div style="display:flex;align-items:center;gap:10px">
+          <input type="color" id="brandCustom" value="#ff6600" oninput="setBrandColor(this.value)" aria-label="Custom brand colour" style="width:48px;height:36px;padding:2px;border:1px solid var(--b);border-radius:8px;background:var(--card);cursor:pointer">
+          <span class="psub" style="margin:0">Pick the client's exact brand colour and the whole app themes to it. The colour box has an eyedropper — open it and sample straight from the logo above.</span>
+        </div>
       </div>
 
       <div class="panel">
@@ -1478,7 +1483,7 @@ function renderLogoPrev(){ var p=document.getElementById('logoPrev'); var rm=doc
   else { var t=clientMonogram(); p.style.background='var(--strip)'; p.innerHTML='<span style="font-family:var(--display);font-weight:700;color:#fff;font-size:'+(t.length>=3?'15px':'20px')+'">'+esc(t)+'</span>'; if(rm)rm.style.display='none'; }
   var bw=document.getElementById('brandWebIn'); if(bw && document.activeElement!==bw) bw.value=(activeCid&&company&&company.web)||'';
 }
-window.uploadLogo=function(file){ if(!isAdmin||!activeCid||!file)return; var rd=new FileReader(); rd.onload=function(){ var img=new Image(); img.onload=function(){ var max=128, sc=Math.min(max/img.width,max/img.height,1); var w=Math.max(1,Math.round(img.width*sc)),h=Math.max(1,Math.round(img.height*sc)); var cv=document.createElement('canvas'); cv.width=w; cv.height=h; cv.getContext('2d').drawImage(img,0,0,w,h); var url; try{url=cv.toDataURL('image/png');}catch(e){url=rd.result;} if(url.length>900000){ alert('That logo is large after processing — try a smaller or simpler image.'); return; } cRef().update({logo:url}).catch(function(e){alert('Could not save logo: '+e.message);}); }; img.onerror=function(){alert('Could not read that image file.');}; img.src=rd.result; }; rd.readAsDataURL(file); };
+window.uploadLogo=function(file){ if(!isAdmin||!activeCid||!file)return; var rd=new FileReader(); rd.onload=function(){ var img=new Image(); img.onload=function(){ var max=128, sc=Math.min(max/img.width,max/img.height,1); var w=Math.max(1,Math.round(img.width*sc)),h=Math.max(1,Math.round(img.height*sc)); var cv=document.createElement('canvas'); cv.width=w; cv.height=h; cv.getContext('2d').drawImage(img,0,0,w,h); var url; try{url=cv.toDataURL('image/png');}catch(e){url=rd.result;} if(url.length>900000){ alert('That logo is large after processing — try a smaller or simpler image.'); return; } cRef().update({logo:url}).then(function(){ sampleColor(url, function(theme){ if(theme){ cRef().update({theme:theme}).then(function(){ if(activeCid)applyTheme(theme); }).catch(function(){}); } }); }).catch(function(e){alert('Could not save logo: '+e.message);}); }; img.onerror=function(){alert('Could not read that image file.');}; img.src=rd.result; }; rd.readAsDataURL(file); };
 function canEditPhoto(mid){ return !!(activeCid && mid && members[mid] && (isAdmin || mid===ME.mid)); }
 window.pfPhotoPick=function(){ if(!canEditPhoto(curProfile))return; var f=document.getElementById('pfPhotoFile'); if(f){ f.value=''; f.click(); } };
 function saveScaledPhoto(source, sw, sh){ if(!canEditPhoto(curProfile))return; var tgt=curProfile; var max=256, sc=Math.min(max/sw,max/sh,1); var w=Math.max(1,Math.round(sw*sc)),h=Math.max(1,Math.round(sh*sc)); var cv=document.createElement('canvas'); cv.width=w; cv.height=h; cv.getContext('2d').drawImage(source,0,0,w,h); var url; try{url=cv.toDataURL('image/jpeg',0.82);}catch(e){alert('Could not process that image.');return;} if(url.length>900000){ alert('That photo is large after processing — try a smaller image.'); return; } membersRef().doc(tgt).update({photo:url}).catch(function(e){alert('Could not save photo: '+e.message);}); }
@@ -1696,7 +1701,7 @@ function joinCompany(){
 }
 window.joinCompanyBtn=function(){ joinCompany().then(function(){ renderAdmin(); render(); }); };
 
-function applyTheme(t){ if(!t)return; var r=document.documentElement; r.style.setProperty('--strip',t.strip); r.style.setProperty('--strip-ink',t.ink); r.style.setProperty('--strip-soft',t.soft); r.style.setProperty('--strip-mid',t.mid); var mt=document.querySelector('meta[name=theme-color]'); if(mt)mt.setAttribute('content',t.strip); document.querySelectorAll('#sws .sw').forEach(function(x){x.classList.toggle('sel',x.dataset.c===t.strip);}); try{localStorage.setItem('ptTheme',JSON.stringify({strip:t.strip,ink:t.ink,soft:t.soft,mid:t.mid}));}catch(e){} }
+function applyTheme(t){ if(!t)return; var r=document.documentElement; r.style.setProperty('--strip',t.strip); r.style.setProperty('--strip-ink',t.ink); r.style.setProperty('--strip-soft',t.soft); r.style.setProperty('--strip-mid',t.mid); var mt=document.querySelector('meta[name=theme-color]'); if(mt)mt.setAttribute('content',t.strip); document.querySelectorAll('#sws .sw').forEach(function(x){x.classList.toggle('sel',x.dataset.c===t.strip);}); var bc=document.getElementById('brandCustom'); if(bc&&t.strip&&t.strip.charAt(0)==='#')bc.value=t.strip; try{localStorage.setItem('ptTheme',JSON.stringify({strip:t.strip,ink:t.ink,soft:t.soft,mid:t.mid}));}catch(e){} }
 
 /* ---------- NAV ---------- */
 function show(id){ document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active');}); var el=document.getElementById(id); if(el)el.classList.add('active'); window.scrollTo(0,0); }
@@ -1790,6 +1795,8 @@ window.rebrandCurrent=function(){
   if(!dom)return;
   brandFromWeb(activeCid, dom);
 };
+function hexToRgb(h){ h=(h||'').replace('#',''); if(h.length===3)h=h[0]+h[0]+h[1]+h[1]+h[2]+h[2]; var n=parseInt(h,16); if(isNaN(n))return{r:255,g:102,b:0}; return {r:(n>>16)&255,g:(n>>8)&255,b:n&255}; }
+window.setBrandColor=function(hex){ if(!isAdmin||!activeCid)return; var c=hexToRgb(hex); var t=themeFromRGB(c.r,c.g,c.b); cRef().update({theme:t}).then(function(){ applyTheme(t); }).catch(function(e){ alert('Could not set colour: '+e.message); }); };
 function themeFromRGB(r,g,b){
   function hx(x){ return ('0'+Math.max(0,Math.min(255,Math.round(x))).toString(16)).slice(-2); }
   function mix(a,bb,t){ return a+(bb-a)*t; }
