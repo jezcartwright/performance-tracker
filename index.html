@@ -470,6 +470,10 @@ body:has(#cohome.active){background:#fff}
 .pcard .pcount{font-size:11px;font-weight:700;color:var(--t2);background:var(--bg);border:1px solid var(--b);border-radius:6px;padding:2px 9px;display:inline-block}
 /* whole-org chart */
 .orgchart{padding-top:8px}
+.ozc{display:inline-flex;align-items:center;border:1px solid var(--b);border-radius:9px;overflow:hidden;background:var(--card);vertical-align:middle}
+.ozb{border:none;background:none;font:700 15px var(--ui);color:var(--t2);padding:6px 11px;cursor:pointer;line-height:1}
+.ozb:hover{background:var(--strip-soft);color:var(--strip-ink)}
+.ozb.ozp{font-size:12px;min-width:48px;border-left:1px solid var(--b);border-right:1px solid var(--b)}
 .orgbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:0 2px 4px;padding-bottom:14px}
 .orgcrumb{font-weight:800;font-size:14px;color:var(--t2)}
 .orgctrls{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
@@ -2534,7 +2538,8 @@ function leaderNode(fid,seen){
 }
 function controlsBar(){
   var toggle='<div class="orgview-tg"><button class="ovt'+(ORGVIEW==='chart'?' on':'')+'" onclick="setOrgView(\'chart\')">Chart</button><button class="ovt'+(ORGVIEW==='list'?' on':'')+'" onclick="setOrgView(\'list\')">List</button></div>';
-  if(!isAdmin) return '<div class="orgbar"><div class="orgcrumb">'+esc(company.name||'Organisation')+'</div><div class="orgctrls">'+toggle+'</div></div>';
+  var oz=(ORGVIEW==='chart')?'<div class="ozc"><button class="ozb" onclick="orgZoom(-0.15)" aria-label="Zoom out" title="Zoom out">\u2212</button><button class="ozb ozp" id="ozPct" onclick="orgZoomReset()" title="Reset zoom">100%</button><button class="ozb" onclick="orgZoom(0.15)" aria-label="Zoom in" title="Zoom in">+</button></div>':'';
+  if(!isAdmin) return '<div class="orgbar"><div class="orgcrumb">'+esc(company.name||'Organisation')+'</div><div class="orgctrls">'+toggle+oz+'</div></div>';
   var mg=(ORGVIEW==='chart')?'<button class="orgbtn'+(MANAGING?' on':'')+'" onclick="toggleManageOrg()">✎ Manage Org</button>':'';
   var addp='<button class="orgbtn primary-org" onclick="openPerson()">+ Add person</button>';
   var addt='<button class="orgbtn" onclick="addTeam()">+ Add team</button>';
@@ -2543,8 +2548,13 @@ function controlsBar(){
   var arch='<button class="orgbtn" onclick="openArchive()">🗄 Archive <span id="archCount">'+archiveCount+'</span></button>';
   var reb=ME.isSuper?'<button class="orgbtn" onclick="rebrandCurrent()" title="Pull logo &amp; accent colour from the company website">🎨 Brand</button>':'';
   var banner=(ORGVIEW==='chart'&&MANAGING)?'<div class="mgbanner">✎ Manage Org on — <strong>drag a card onto another</strong> to change who they report to (their team moves too); <strong>drop on a card’s left/right edge</strong> to reorder. Tap a leader slot to set them, or use a card’s ⋯ menu. Tap anyone to view them.</div>':'';
-  return '<div class="orgbar"><div class="orgcrumb">'+esc(company.name||'Organisation')+'</div><div class="orgctrls">'+toggle+mg+addp+addt+imp+setceo+arch+reb+'</div></div>'+banner;
+  return '<div class="orgbar"><div class="orgcrumb">'+esc(company.name||'Organisation')+'</div><div class="orgctrls">'+toggle+oz+mg+addp+addt+imp+setceo+arch+reb+'</div></div>'+banner;
 }
+var ORGZOOM=1;
+function applyOrgZoom(){ var tree=document.querySelector('.orgchart .tree'); if(tree){ try{ tree.style.zoom=ORGZOOM; }catch(e){ tree.style.transform='scale('+ORGZOOM+')'; tree.style.transformOrigin='top center'; } } var pct=document.getElementById('ozPct'); if(pct)pct.textContent=Math.round(ORGZOOM*100)+'%'; }
+window.orgZoom=function(d){ ORGZOOM=Math.max(0.4,Math.min(1.5,Math.round((ORGZOOM+d)*100)/100)); applyOrgZoom(); };
+window.orgZoomReset=function(){ ORGZOOM=1; applyOrgZoom(); };
+function orgWheelZoom(e){ if(e.ctrlKey||e.metaKey){ e.preventDefault(); orgZoom(e.deltaY<0?0.08:-0.08); } }
 function renderTeam(){
   var onAdmin=(function(){var a=document.getElementById('admin');return !!(a&&a.classList.contains('active'));})();
   var other=document.getElementById(onAdmin?'orgWrap':'admOrgWrap'); if(other)other.innerHTML='';
@@ -2557,7 +2567,7 @@ function renderTeam(){
       ? '<ul><li>'+orgCard(ceo0,'ceo')+'<ul>'+addTile+'</ul></li></ul>'
       : '<ul>'+addTile+'</ul>';
     wrap.innerHTML=controlsBar()+'<div class="dept orgchart'+(MANAGING?' managing':'')+'"><div class="tree">'+inner+'</div></div>';
-    var sc0=wrap.querySelector('.orgchart'); if(sc0){ sc0.scrollLeft=Math.max(0,(sc0.scrollWidth-sc0.clientWidth)/2); }
+    var sc0=wrap.querySelector('.orgchart'); if(sc0){ sc0.scrollLeft=Math.max(0,(sc0.scrollWidth-sc0.clientWidth)/2); sc0.addEventListener('wheel',orgWheelZoom,{passive:false}); } applyOrgZoom();
     return;
   }
   if(ORGVIEW==='list'){ wrap.innerHTML=controlsBar()+orgListHtml(); return; }
@@ -2568,7 +2578,7 @@ function renderTeam(){
     ? '<div class="tree"><ul><li>'+orgCard(ceo,'ceo')+'<ul>'+leaderLis+'</ul></li></ul></div>'
     : '<div class="tree"><ul>'+leaderLis+'</ul></div>';
   wrap.innerHTML=controlsBar()+'<div class="dept orgchart'+(MANAGING?' managing':'')+'">'+tree+'</div>';
-  var sc=wrap.querySelector('.orgchart'); if(sc){ sc.scrollLeft=Math.max(0,(sc.scrollWidth-sc.clientWidth)/2); }
+  var sc=wrap.querySelector('.orgchart'); if(sc){ sc.scrollLeft=Math.max(0,(sc.scrollWidth-sc.clientWidth)/2); sc.addEventListener('wheel',orgWheelZoom,{passive:false}); } applyOrgZoom();
 }
 function orgListHtml(){
   var lens='<div class="ollens">'+
