@@ -558,6 +558,12 @@ body:has(#cohome.active){background:#fff}
 /* archive modal */
 .amodal{position:fixed;inset:0;background:rgba(26,26,26,.4);display:none;z-index:80;align-items:flex-start;justify-content:center;padding:60px 18px}
 .amodal.on{display:flex}
+.imp-prev{max-height:300px;overflow:auto}
+.imp-sum{font-weight:700;font-size:13px;color:var(--strip-ink);background:var(--strip-soft);border:1px solid var(--strip-mid);border-radius:8px;padding:8px 11px;margin-bottom:10px}
+.imp-dept{border:1px solid var(--b);border-radius:8px;padding:8px 11px;margin-bottom:8px}
+.imp-dept-h{font-weight:800;font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--t3);margin-bottom:5px}
+.imp-row{font-size:13px;color:var(--t);padding:2px 0}
+.imp-mgr{color:var(--t3);font-size:11.5px}
 .amodal-card{background:#fff;border-radius:16px;width:100%;max-width:460px;max-height:80vh;overflow-y:auto;padding:24px;box-shadow:0 30px 80px rgba(0,0,0,.3)}
 .amodal-h{display:flex;align-items:center;justify-content:space-between}
 .amodal-h h2{font-family:var(--display);font-weight:600;font-size:26px;margin:0}
@@ -1053,6 +1059,24 @@ tr.rowdone:hover td{opacity:.78}
       <div class="amodal-h"><h2>Archive</h2><button class="amodal-x" onclick="closeArchive()">✕</button></div>
       <p class="amodal-sub">People removed from an org, kept on record. Each carries a permanent reference number (e.g. PT-…) so they stay identifiable even though their old work email belonged to the company they left. Reassign them to any company you manage and that number travels with them.</p>
       <div id="archBody"></div>
+    </div>
+  </div>
+
+  <div class="amodal" id="importSheet">
+    <div class="amodal-card">
+      <div class="amodal-h"><h2>Import org chart</h2><button class="amodal-x" onclick="closeImport()">✕</button></div>
+      <p class="amodal-sub">Drop in a spreadsheet (.xlsx or .csv) and the whole org is built — departments, people and reporting lines. Columns it understands: <b>Name</b> (or First / Last), <b>Title</b>, <b>Email</b>, <b>Department</b>, <b>Manager</b> (their manager's name or email), and an optional <b>Leader</b> flag. The person with no manager becomes the CEO. If your org chart is a picture, send it to me in chat and I'll turn it into a sheet you can drop in here.</p>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:10px">
+        <label class="tinybtn upbtn">Choose spreadsheet<input type="file" accept=".xlsx,.xls,.csv" id="imp-file" onchange="impFile(this.files[0])" style="display:none"></label>
+        <span class="psub" style="margin:0">…or paste a table below</span>
+      </div>
+      <textarea id="imp-paste" placeholder="Paste tab- or comma-separated rows here — header row first" style="width:100%;min-height:88px;font-family:var(--ui);font-size:13px;padding:9px;border:1px solid var(--b);border-radius:8px;background:var(--card);box-sizing:border-box"></textarea>
+      <div style="margin:8px 0 12px"><button class="tinybtn" onclick="impPaste()">Read pasted table</button></div>
+      <div id="imp-prev" class="imp-prev"></div>
+      <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:14px">
+        <button class="ghost" onclick="closeImport()">Cancel</button>
+        <button class="primary" id="imp-go" onclick="impCreate()" disabled>Create org</button>
+      </div>
     </div>
   </div>
 
@@ -1797,6 +1821,36 @@ window.rebrandCurrent=function(){
 };
 function hexToRgb(h){ h=(h||'').replace('#',''); if(h.length===3)h=h[0]+h[0]+h[1]+h[1]+h[2]+h[2]; var n=parseInt(h,16); if(isNaN(n))return{r:255,g:102,b:0}; return {r:(n>>16)&255,g:(n>>8)&255,b:n&255}; }
 window.setBrandColor=function(hex){ if(!isAdmin||!activeCid)return; var c=hexToRgb(hex); var t=themeFromRGB(c.r,c.g,c.b); cRef().update({theme:t}).then(function(){ applyTheme(t); }).catch(function(e){ alert('Could not set colour: '+e.message); }); };
+
+/* ---------- IMPORT ORG CHART (spreadsheet / pasted table) ---------- */
+var IMP_ROWS=null;
+function impLoadXLSX(cb){ if(window.XLSX){ cb(); return; } var s=document.createElement('script'); s.src='https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js'; s.onload=function(){ cb(); }; s.onerror=function(){ alert('Could not load the spreadsheet reader — check your connection and try again.'); }; document.head.appendChild(s); }
+window.openImport=function(){ if(!isAdmin||!activeCid)return; IMP_ROWS=null; var fi=document.getElementById('imp-file'); if(fi)fi.value=''; var pa=document.getElementById('imp-paste'); if(pa)pa.value=''; var pv=document.getElementById('imp-prev'); if(pv)pv.innerHTML=''; var go=document.getElementById('imp-go'); if(go){go.disabled=true;go.textContent='Create org';} document.getElementById('importSheet').classList.add('on'); };
+window.closeImport=function(){ document.getElementById('importSheet').classList.remove('on'); };
+function impSplitCSV(line){ var out=[],cur='',q=false; for(var i=0;i<line.length;i++){ var c=line[i]; if(q){ if(c==='"'){ if(line[i+1]==='"'){cur+='"';i++;} else q=false; } else cur+=c; } else { if(c==='"')q=true; else if(c===','){out.push(cur);cur='';} else cur+=c; } } out.push(cur); return out; }
+window.impFile=function(file){ if(!file)return; impLoadXLSX(function(){ var rd=new FileReader(); rd.onload=function(){ try{ var wb=XLSX.read(rd.result,{type:'binary'}); var ws=wb.Sheets[wb.SheetNames[0]]; var aoa=XLSX.utils.sheet_to_json(ws,{header:1,blankrows:false,defval:''}); impFromAOA(aoa); }catch(e){ alert('Could not read that file: '+e.message); } }; rd.readAsBinaryString(file); }); };
+window.impPaste=function(){ var txt=(document.getElementById('imp-paste').value||'').replace(/^\s+|\s+$/g,''); if(!txt){ alert('Paste a table first — header row, then one person per line (tabs or commas).'); return; } var aoa=txt.split(/\r?\n/).map(function(l){ return l.indexOf('\t')>=0?l.split('\t'):impSplitCSV(l); }); impFromAOA(aoa); };
+function impHeaderIndex(hdr){ function find(re){ for(var i=0;i<hdr.length;i++){ if(re.test((hdr[i]||'').toString().trim())) return i; } return -1; } return { name:find(/^(name|full ?name|person|employee|member)$/i), first:find(/^(first ?name|first|given ?name)$/i), last:find(/^(last ?name|last|surname|family ?name)$/i), title:find(/title|role|position|job/i), email:find(/e-?mail/i), dept:find(/department|dept|function|team|division|group|unit/i), manager:find(/manager|reports? ?to|supervisor|line ?manager|boss|parent/i), leader:find(/is ?leader|^leader|head|^lead$/i) }; }
+function impFromAOA(aoa){ aoa=(aoa||[]).filter(function(r){ return r && r.join('').replace(/\s/g,'')!==''; }); if(aoa.length<2){ alert('Need a header row plus at least one person.'); return; } var hdr=aoa[0].map(function(x){ return (x==null?'':x).toString(); }); var ix=impHeaderIndex(hdr); if(ix.name<0 && ix.first<0){ alert('Couldn\u2019t find a Name column. Add a column headed \u201cName\u201d (or First name / Last name).'); return; } var rows=[]; for(var r=1;r<aoa.length;r++){ var row=aoa[r]; var cell=function(i){ return i>=0?((row[i]==null?'':row[i]).toString().trim()):''; }; var nm=cell(ix.name); var fn=cell(ix.first), ln=cell(ix.last); if(!nm && (fn||ln)) nm=(fn+' '+ln).trim(); if(!nm) continue; rows.push({ name:nm, title:cell(ix.title), email:cell(ix.email).toLowerCase(), dept:cell(ix.dept)||'Team', manager:cell(ix.manager), leaderFlag:/^(y|yes|true|1|x|lead)/i.test(cell(ix.leader)) }); } if(!rows.length){ alert('No people found in the table.'); return; } IMP_ROWS=rows; impPreview(rows); }
+function impResolve(rows){ var byName={}, byEmail={}; rows.forEach(function(p,i){ byName[p.name.toLowerCase()]=i; if(p.email)byEmail[p.email]=i; }); rows.forEach(function(p,i){ var m=(p.manager||'').trim(); var mi=-1; if(m){ if(byEmail[m.toLowerCase()]!=null)mi=byEmail[m.toLowerCase()]; else if(byName[m.toLowerCase()]!=null)mi=byName[m.toLowerCase()]; } p._mgrIdx=(mi===i?-1:mi); }); var roots=[]; rows.forEach(function(p,i){ if(p._mgrIdx<0)roots.push(i); }); var ceoIdx=-1; for(var k=0;k<roots.length;k++){ if(/ceo|chief exec|founder|president|managing director|owner|chair/i.test(rows[roots[k]].title||'')){ ceoIdx=roots[k]; break; } } if(ceoIdx<0&&roots.length)ceoIdx=roots[0]; return { roots:roots, ceoIdx:ceoIdx }; }
+function impPreview(rows){ var info=impResolve(rows); var depts={}, order=[]; rows.forEach(function(p){ if(!depts[p.dept]){depts[p.dept]=[];order.push(p.dept);} depts[p.dept].push(p); }); var nd=order.length; var html='<div class="imp-sum">'+rows.length+' people \u00b7 '+nd+' department'+(nd>1?'s':'')+(info.ceoIdx>=0?(' \u00b7 CEO: '+esc(rows[info.ceoIdx].name)):'')+'</div>'; order.forEach(function(d){ html+='<div class="imp-dept"><div class="imp-dept-h">'+esc(d)+'</div>'; depts[d].forEach(function(p){ var mgr=(p._mgrIdx>=0)?rows[p._mgrIdx].name:(rows.indexOf(p)===info.ceoIdx?'top of org':'(no manager)'); html+='<div class="imp-row"><b>'+esc(p.name)+'</b>'+(p.title?' \u00b7 '+esc(p.title):'')+'<span class="imp-mgr"> \u2192 '+esc(mgr)+'</span></div>'; }); html+='</div>'; }); document.getElementById('imp-prev').innerHTML=html; var go=document.getElementById('imp-go'); if(go)go.disabled=false; }
+window.impCreate=function(){ if(!isAdmin||!activeCid||!IMP_ROWS||!IMP_ROWS.length)return; var rows=IMP_ROWS, info=impResolve(rows); var go=document.getElementById('imp-go'); go.disabled=true; go.textContent='Creating\u2026';
+  var deptNames=[]; rows.forEach(function(p){ if(deptNames.indexOf(p.dept)<0)deptNames.push(p.dept); });
+  var existing={}; Object.keys(fns).forEach(function(f){ existing[(fns[f].name||'').toLowerCase()]=f; });
+  var fidByDept={};
+  Promise.all(deptNames.map(function(d,i){ var ex=existing[d.toLowerCase()]; if(ex){ fidByDept[d]=ex; return Promise.resolve(); } var color=TEAM_COLORS[(Object.keys(fns).length+i)%TEAM_COLORS.length]; return fnsRef().add({name:d,color:color,leaderMid:null,leaderName:''}).then(function(ref){ fidByDept[d]=ref.id; }); }))
+  .then(function(){ var midByIdx=new Array(rows.length); return Promise.all(rows.map(function(p,i){ var parts=p.name.split(' ').filter(Boolean); var first=parts.shift()||p.name; var last=parts.join(' '); return membersRef().add({ first:first, last:last, name:p.name, initials:initials(p.name), email:p.email||null, functionId:fidByDept[p.dept]||null, title:p.title||null, isLeader:false, managerMid:null, uid:null, pid:newPid(), order:i }).then(function(ref){ midByIdx[i]=ref.id; }); }))
+    .then(function(){ var tasks=[];
+      rows.forEach(function(p,i){ if(p._mgrIdx>=0 && midByIdx[p._mgrIdx]) tasks.push(membersRef().doc(midByIdx[i]).update({managerMid:midByIdx[p._mgrIdx]})); });
+      var leaderByDept={}; rows.forEach(function(p,i){ if(p.leaderFlag && leaderByDept[p.dept]==null) leaderByDept[p.dept]=i; });
+      deptNames.forEach(function(d){ if(leaderByDept[d]==null){ for(var i=0;i<rows.length;i++){ if(rows[i].dept!==d)continue; var mi=rows[i]._mgrIdx; if(mi<0||rows[mi].dept!==d){ leaderByDept[d]=i; break; } } } if(leaderByDept[d]==null){ for(var j=0;j<rows.length;j++){ if(rows[j].dept===d){ leaderByDept[d]=j; break; } } } });
+      Object.keys(leaderByDept).forEach(function(d){ var li=leaderByDept[d], fid=fidByDept[d]; if(fid!=null && li!=null && midByIdx[li]){ tasks.push(membersRef().doc(midByIdx[li]).update({isLeader:true})); tasks.push(fnsRef().doc(fid).update({leaderMid:midByIdx[li],leaderName:rows[li].name})); } });
+      if(info.ceoIdx>=0 && midByIdx[info.ceoIdx]) tasks.push(cRef().update({ceoMemberId:midByIdx[info.ceoIdx]}));
+      return Promise.all(tasks);
+    }); })
+  .then(function(){ go.disabled=false; go.textContent='Create org'; closeImport(); if(window.goTeam)goTeam(); })
+  .catch(function(e){ go.disabled=false; go.textContent='Create org'; alert('Import failed: '+e.message); });
+};
 function themeFromRGB(r,g,b){
   function hx(x){ return ('0'+Math.max(0,Math.min(255,Math.round(x))).toString(16)).slice(-2); }
   function mix(a,bb,t){ return a+(bb-a)*t; }
@@ -2484,11 +2538,12 @@ function controlsBar(){
   var mg=(ORGVIEW==='chart')?'<button class="orgbtn'+(MANAGING?' on':'')+'" onclick="toggleManageOrg()">✎ Manage Org</button>':'';
   var addp='<button class="orgbtn primary-org" onclick="openPerson()">+ Add person</button>';
   var addt='<button class="orgbtn" onclick="addTeam()">+ Add team</button>';
+  var imp=isAdmin?'<button class="orgbtn" onclick="openImport()">⬆ Import</button>':'';
   var setceo=(!(company.ceoMemberId&&members[company.ceoMemberId]))?'<button class="orgbtn" onclick="appointCEOPick()">♛ Set a CEO</button>':'';
   var arch='<button class="orgbtn" onclick="openArchive()">🗄 Archive <span id="archCount">'+archiveCount+'</span></button>';
   var reb=ME.isSuper?'<button class="orgbtn" onclick="rebrandCurrent()" title="Pull logo &amp; accent colour from the company website">🎨 Brand</button>':'';
   var banner=(ORGVIEW==='chart'&&MANAGING)?'<div class="mgbanner">✎ Manage Org on — <strong>drag a card onto another</strong> to change who they report to (their team moves too); <strong>drop on a card’s left/right edge</strong> to reorder. Tap a leader slot to set them, or use a card’s ⋯ menu. Tap anyone to view them.</div>':'';
-  return '<div class="orgbar"><div class="orgcrumb">'+esc(company.name||'Organisation')+'</div><div class="orgctrls">'+toggle+mg+addp+addt+setceo+arch+reb+'</div></div>'+banner;
+  return '<div class="orgbar"><div class="orgcrumb">'+esc(company.name||'Organisation')+'</div><div class="orgctrls">'+toggle+mg+addp+addt+imp+setceo+arch+reb+'</div></div>'+banner;
 }
 function renderTeam(){
   var onAdmin=(function(){var a=document.getElementById('admin');return !!(a&&a.classList.contains('active'));})();
