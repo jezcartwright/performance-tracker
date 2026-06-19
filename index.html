@@ -185,6 +185,9 @@ tbody td{padding:14px 16px;vertical-align:middle}
 .meta{display:flex;flex-wrap:wrap;gap:20px;padding:15px 0;border-top:1px solid var(--b);border-bottom:1px solid var(--b);margin-bottom:18px}
 .meta .k{font-family:var(--ui);font-size:10px;text-transform:uppercase;letter-spacing:1.3px;color:var(--t3);margin-bottom:5px;font-weight:700}
 .meta .v{font-weight:600;display:flex;align-items:center;gap:7px;font-size:13.5px}
+.dperson{display:inline-flex;align-items:center;gap:6px}
+.dnobody{color:var(--t3);font-weight:400}
+#dPeople{flex-wrap:wrap}
 .sec{margin-bottom:20px}
 .sec h3{font-family:var(--ui);font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--strip);margin-bottom:8px}
 .sec p{font-family:var(--serif);font-size:14.5px;line-height:1.65;color:var(--t)}
@@ -1000,9 +1003,9 @@ tr.rowdone:hover td{opacity:.78}
         <h1 class="dtitle" id="dT">Reporting dashboard data is 48h stale</h1>
         <div class="meta">
           <div><div class="k">Raised by</div><div class="v"><span class="mini" id="dRav" style="background:#db2777">AD</span><span id="dR">Amara Diallo</span></div></div>
-          <div><div class="k">Function</div><div class="v"><span class="fpill" id="dF" style="background:#7c3aed">Technology</span></div></div>
-          <div><div class="k">Person tagged</div><div class="v"><span class="mini" id="dLav" style="background:#7c3aed">ML</span><span id="dL">Marcus Lin</span></div></div>
+          <div><div class="k">People tagged</div><div class="v" id="dPeople"></div></div>
           <div><div class="k">Spoken</div><div class="v" id="dConv"></div></div>
+          <div><div class="k">Function</div><div class="v"><span class="fpill" id="dF" style="background:#7c3aed">Technology</span></div></div>
         </div>
         <div class="ballbox" id="dBallWrap"></div>
         <div class="ta" id="ball-ta" style="display:none;margin:-6px 0 14px"><div id="ball-back"></div><input id="ball-input" class="ta-input" type="text" placeholder="Pass the ball to…" autocomplete="off" oninput="ballSearch(this)" onfocus="ballSearch(this)" onblur="taBlur('ball-list')"><div id="ball-list" class="ta-list" style="display:none"></div></div>
@@ -2399,8 +2402,7 @@ function fillDetail(i){
   var fc=i.color||(fns[i.functionId]&&fns[i.functionId].color)||'var(--strip)';
   document.getElementById('dT').textContent=i.title;
   var f=document.getElementById('dF'); f.textContent=i.functionName||''; f.style.background=fc;
-  var la=document.getElementById('dLav'); if(i.leaderMid){ la.innerHTML=avBody(i.leaderMid); la.style.background=(members[i.leaderMid]&&members[i.leaderMid].photo)?'transparent':fc; } else { la.textContent='—'; la.style.background=fc; }
-  document.getElementById('dL').textContent=i.leaderMid?(i.leaderName||personName(i.leaderMid)):'No leader set';
+  var dp=document.getElementById('dPeople'); if(dp){ var tg=(i.participants||[]).filter(function(m){return m&&m!==i.raiserMid;}); dp.innerHTML=tg.length?tg.map(function(m){ return '<span class="dperson"><span class="mini" style="'+avBg(m)+'">'+avBody(m)+'</span><span>'+esc(personName(m))+'</span></span>'; }).join(''):'<span class="dnobody">No one tagged</span>'; }
   var ra=document.getElementById('dRav'); ra.innerHTML=avBody(i.raiserMid); ra.style.background=(members[i.raiserMid]&&members[i.raiserMid].photo)?'transparent':personColor(i.raiserMid);
   document.getElementById('dR').textContent=i.raiserName||personName(i.raiserMid);
   var cv=document.getElementById('dConv'); if(cv) cv.innerHTML=spokenToggle(i);
@@ -2458,7 +2460,8 @@ function renderStepper(st){
 window.setStatus=function(s){ if(!curIssue||!curId)return; issuesRef().doc(curId).update({status:s,updatedAt:FV.serverTimestamp()}); issuesRef().doc(curId).collection('messages').add({type:'system',event:'status',text:ME.first+' moved this to “'+(sm[s]?sm[s][1]:s)+'”.',authorMid:ME.mid,authorUid:ME.uid,authorName:ME.name,createdAt:FV.serverTimestamp()}); };
 window.resolveIssue=function(){ if(!curIssue||!curId)return; var canResolve=(curIssue.raiserMid&&curIssue.raiserMid===ME.mid)||isAdmin; if(!canResolve)return; if(!confirm('Mark this issue as resolved?'))return; issuesRef().doc(curId).update({status:'done',ballMid:null,resolvedAt:FV.serverTimestamp(),updatedAt:FV.serverTimestamp()}); issuesRef().doc(curId).collection('messages').add({type:'system',event:'resolve',text:ME.first+' marked this resolved.',authorMid:ME.mid,authorUid:ME.uid,authorName:ME.name,createdAt:FV.serverTimestamp()}); };
 /* ---------- HOLDING THE BALL: current owner of the next action; moves through the lifecycle ---------- */
-function canPassBall(i){ if(!i||i.status==='done') return false; return isAdmin || i.ballMid===ME.mid || i.raiserMid===ME.mid || (i.participants||[]).indexOf(ME.mid)>=0; }
+function canPassBall(i){ if(!i||i.status==='done') return false; return isAdmin || i.ballMid===ME.mid; }
+function canTakeBall(i){ if(!i||i.status==='done') return false; if(i.ballMid===ME.mid) return false; return isAdmin || i.raiserMid===ME.mid || i.leaderMid===ME.mid || (i.participants||[]).indexOf(ME.mid)>=0; }
 function kindPill(i){ if(!i.kind) return ''; return i.kind==='fyi'?'<span class="kpill fyi">FYI</span>':'<span class="kpill act">Action</span>'; }
 function ballInline(i){ if(i.status==='done'||!i.ballMid) return ''; var mine=i.ballMid===ME.mid; return '<span class="ball'+(mine?' mine':'')+'" style="font-size:11px"><span class="dot"></span>'+(mine?'Your move':esc(personName(i.ballMid)))+'</span>'; }
 function ballBoxHTML(i){
@@ -2467,10 +2470,8 @@ function ballBoxHTML(i){
   else if(i.ballMid){ var mine=i.ballMid===ME.mid; status='<span class="ball'+(mine?' mine':'')+'"><span class="dot"></span>'+(mine?'Your move':('Ball with '+esc(personName(i.ballMid))))+'</span>'; }
   else { status='<span class="ball none"><span class="dot"></span>No action owed \u00b7 FYI</span>'; }
   var ctrls='';
-  if(canPassBall(i)){
-    ctrls+='<button class="dact" onclick="ballHandOpen()">\u21aa Pass the ball to\u2026</button>';
-    if(i.ballMid!==ME.mid) ctrls+='<button class="dact" onclick="ballTake()">\u270b Take it</button>';
-  }
+  if(canPassBall(i)){ ctrls+='<button class="dact" onclick="ballHandOpen()">\u21aa Pass the ball to\u2026</button>'; }
+  if(canTakeBall(i)){ ctrls+='<button class="dact" onclick="ballTake()">\u270b Take it</button>'; }
   return tag+status+'<span class="bspace"></span>'+ctrls;
 }
 function ballSetTo(mid){
@@ -2483,7 +2484,7 @@ function ballSetTo(mid){
     issuesRef().doc(curId).collection('messages').add({type:'system',event:'pass',text:txt,authorMid:ME.mid,authorUid:ME.uid,authorName:ME.name,createdAt:FV.serverTimestamp()});
   }).catch(function(e){ alert('Could not pass the ball: '+e.message); });
 }
-window.ballTake=function(){ if(curIssue&&canPassBall(curIssue)) ballSetTo(ME.mid); };
+window.ballTake=function(){ if(curIssue&&canTakeBall(curIssue)) ballSetTo(ME.mid); };
 window.ballHandBack=function(){ if(!curIssue||!canPassBall(curIssue))return; var b=(curIssue.ballFromMid||curIssue.raiserMid); if(!b||b===curIssue.ballMid)return; var ta=document.getElementById('ball-ta'); if(ta)ta.style.display='none'; hideTa('ball-list'); ballSetTo(b); };
 window.ballHandOpen=function(){ if(!curIssue||!canPassBall(curIssue))return; var ta=document.getElementById('ball-ta'); if(!ta)return; ta.style.display='block'; var bm=curIssue.ballFromMid||null; if(bm===curIssue.ballMid) bm=null; var back=document.getElementById('ball-back'); if(back){ back.innerHTML=(bm&&members[bm])?'<button type="button" class="ball-backbtn" onclick="ballHandBack()">\u21a9 Back to '+esc(personName(bm))+'<span class="bb-sub">passed it to you</span></button>':''; } var inp=document.getElementById('ball-input'); if(inp){inp.value='';inp.focus();} renderTaList('ball-list','',[],'ballPick'); };
 window.ballSearch=function(inp){ renderTaList('ball-list', inp.value, [], 'ballPick'); };
