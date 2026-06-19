@@ -727,6 +727,7 @@ tr.rowdone:hover td{opacity:.78}
 .addmenu .am-s{display:block;font-size:12px;color:var(--t3);margin-top:1px}
 .pri-noteline{font-size:12.5px;color:var(--t3);margin:-3px 0 7px;line-height:1.45}
 input,textarea,select{font-family:inherit}
+input,textarea,select{font-family:inherit}
 @media(max-width:560px){.pri-card{grid-template-columns:auto 1fr;grid-template-areas:'h m' 'r right'}.pri-handle{grid-area:h}.pri-main{grid-area:m}.pri-rank{grid-area:r;justify-self:start}.pri-right{grid-area:right;flex-direction:row;align-items:center;width:100%;justify-content:space-between}}
 </style>
 </head>
@@ -826,7 +827,6 @@ input,textarea,select{font-family:inherit}
       <button class="primary" onclick="toggleAddMenu(event)">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
         New
-        <svg viewBox="0 0 24 24" width="14" fill="none" stroke="currentColor" stroke-width="2.4" style="margin-left:1px"><path d="m6 9 6 6 6-6"/></svg>
       </button>
       <div class="addmenu" id="addMenu">
         <button onclick="addMenuPick('priority')"><span class="am-ic">&#9733;</span><span><span class="am-t">Add a priority</span><span class="am-s">Something you're driving</span></span></button>
