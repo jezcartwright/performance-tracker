@@ -157,6 +157,7 @@ tbody td{padding:14px 16px;vertical-align:middle}
 .fn-dot{width:9px;height:9px;border-radius:50%}
 .fpill{display:inline-flex;align-items:center;font-size:11px;font-weight:700;padding:4px 10px;border-radius:6px;color:#fff;letter-spacing:.02em;white-space:nowrap}
 .who{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--t2);font-weight:500}
+.tagmini{display:flex;flex-wrap:wrap;gap:4px}
 .mini{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;font-size:10px;font-weight:700;color:#fff;flex-shrink:0}
 /* BOLD status pills (solid fills) */
 .st{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:700;padding:5px 11px;border-radius:20px;color:#fff;letter-spacing:.02em}
@@ -187,7 +188,7 @@ tbody td{padding:14px 16px;vertical-align:middle}
 .meta .v{font-weight:600;display:flex;align-items:center;gap:7px;font-size:13.5px}
 .dperson{display:inline-flex;align-items:center;gap:6px}
 .dnobody{color:var(--t3);font-weight:400}
-#dPeople{flex-wrap:wrap}
+#dPeople{flex-direction:column;align-items:flex-start;gap:7px}
 .sec{margin-bottom:20px}
 .sec h3{font-family:var(--ui);font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--strip);margin-bottom:8px}
 .sec p{font-family:var(--serif);font-size:14.5px;line-height:1.65;color:var(--t)}
@@ -248,7 +249,7 @@ tbody td{padding:14px 16px;vertical-align:middle}
 .doc-chip .doc-nm{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .doc-chip .doc-by{color:var(--t3);font-size:11px;margin-left:auto;white-space:nowrap;flex-shrink:0}
 .doc-x{margin-left:6px;border:none;background:none;color:var(--t3);cursor:pointer;font-size:16px;line-height:1;flex-shrink:0}
-.doc-x:hover{color:#c0392b}
+.doc-x:hover{color:#e5252b}
 .pri-docs{display:inline-flex;align-items:center;gap:3px;margin-left:8px;color:var(--t3);font-size:11.5px;font-weight:600;vertical-align:middle}
 .rchip button{border:none;background:none;cursor:pointer;font-size:15px;line-height:1;color:#999;padding:0 3px}
 .rchip button:hover{color:#d33}
@@ -272,7 +273,7 @@ tbody td{padding:14px 16px;vertical-align:middle}
 .dactions{display:flex;gap:8px;justify-content:flex-end;margin:0 0 12px}
 .dact{display:inline-flex;align-items:center;gap:5px;padding:7px 13px;border:1.5px solid var(--b);background:#fff;border-radius:8px;font-weight:600;font-size:13px;color:var(--t2);cursor:pointer}
 .dact:hover{background:#faf7f3}
-.dact.danger{color:#cf3a2e;border-color:#f0c8c3}
+.dact.danger{color:#e5252b;border-color:#f3b5b0}
 .dact.danger:hover{background:#fdf1f0}
 .ball-backbtn{display:flex;align-items:center;gap:8px;width:100%;text-align:left;padding:9px 11px;margin-bottom:8px;border:1.5px solid var(--b);background:#faf7f3;border-radius:9px;font-weight:700;font-size:13px;color:var(--t);cursor:pointer}
 .ball-backbtn:hover{border-color:var(--strip);background:var(--strip-soft)}
@@ -498,10 +499,10 @@ body:has(#cohome.active){background:#fff}
 .pcard .pc{margin-top:8px;font-size:11px;font-weight:700;color:var(--strip-ink);background:var(--card);border:1px solid var(--strip-mid);border-radius:20px;padding:2px 9px;display:inline-block}
 .ocbadge{position:absolute;top:-7px;right:-7px;min-width:21px;height:21px;padding:0 5px;border-radius:11px;background:#e5484d;color:#fff;font:800 11.5px var(--ui);display:flex;align-items:center;justify-content:center;box-shadow:0 1px 5px rgba(0,0,0,.28);z-index:3}
 .kpill{font-size:10px;font-weight:800;letter-spacing:.4px;text-transform:uppercase;border-radius:6px;padding:2px 7px;display:inline-block;vertical-align:middle}
-.kpill.act{background:#fbe4e4;color:#b42318}
+.kpill.act{background:#ffe0df;color:#e5252b}
 .kpill.fyi{background:#edf0f2;color:#5b554d}
 .ball{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:var(--t2);vertical-align:middle}
-.ball .dot{width:9px;height:9px;border-radius:50%;background:#e5484d;flex:0 0 auto}
+.ball .dot{width:9px;height:9px;border-radius:50%;background:#e5252b;flex:0 0 auto}
 .ball.mine{color:#0a7d57}.ball.mine .dot{background:#0e9f6e}
 .ball.none{color:var(--t3)}.ball.none .dot{background:var(--t3)}
 .ballbox{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:2px 0 14px;padding:10px 12px;border:1px solid var(--b);border-radius:10px;background:var(--bg)}
@@ -726,7 +727,7 @@ tr.rowdone:hover td{opacity:.78}
 .pri-agree.on .pri-box{background:#12936a;border-color:#12936a}
 .pri-agree.on{color:#0a7d57}
 .pri-del{border:none;background:none;color:var(--t3);font-size:13px;cursor:pointer;padding:2px 5px;border-radius:6px}
-.pri-del:hover{color:#cf3a2e;background:#fbeaea}
+.pri-del:hover{color:#e5252b;background:#fbeaea}
 .pri-readonly .pri-card{box-shadow:none}
 /* Issues filter pill */
 .iss-seg{display:inline-flex;position:relative;background:#efece5;border-radius:11px;padding:4px;margin:0 0 16px}
@@ -861,8 +862,8 @@ tr.rowdone:hover td{opacity:.78}
       <table>
         <thead><tr>
           <th>Issue</th>
-          <th>Function</th>
           <th class="hs">Raised by</th>
+          <th class="hs">Tagged</th>
           <th class="hs">Spoken</th>
           <th>Status</th>
           <th class="hs">Raised</th>
@@ -1005,7 +1006,7 @@ tr.rowdone:hover td{opacity:.78}
           <div><div class="k">Raised by</div><div class="v"><span class="mini" id="dRav" style="background:#db2777">AD</span><span id="dR">Amara Diallo</span></div></div>
           <div><div class="k">People tagged</div><div class="v" id="dPeople"></div></div>
           <div><div class="k">Spoken</div><div class="v" id="dConv"></div></div>
-          <div><div class="k">Function</div><div class="v"><span class="fpill" id="dF" style="background:#7c3aed">Technology</span></div></div>
+
         </div>
         <div class="ballbox" id="dBallWrap"></div>
         <div class="ta" id="ball-ta" style="display:none;margin:-6px 0 14px"><div id="ball-back"></div><input id="ball-input" class="ta-input" type="text" placeholder="Pass the ball to…" autocomplete="off" oninput="ballSearch(this)" onfocus="ballSearch(this)" onblur="taBlur('ball-list')"><div id="ball-list" class="ta-list" style="display:none"></div></div>
@@ -2246,13 +2247,15 @@ function spokenToggle(i){ var on=!!i.conversationHad; var can=canToggleSpoken(i)
   var oc=can?(' onclick="event.stopPropagation();toggleSpoken(\''+i.id+'\')"'):'';
   return '<span class="sw-tog'+(can?'':' ro')+'"'+oc+' title="'+(on?'Spoken':'Not spoken yet')+'"><span class="sw-track'+(on?' on':'')+'"><span class="sw-knob"></span></span><span class="sw-lab'+(on?' on':'')+'">'+(on?'Yes':'No')+'</span></span>'; }
 window.toggleSpoken=function(id){ var i=null; for(var k=0;k<issues.length;k++){ if(issues[k].id===id){ i=issues[k]; break; } } if(!i&&curIssue&&curIssue.id===id)i=curIssue; if(!i)return; if(!canToggleSpoken(i))return; issuesRef().doc(id).update({conversationHad:!i.conversationHad, updatedAt:FV.serverTimestamp()}).catch(function(e){ alert('Could not update: '+e.message); }); };
+function taggedList(i){ return (i.participants||[]).filter(function(m){return m&&m!==i.raiserMid;}); }
+function taggedMinis(i){ var t=taggedList(i); if(!t.length) return '<span class="dnobody">\u2014</span>'; return '<div class="tagmini">'+t.map(function(m){ return '<span class="mini" style="'+avBg(m)+'" title="'+esc(personName(m))+'">'+avBody(m)+'</span>'; }).join('')+'</div>'; }
 function rowHTML(i){
   var fc=i.color||(fns[i.functionId]&&fns[i.functionId].color)||'var(--strip)';
   var cls=(i.status==='done'&&boardMode!=='done')?' class="rowdone"':'';
   return '<tr'+cls+' onclick="openIssue(\''+i.id+'\')">'
    +'<td><div class="t-title">'+esc(i.title)+'</div><div class="t-sub">'+esc((i.description||'').slice(0,72))+'</div>'+((kindPill(i)||ballInline(i))?('<div class="t-meta">'+kindPill(i)+ballInline(i)+'</div>'):'')+'</td>'
-   +'<td><span class="fpill" style="background:'+fc+'">'+esc(i.functionName||'')+'</span></td>'
    +'<td class="hs"><div class="who"><span class="mini" style="'+avBg(i.raiserMid)+'">'+avBody(i.raiserMid)+'</span>'+esc(i.raiserName||personName(i.raiserMid))+'</div></td>'
+   +'<td class="hs">'+taggedMinis(i)+'</td>'
    +'<td class="hs">'+spokenToggle(i)+'</td>'
    +'<td><span class="st '+sm[i.status][0]+'"><span class="d"></span>'+sm[i.status][1]+'</span></td>'
    +'<td class="hs" style="color:var(--t3);font-size:12.5px">'+timeAgo(i.createdAt)+'</td></tr>';
@@ -2401,7 +2404,7 @@ window.openIssue=function(id){ clearTabs(); curId=id; curIssue=null; for(var k=0
 function fillDetail(i){
   var fc=i.color||(fns[i.functionId]&&fns[i.functionId].color)||'var(--strip)';
   document.getElementById('dT').textContent=i.title;
-  var f=document.getElementById('dF'); f.textContent=i.functionName||''; f.style.background=fc;
+  var f=document.getElementById('dF'); if(f){ f.textContent=i.functionName||''; f.style.background=fc; }
   var dp=document.getElementById('dPeople'); if(dp){ var tg=(i.participants||[]).filter(function(m){return m&&m!==i.raiserMid;}); dp.innerHTML=tg.length?tg.map(function(m){ return '<span class="dperson"><span class="mini" style="'+avBg(m)+'">'+avBody(m)+'</span><span>'+esc(personName(m))+'</span></span>'; }).join(''):'<span class="dnobody">No one tagged</span>'; }
   var ra=document.getElementById('dRav'); ra.innerHTML=avBody(i.raiserMid); ra.style.background=(members[i.raiserMid]&&members[i.raiserMid].photo)?'transparent':personColor(i.raiserMid);
   document.getElementById('dR').textContent=i.raiserName||personName(i.raiserMid);
