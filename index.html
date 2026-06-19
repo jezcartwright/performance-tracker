@@ -109,6 +109,9 @@ input,textarea,select{font-family:inherit;font-size:inherit}
 
 /* Button row */
 .navbar{display:flex;align-items:center;gap:9px;margin:18px 0 22px;flex-wrap:wrap}
+.salute{font-family:var(--display);font-size:26px;font-weight:600;color:var(--t);line-height:1.15;margin:2px 2px 0}
+.salute:empty{display:none}
+#app.home .salute{display:none}
 .tg{font-family:var(--ui);font-weight:700;font-size:13px;display:inline-flex;align-items:center;gap:7px;background:#fff;border:1px solid var(--strip-mid);color:#ff6600;border-radius:5px;padding:9px 14px;transition:.14s}
 .tg:hover{border-color:var(--strip)}
 .tg.active{background:var(--strip);border-color:var(--strip);color:#fff}
@@ -229,7 +232,7 @@ tbody td{padding:14px 16px;vertical-align:middle}
 .fld label{display:block;font-family:var(--ui);font-size:11px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:var(--t2);margin-bottom:7px}
 .fld input,.fld textarea,.fld select{width:100%;border:1.5px solid var(--b);border-radius:8px;padding:11px 13px;outline:none;background:#fff;font-size:14px}
 .fld input:focus,.fld textarea:focus,.fld select:focus{border-color:var(--strip)}
-.fld textarea{resize:vertical;min-height:96px;font-family:var(--serif)}
+.fld textarea{resize:vertical;min-height:96px;font-family:var(--ui)}
 .tagp{margin-top:9px;font-size:12.5px;display:none;align-items:center;gap:8px;background:var(--strip-soft);color:var(--strip-ink);padding:10px 13px;border-radius:8px;font-weight:600}
 .tagp.show{display:flex}
 .chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px}
@@ -726,8 +729,6 @@ tr.rowdone:hover td{opacity:.78}
 .addmenu .am-t{display:block;font-weight:700;font-size:14px;color:var(--t)}
 .addmenu .am-s{display:block;font-size:12px;color:var(--t3);margin-top:1px}
 .pri-noteline{font-size:12.5px;color:var(--t3);margin:-3px 0 7px;line-height:1.45}
-input,textarea,select{font-family:inherit}
-input,textarea,select{font-family:inherit}
 @media(max-width:560px){.pri-card{grid-template-columns:auto 1fr;grid-template-areas:'h m' 'r right'}.pri-handle{grid-area:h}.pri-main{grid-area:m}.pri-rank{grid-area:r;justify-self:start}.pri-right{grid-area:right;flex-direction:row;align-items:center;width:100%;justify-content:space-between}}
 </style>
 </head>
@@ -816,6 +817,8 @@ input,textarea,select{font-family:inherit}
 <div class="wrap">
 
   <div class="superbar" id="superFlag" style="display:none"><span class="superflag">SUPER ADMIN</span></div>
+
+  <div class="salute" id="salute"></div>
 
   <nav class="navbar">
     <button class="tg active" data-s="priorities" id="tabPri">My Priorities <span class="ct" id="priCount">0</span></button>
@@ -1631,6 +1634,7 @@ function finalizeCompanyPick(){
 function setHeader(){
   var _ma=document.getElementById('meAva'); var _mp=(ME.mid&&members[ME.mid]&&members[ME.mid].photo)?members[ME.mid].photo:''; if(_mp){ _ma.innerHTML='<img class="av-img" src="'+_mp+'" alt="">'; _ma.style.background='transparent'; } else { _ma.textContent=ME.initials; _ma.style.background=''; }
   document.getElementById('meName').textContent=ME.first;
+  var _sal=document.getElementById('salute'); if(_sal){ var _h=new Date().getHours(); var _g=(_h<12)?'Good morning':((_h<18)?'Good afternoon':'Good evening'); _sal.textContent=ME.first?(_g+' '+ME.first):_g; }
   document.getElementById('meFull').textContent=ME.name||ME.first;
   document.getElementById('meEmail').textContent=ME.email;
   renderClientLogo();
