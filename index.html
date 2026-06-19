@@ -261,6 +261,26 @@ tbody td{padding:14px 16px;vertical-align:middle}
 .ball-backbtn{display:flex;align-items:center;gap:8px;width:100%;text-align:left;padding:9px 11px;margin-bottom:8px;border:1.5px solid var(--b);background:#faf7f3;border-radius:9px;font-weight:700;font-size:13px;color:var(--t);cursor:pointer}
 .ball-backbtn:hover{border-color:var(--strip);background:var(--strip-soft)}
 .ball-backbtn .bb-sub{font-weight:500;font-size:11.5px;color:var(--t2);margin-left:auto}
+.jhead{display:flex;align-items:center;gap:8px;cursor:pointer;user-select:none}
+.jcount{font-weight:700;color:var(--t3);font-size:13px}
+.jhead .jcaret{margin-left:auto;color:var(--t3);font-size:13px;transition:transform .15s}
+#journeySec.collapsed .jcaret{transform:rotate(-90deg)}
+#journeySec.collapsed #journey{display:none}
+.jmap{margin-top:8px}
+.jstop{display:grid;grid-template-columns:22px 1fr;gap:12px;position:relative;padding-bottom:16px}
+.jstop:last-child{padding-bottom:2px}
+.jstop:not(:last-child)::before{content:"";position:absolute;left:9.5px;top:5px;bottom:0;width:3px;background:var(--strip);border-radius:2px;opacity:.85}
+.jtick{width:13px;height:13px;border-radius:50%;background:var(--card);border:3px solid var(--t3);margin:3px auto 0;position:relative;z-index:1;box-sizing:border-box}
+.jstop.major .jtick{width:19px;height:19px;border-width:4px;margin-top:0}
+.jbody{min-width:0}
+.jname{font-size:13.5px;font-weight:600;color:var(--t);line-height:1.35}
+.jmeta{font-size:11.5px;color:var(--t3);margin-top:3px;display:flex;align-items:center;gap:6px}
+.jav{width:18px;height:18px;font-size:9px}
+.jtoggle{display:inline-flex;align-items:center;gap:6px;cursor:pointer}
+.jtoggle .jchev{color:var(--t3);transition:transform .15s;font-size:15px}
+.jstop.open .jtoggle .jchev{transform:rotate(90deg)}
+.jnote{display:none;margin-top:7px;padding:9px 11px;background:var(--strip-soft);border:1px solid var(--b);border-radius:9px;font-size:13px;color:var(--t);line-height:1.5;white-space:pre-wrap}
+.jstop.open .jnote{display:block}
 .orgchart.managing .pcard{cursor:grab;touch-action:none}
 .orgchart.managing .pcard.ceoc{cursor:default;touch-action:auto}
 .pcard.dragging{opacity:.4}
@@ -875,6 +895,10 @@ tr.rowdone:hover td{opacity:.78}
           <h3>Status</h3>
           <div class="steps" id="dSteps"></div>
           <p class="note">Leader or participants move it along. Only the person who raised it can mark it <strong>Resolved</strong>.</p>
+        </div>
+        <div class="sec" id="journeySec">
+          <h3 class="jhead" onclick="toggleJourney()">Journey <span class="jcount" id="jcount"></span><span class="jcaret">▾</span></h3>
+          <div class="journey jmap" id="journey"></div>
         </div>
       </div>
 
@@ -2231,7 +2255,7 @@ window.raiseIssue=function(){
     if(leaderMid) upd.participants=FV.arrayUnion(leaderMid);
     var eid=riEditId;
     issuesRef().doc(eid).update(upd).then(function(){
-      issuesRef().doc(eid).collection('messages').add({type:'system',text:ME.first+' edited this issue.',authorMid:ME.mid,authorUid:ME.uid,authorName:ME.name,createdAt:FV.serverTimestamp()});
+      issuesRef().doc(eid).collection('messages').add({type:'system',event:'edit',text:ME.first+' edited this issue.',authorMid:ME.mid,authorUid:ME.uid,authorName:ME.name,createdAt:FV.serverTimestamp()});
       riEditId=null; openIssue(eid);
     }).catch(function(e){ alert('Could not save changes: '+e.message); });
     return;
@@ -2242,7 +2266,7 @@ window.raiseIssue=function(){
     var extra=(vis!=='teamleader'&&riOthers.length)?(' and '+riOthers.length+' other'+(riOthers.length>1?'s':'')):'';
     var byName=(rMid&&members[rMid])?(members[rMid].first||rName):(ME.first||rName);
     var loggedNote=(rMid&&ME.mid&&rMid!==ME.mid)?(' (logged by '+ME.first+')'):'';
-    ref.collection('messages').add({type:'system',text:byName+' raised this and '+who+extra+loggedNote+'.',authorMid:ME.mid,authorUid:ME.uid,authorName:ME.name,createdAt:FV.serverTimestamp()});
+    ref.collection('messages').add({type:'system',event:'raise',text:byName+' raised this and '+who+extra+loggedNote+'.',authorMid:ME.mid,authorUid:ME.uid,authorName:ME.name,createdAt:FV.serverTimestamp()});
     goDash();
   }).catch(function(e){ alert('Could not raise issue: '+e.message); });
 };
@@ -2308,8 +2332,8 @@ function renderStepper(st){
   }).join('');
   document.getElementById('dSteps').innerHTML=html;
 }
-window.setStatus=function(s){ if(!curIssue||!curId)return; issuesRef().doc(curId).update({status:s,updatedAt:FV.serverTimestamp()}); issuesRef().doc(curId).collection('messages').add({type:'system',text:ME.first+' moved this to “'+(sm[s]?sm[s][1]:s)+'”.',authorMid:ME.mid,authorUid:ME.uid,authorName:ME.name,createdAt:FV.serverTimestamp()}); };
-window.resolveIssue=function(){ if(!curIssue||!curId)return; var canResolve=(curIssue.raiserMid&&curIssue.raiserMid===ME.mid)||isAdmin; if(!canResolve)return; if(!confirm('Mark this issue as resolved?'))return; issuesRef().doc(curId).update({status:'done',ballMid:null,resolvedAt:FV.serverTimestamp(),updatedAt:FV.serverTimestamp()}); issuesRef().doc(curId).collection('messages').add({type:'system',text:ME.first+' marked this resolved.',authorMid:ME.mid,authorUid:ME.uid,authorName:ME.name,createdAt:FV.serverTimestamp()}); };
+window.setStatus=function(s){ if(!curIssue||!curId)return; issuesRef().doc(curId).update({status:s,updatedAt:FV.serverTimestamp()}); issuesRef().doc(curId).collection('messages').add({type:'system',event:'status',text:ME.first+' moved this to “'+(sm[s]?sm[s][1]:s)+'”.',authorMid:ME.mid,authorUid:ME.uid,authorName:ME.name,createdAt:FV.serverTimestamp()}); };
+window.resolveIssue=function(){ if(!curIssue||!curId)return; var canResolve=(curIssue.raiserMid&&curIssue.raiserMid===ME.mid)||isAdmin; if(!canResolve)return; if(!confirm('Mark this issue as resolved?'))return; issuesRef().doc(curId).update({status:'done',ballMid:null,resolvedAt:FV.serverTimestamp(),updatedAt:FV.serverTimestamp()}); issuesRef().doc(curId).collection('messages').add({type:'system',event:'resolve',text:ME.first+' marked this resolved.',authorMid:ME.mid,authorUid:ME.uid,authorName:ME.name,createdAt:FV.serverTimestamp()}); };
 /* ---------- HOLDING THE BALL: current owner of the next action; moves through the lifecycle ---------- */
 function canPassBall(i){ if(!i||i.status==='done') return false; return isAdmin || i.ballMid===ME.mid || i.raiserMid===ME.mid || (i.participants||[]).indexOf(ME.mid)>=0; }
 function kindPill(i){ if(!i.kind) return ''; return i.kind==='fyi'?'<span class="kpill fyi">FYI</span>':'<span class="kpill act">Action</span>'; }
@@ -2333,7 +2357,7 @@ function ballSetTo(mid){
   if(fromMid===mid) fromMid=null;
   var txt=(mid===ME.mid)?(ME.first+' took the ball.'):(ME.first+' passed the ball to '+personName(mid)+'.');
   issuesRef().doc(curId).update({ballMid:mid, ballFromMid:fromMid, kind:'action', updatedAt:FV.serverTimestamp()}).then(function(){
-    issuesRef().doc(curId).collection('messages').add({type:'system',text:txt,authorMid:ME.mid,authorUid:ME.uid,authorName:ME.name,createdAt:FV.serverTimestamp()});
+    issuesRef().doc(curId).collection('messages').add({type:'system',event:'pass',text:txt,authorMid:ME.mid,authorUid:ME.uid,authorName:ME.name,createdAt:FV.serverTimestamp()});
   }).catch(function(e){ alert('Could not pass the ball: '+e.message); });
 }
 window.ballTake=function(){ if(curIssue&&canPassBall(curIssue)) ballSetTo(ME.mid); };
@@ -2357,18 +2381,63 @@ window.addPart=function(){
   var idx=parseInt(pick,10)-1; if(isNaN(idx)||idx<0||idx>=avail.length)return;
   var mid=avail[idx];
   issuesRef().doc(curId).update({participants:FV.arrayUnion(mid),updatedAt:FV.serverTimestamp()});
-  issuesRef().doc(curId).collection('messages').add({type:'system',text:ME.first+' added '+personName(mid)+' to the discussion.',authorMid:ME.mid,authorUid:ME.uid,authorName:ME.name,createdAt:FV.serverTimestamp()});
+  issuesRef().doc(curId).collection('messages').add({type:'system',event:'join',text:ME.first+' added '+personName(mid)+' to the discussion.',authorMid:ME.mid,authorUid:ME.uid,authorName:ME.name,createdAt:FV.serverTimestamp()});
 };
+var journeyOpen={};
+var JCAT={ raise:{c:'#e5484d',major:1}, pass:{c:'#ef9f27'}, status:{c:'#378add'}, resolve:{c:'#1d9e75',major:1}, edit:{c:'#888780'}, join:{c:'#534ab7'}, note:{c:'#888780'}, event:{c:'#888780'} };
+function jcat(m){
+  if(m.type!=='system') return 'note';
+  if(m.event) return m.event==='take'?'pass':m.event;
+  var t=(m.text||'').toLowerCase();
+  if(t.indexOf('raised this')>=0) return 'raise';
+  if(t.indexOf('ball')>=0) return 'pass';
+  if(t.indexOf('resolved')>=0) return 'resolve';
+  if(t.indexOf('moved this')>=0) return 'status';
+  if(t.indexOf('discussion')>=0) return 'join';
+  if(t.indexOf('edited')>=0) return 'edit';
+  return 'event';
+}
+function renderJourney(arr){
+  var host=document.getElementById('journey'); if(!host) return;
+  var cnt=document.getElementById('jcount'); if(cnt) cnt.textContent=arr.length?('· '+arr.length):'';
+  if(!arr.length){ host.innerHTML='<div class="sys">No activity yet.</div>'; return; }
+  host.innerHTML=arr.map(function(m){
+    var cat=jcat(m); var def=JCAT[cat]||JCAT.event;
+    var who=m.authorMid;
+    var av='<span class="mini jav" style="'+avBg(who)+'">'+avBody(who)+'</span>';
+    var time=timeAgo(m.createdAt);
+    if(cat==='note'){
+      var op=!!journeyOpen[m.id];
+      return '<div class="jstop jcat-note'+(op?' open':'')+'">'+
+        '<span class="jtick" style="border-color:'+def.c+'"></span>'+
+        '<div class="jbody">'+
+          '<div class="jname jtoggle" onclick="jToggle(\''+m.id+'\',this)"><span>Note from '+esc(m.authorName||personName(who))+'</span><span class="jchev">\u203a</span></div>'+
+          '<div class="jnote">'+esc(m.text)+'</div>'+
+          '<div class="jmeta">'+av+' '+time+'</div>'+
+        '</div></div>';
+    }
+    return '<div class="jstop'+(def.major?' major':'')+'">'+
+      '<span class="jtick" style="border-color:'+def.c+'"></span>'+
+      '<div class="jbody">'+
+        '<div class="jname">'+esc(m.text)+'</div>'+
+        '<div class="jmeta">'+av+' '+time+'</div>'+
+      '</div></div>';
+  }).join('');
+}
+window.jToggle=function(id,el){ journeyOpen[id]=!journeyOpen[id]; var st=el.closest('.jstop'); if(st) st.classList.toggle('open', !!journeyOpen[id]); };
+window.toggleJourney=function(){ var s=document.getElementById('journeySec'); if(s) s.classList.toggle('collapsed'); };
 function subscribeMsgs(id){
   if(msgsUnsub)msgsUnsub();
+  journeyOpen={};
   msgsUnsub=issuesRef().doc(id).collection('messages').orderBy('createdAt','asc').onSnapshot(function(qs){
-    var html='';
-    qs.forEach(function(d){ var m=d.data();
+    var html=''; var arr=[];
+    qs.forEach(function(d){ var m=d.data(); m.id=d.id; arr.push(m);
       if(m.type==='system'){ html+='<div class="sys">'+esc(m.text)+'</div>'; return; }
       var meMsg=(m.authorMid&&m.authorMid===ME.mid);
       html+='<div class="msg'+(meMsg?' me':'')+'"><span class="mini" style="'+avBg(m.authorMid)+'">'+avBody(m.authorMid)+'</span><div class="bub"><div class="nm">'+esc(m.authorName||personName(m.authorMid))+'</div>'+esc(m.text)+'<div class="tm">'+timeAgo(m.createdAt)+'</div></div></div>';
     });
     var c=document.getElementById('msgs'); c.innerHTML=html||'<div class="sys">No messages yet.</div>'; c.scrollTop=c.scrollHeight;
+    renderJourney(arr);
   });
 }
 window.sendMsg=function(){ var t=document.getElementById('mi'); var v=t.value.trim(); if(!v||!curId)return; issuesRef().doc(curId).collection('messages').add({type:'msg',text:v,authorMid:ME.mid,authorUid:ME.uid,authorName:ME.name,createdAt:FV.serverTimestamp()}); issuesRef().doc(curId).update({updatedAt:FV.serverTimestamp()}); t.value=''; };
