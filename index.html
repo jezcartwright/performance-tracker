@@ -283,7 +283,7 @@ tbody td{padding:14px 16px;vertical-align:middle}
 .seg{display:flex;gap:9px}
 .seg button{flex:1;padding:11px;border-radius:8px;border:1.5px solid var(--b);background:#fff;font-weight:700;color:var(--t2);font-size:13.5px;cursor:pointer}
 .seg button.sel{background:#1a1a1a;border-color:#1a1a1a;color:#fff}
-#ri-kind button:first-child.sel{background:#e5484d;border-color:#e5484d}
+#ri-kind button:first-child.sel{background:#e5252b;border-color:#e5252b}
 #ri-kind button:last-child.sel{background:#ff6600;border-color:#ff6600}
 .dactions{display:flex;gap:8px;justify-content:flex-end;margin:0 0 12px}
 .dhead{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;border-bottom:1px solid var(--b);padding-bottom:14px;margin-bottom:18px}
@@ -314,7 +314,8 @@ tbody td{padding:14px 16px;vertical-align:middle}
 .jlegend{display:flex;flex-wrap:wrap;gap:12px 18px;margin-top:14px;padding-top:13px;border-top:1px solid var(--b)}
 .jleg{display:inline-flex;align-items:center;gap:8px;font-size:12px;color:var(--t2)}
 .jleg .lm{flex:0 0 auto}
-.lm-tick{width:11px;height:8px;background:#ff6600}
+.lm-tick{position:relative;width:5px;height:16px;background:#ff6600;border-radius:0}
+.lm-tick::after{content:"";position:absolute;left:5px;top:5px;width:9px;height:5px;background:#ff6600}
 .lm-ring{width:15px;height:15px;border-radius:50%;background:var(--card);border:4px solid #ff6600;box-sizing:border-box}
 .lm-start{width:14px;height:14px;border-radius:50%;background:#ff6600}
 .lm-end{width:14px;height:14px;border-radius:50%;background:#0e9f6e}
@@ -526,7 +527,7 @@ body:has(#cohome.active){background:#fff}
 .pcard .pn{font-weight:700;font-size:13.5px;line-height:1.2}
 .pcard .pr{font-size:10.5px;color:var(--t3);margin-top:3px;text-transform:uppercase;letter-spacing:.4px;font-weight:700}
 .pcard .pc{margin-top:8px;font-size:11px;font-weight:700;color:var(--strip-ink);background:var(--card);border:1px solid var(--strip-mid);border-radius:20px;padding:2px 9px;display:inline-block}
-.ocbadge{position:absolute;top:-7px;right:-7px;min-width:21px;height:21px;padding:0 5px;border-radius:11px;background:#e5484d;color:#fff;font:800 11.5px var(--ui);display:flex;align-items:center;justify-content:center;box-shadow:0 1px 5px rgba(0,0,0,.28);z-index:3}
+.ocbadge{position:absolute;top:-7px;right:-7px;min-width:21px;height:21px;padding:0 5px;border-radius:11px;background:#e5252b;color:#fff;font:800 11.5px var(--ui);display:flex;align-items:center;justify-content:center;box-shadow:0 1px 5px rgba(0,0,0,.28);z-index:3}
 .kpill{font-size:10px;font-weight:800;letter-spacing:.4px;text-transform:uppercase;border-radius:6px;padding:2px 7px;display:inline-block;vertical-align:middle}
 .kpill.act{background:#e5252b;color:#fff}
 .kpill.fyi{background:#edf0f2;color:#5b554d}
@@ -2555,7 +2556,7 @@ window.addPart=function(){
   issuesRef().doc(curId).collection('messages').add({type:'system',event:'join',text:ME.first+' added '+personName(mid)+' to the discussion.',authorMid:ME.mid,authorUid:ME.uid,authorName:ME.name,createdAt:FV.serverTimestamp()});
 };
 var journeyOpen={};
-var JCAT={ raise:{c:'#e5484d',major:1}, pass:{c:'#ef9f27'}, status:{c:'#378add'}, resolve:{c:'#1d9e75',major:1}, edit:{c:'#888780'}, join:{c:'#534ab7'}, note:{c:'#888780'}, event:{c:'#888780'} };
+var JCAT={ raise:{c:'#e5252b',major:1}, pass:{c:'#ef9f27'}, status:{c:'#378add'}, resolve:{c:'#1d9e75',major:1}, edit:{c:'#888780'}, join:{c:'#534ab7'}, note:{c:'#888780'}, event:{c:'#888780'} };
 function jcat(m){
   if(m.type!=='system') return 'note';
   if(m.event) return m.event==='take'?'pass':m.event;
