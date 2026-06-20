@@ -2315,7 +2315,7 @@ document.querySelectorAll('.schip').forEach(function(c){ c.addEventListener('cli
 /* ---------- RAISE ---------- */
 var raiseConv=null, riMode='fn', riOthers=[], riEditId=null, psMid=null, riFromMid=null, riKind='action';
 window.riSetKind=function(k){ riKind=(k==='fyi')?'fyi':'action'; var seg=document.getElementById('ri-kind'); if(seg){ seg.querySelectorAll('button').forEach(function(b,idx){ b.classList.toggle('sel', idx===(riKind==='fyi'?1:0)); }); } var n=document.getElementById('ri-kind-note'); if(n) n.textContent=(riKind==='fyi')?'Just sharing information — no action needed, so no one holds the ball.':'Someone needs to act — they’ll hold the ball until it’s passed on or resolved.'; };
-function peopleMatches(q, exclude){ q=(q||'').trim().toLowerCase(); var ids=Object.keys(members).filter(function(m){ if(exclude&&exclude.indexOf(m)>=0)return false; if(!q)return true; var nm=personName(m).toLowerCase(); var em=((members[m]||{}).email||'').toLowerCase(); return nm.indexOf(q)>=0||em.indexOf(q)>=0; }); ids.sort(function(a,b){return personName(a).localeCompare(personName(b));}); return ids.slice(0,8); }
+function peopleMatches(q, exclude){ q=(q||'').trim().toLowerCase(); var ids=Object.keys(members).filter(function(m){ if(exclude&&exclude.indexOf(m)>=0)return false; if(!q)return true; var nm=personName(m).toLowerCase(); var em=((members[m]||{}).email||'').toLowerCase(); return nm.indexOf(q)>=0||em.indexOf(q)>=0; }); ids.sort(function(a,b){return personName(a).localeCompare(personName(b));}); return ids; }
 function renderTaList(listId, q, exclude, pickFn){
   var el=document.getElementById(listId); if(!el)return;
   var ms=peopleMatches(q, exclude);
