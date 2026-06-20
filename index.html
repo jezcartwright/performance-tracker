@@ -168,7 +168,7 @@ tbody td{padding:14px 16px;vertical-align:middle}
 .pb-sm .mini{width:20px;height:20px;font-size:8px}
 .pb-sm .pnm{font-size:12px}
 .avstack{display:flex}
-.avstack .mini{margin-left:-7px;border:2px solid var(--card)}
+.avstack .mini{margin-left:-7px;border:2px solid var(--card);box-sizing:border-box}
 .avstack .mini:first-child{margin-left:0}
 .tagwrap{display:flex;flex-wrap:wrap;gap:7px 14px}
 .pri-people{display:inline-block}
@@ -306,14 +306,14 @@ tbody td{padding:14px 16px;vertical-align:middle}
 .jstop:first-child::before{top:10px}
 .jstop:last-child::before{bottom:auto;height:10px}
 .jstop:only-child::before{display:none}
-.jtick{width:24px;height:5px;border-radius:2px;background:#ff6600;margin:7px 0 0;position:relative;z-index:1;box-sizing:border-box}
-.jcat-pass .jtick{width:18px;height:18px;border-radius:50%;background:var(--card);border:5px solid #ff6600;margin:1px auto 0}
-.jstop.major .jtick{width:18px;height:18px;border-radius:50%;background:#ff6600;border:3px solid #ff6600;margin:1px auto 0}
-.jcat-resolve .jtick{background:#0e9f6e;border-color:#0e9f6e}
+.jtick{position:absolute;left:12px;top:7px;width:11px;height:8px;background:#ff6600;z-index:1;box-sizing:border-box}
+.jcat-pass .jtick{left:3px;top:2px;width:18px;height:18px;border-radius:50%;background:var(--card);border:5px solid #ff6600}
+.jstop.major .jtick{left:3px;top:2px;width:18px;height:18px;border-radius:50%;background:#ff6600;border:none}
+.jcat-resolve .jtick{background:#0e9f6e}
 .jlegend{display:flex;flex-wrap:wrap;gap:12px 18px;margin-top:14px;padding-top:13px;border-top:1px solid var(--b)}
 .jleg{display:inline-flex;align-items:center;gap:8px;font-size:12px;color:var(--t2)}
 .jleg .lm{flex:0 0 auto}
-.lm-tick{width:18px;height:5px;border-radius:2px;background:#ff6600}
+.lm-tick{width:11px;height:8px;background:#ff6600}
 .lm-ring{width:15px;height:15px;border-radius:50%;background:var(--card);border:4px solid #ff6600;box-sizing:border-box}
 .lm-start{width:14px;height:14px;border-radius:50%;background:#ff6600}
 .lm-end{width:14px;height:14px;border-radius:50%;background:#0e9f6e}
