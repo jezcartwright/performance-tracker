@@ -1047,9 +1047,9 @@ tr.rowdone:hover td{opacity:.78}
           <h3 class="jhead" onclick="toggleJourney()"><span class="jcaret" aria-hidden="true">▾</span>Progress <span class="jcount" id="jcount"></span></h3>
           <div class="journey jmap" id="journey"></div>
           <div class="jlegend" id="jlegend">
+            <span class="jleg"><span class="lm lm-start"></span>Raised</span>
             <span class="jleg"><span class="lm lm-tick"></span>Update</span>
             <span class="jleg"><span class="lm lm-ring"></span>Ownership change</span>
-            <span class="jleg"><span class="lm lm-start"></span>Raised</span>
             <span class="jleg"><span class="lm lm-end"></span>Resolved</span>
           </div>
         </div>
@@ -2484,13 +2484,9 @@ window.deleteIssue=function(){
 function renderStepper(st){
   var order=[['open','Open'],['prog','In Progress'],['done','Resolved']];
   var idx=-1; order.forEach(function(o,n){ if(o[0]===st)idx=n; });
-  var canMove=curIssue&&(curIssue.leaderMid===ME.mid||(curIssue.participants||[]).indexOf(ME.mid)>=0||isAdmin);
-  var canResolve=curIssue&&((curIssue.raiserMid&&curIssue.raiserMid===ME.mid)||isAdmin);
   var html=order.map(function(o,n){
-    var cls='step s-'+o[0]+(n<idx?' done':'')+(n===idx?' cur':''); var oc='', cur='';
-    if(o[0]==='done'){ if(canResolve && st!=='done'){ oc='onclick="resolveIssue()"'; cur='cursor:pointer'; } }
-    else { if(canMove && n>idx){ oc='onclick="setStatus(\''+o[0]+'\')"'; cur='cursor:pointer'; } }
-    return '<div class="'+cls+'" style="'+cur+'" '+oc+'>'+o[1]+'</div>';
+    var cls='step s-'+o[0]+(n<idx?' done':'')+(n===idx?' cur':'');
+    return '<div class="'+cls+'">'+o[1]+'</div>';
   }).join('');
   document.getElementById('dSteps').innerHTML=html;
 }
@@ -2603,7 +2599,7 @@ function subscribeMsgs(id){
     renderJourney(arr);
   });
 }
-window.sendMsg=function(){ var t=document.getElementById('mi'); var v=t.value.trim(); if(!v||!curId)return; issuesRef().doc(curId).collection('messages').add({type:'msg',text:v,authorMid:ME.mid,authorUid:ME.uid,authorName:ME.name,createdAt:FV.serverTimestamp()}); issuesRef().doc(curId).update({updatedAt:FV.serverTimestamp()}); t.value=''; };
+window.sendMsg=function(){ var t=document.getElementById('mi'); var v=t.value.trim(); if(!v||!curId)return; var d=issuesRef().doc(curId); d.collection('messages').add({type:'msg',text:v,authorMid:ME.mid,authorUid:ME.uid,authorName:ME.name,createdAt:FV.serverTimestamp()}); var autoProg=!!(curIssue&&curIssue.status==='open'&&curIssue.kind!=='fyi'&&curIssue.raiserMid!==ME.mid); if(autoProg){ d.update({status:'prog',updatedAt:FV.serverTimestamp()}); d.collection('messages').add({type:'system',event:'status',text:'In progress.',authorMid:ME.mid,authorUid:ME.uid,authorName:ME.name,createdAt:FV.serverTimestamp()}); } else { d.update({updatedAt:FV.serverTimestamp()}); } t.value=''; };
 /* ---- document attachments (links) — issues + priorities ---- */
 var DOC_SVG='<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>';
 var CLIP_SVG='<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>';
