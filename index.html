@@ -939,7 +939,7 @@ tr.rowdone:hover td{opacity:.78}
           <button type="button" class="sel" onclick="riSetKind('action')">⚑ Requires action</button>
           <button type="button" onclick="riSetKind('fyi')">ⓘ FYI</button>
         </div>
-        <p class="note" id="ri-kind-note">Someone needs to act — they’ll hold the ball until it’s passed on or resolved.</p>
+        <p class="note" id="ri-kind-note">Someone needs to act — they’ll hold responsibility until it’s passed on or resolved.</p>
       </div>
       <div class="fld" id="ri-from-fld" style="display:none">
         <label>Raised by <span style="font-weight:400;text-transform:none;letter-spacing:0;color:#999">(who it's from)</span></label>
@@ -2329,7 +2329,7 @@ document.querySelectorAll('.schip').forEach(function(c){ c.addEventListener('cli
 
 /* ---------- RAISE ---------- */
 var raiseConv=null, riMode='fn', riOthers=[], riEditId=null, psMid=null, riFromMid=null, riKind='action';
-window.riSetKind=function(k){ riKind=(k==='fyi')?'fyi':'action'; var seg=document.getElementById('ri-kind'); if(seg){ seg.querySelectorAll('button').forEach(function(b,idx){ b.classList.toggle('sel', idx===(riKind==='fyi'?1:0)); }); } var n=document.getElementById('ri-kind-note'); if(n) n.textContent=(riKind==='fyi')?'Just sharing information — no action needed, so no one holds the ball.':'Someone needs to act — they’ll hold the ball until it’s passed on or resolved.'; };
+window.riSetKind=function(k){ riKind=(k==='fyi')?'fyi':'action'; var seg=document.getElementById('ri-kind'); if(seg){ seg.querySelectorAll('button').forEach(function(b,idx){ b.classList.toggle('sel', idx===(riKind==='fyi'?1:0)); }); } var n=document.getElementById('ri-kind-note'); if(n) n.textContent=(riKind==='fyi')?'Just sharing information — no action needed, so no one holds responsibility.':'Someone needs to act — they’ll hold responsibility until it’s passed on or resolved.'; };
 function peopleMatches(q, exclude){ q=(q||'').trim().toLowerCase(); var ids=Object.keys(members).filter(function(m){ if(exclude&&exclude.indexOf(m)>=0)return false; if(!q)return true; var nm=personName(m).toLowerCase(); var em=((members[m]||{}).email||'').toLowerCase(); return nm.indexOf(q)>=0||em.indexOf(q)>=0; }); ids.sort(function(a,b){return personName(a).localeCompare(personName(b));}); return ids; }
 function renderTaList(listId, q, exclude, pickFn){
   var el=document.getElementById(listId); if(!el)return;
@@ -2513,8 +2513,8 @@ function kindPill(i){ if(!i.kind) return ''; return i.kind==='fyi'?'<span class=
 function ballInline(i){ if(i.status==='done'||!i.ballMid) return ''; var mine=i.ballMid===ME.mid; return '<span class="ball'+(mine?' mine':'')+'" style="font-size:11px"><span class="dot"></span>'+(mine?'Your move':esc(personName(i.ballMid)))+'</span>'; }
 function ballBoxHTML(i){
   var tag=kindPill(i), status;
-  if(i.status==='done'){ status='<span class="ball none"><span class="dot"></span>Resolved \u2014 ball down</span>'; }
-  else if(i.ballMid){ var mine=i.ballMid===ME.mid; status='<span class="ball'+(mine?' mine':'')+'"><span class="dot"></span>'+(mine?'Your move':('Ball with '+esc(personName(i.ballMid))))+'</span>'; }
+  if(i.status==='done'){ status='<span class="ball none"><span class="dot"></span>Resolved</span>'; }
+  else if(i.ballMid){ var mine=i.ballMid===ME.mid; status='<span class="ball'+(mine?' mine':'')+'"><span class="dot"></span>'+(mine?'Your move':('with '+esc(personName(i.ballMid))))+'</span>'; }
   else { status='<span class="ball none"><span class="dot"></span>No action owed \u00b7 FYI</span>'; }
   var ctrls='';
   if(canPassBall(i)){ ctrls+='<button class="dact" onclick="ballHandOpen()">\u21aa Move responsibility &amp; ownership over to\u2026</button>'; }
@@ -2529,7 +2529,7 @@ function ballSetTo(mid){
   var txt='Ownership & responsibility has moved to '+personName(mid)+'.';
   issuesRef().doc(curId).update({ballMid:mid, ballFromMid:fromMid, kind:'action', updatedAt:FV.serverTimestamp()}).then(function(){
     issuesRef().doc(curId).collection('messages').add({type:'system',event:'pass',text:txt,authorMid:ME.mid,authorUid:ME.uid,authorName:ME.name,createdAt:FV.serverTimestamp()});
-  }).catch(function(e){ alert('Could not pass the ball: '+e.message); });
+  }).catch(function(e){ alert('Could not move it: '+e.message); });
 }
 window.ballTake=function(){ if(curIssue&&canTakeBall(curIssue)) ballSetTo(ME.mid); };
 window.ballHandBack=function(){ if(!curIssue||!canPassBall(curIssue))return; var b=(curIssue.ballFromMid||curIssue.raiserMid); if(!b||b===curIssue.ballMid)return; var ta=document.getElementById('ball-ta'); if(ta)ta.style.display='none'; hideTa('ball-list'); ballSetTo(b); };
