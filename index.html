@@ -306,7 +306,7 @@ tbody td{padding:14px 16px;vertical-align:middle}
 .jstop:first-child::before{top:10px}
 .jstop:last-child::before{bottom:auto;height:10px}
 .jstop:only-child::before{display:none}
-.jtick{position:absolute;left:12px;top:7px;width:11px;height:8px;background:#ff6600;z-index:1;box-sizing:border-box}
+.jtick{position:absolute;left:8px;top:7px;width:18px;height:8px;background:#ff6600;z-index:1;box-sizing:border-box}
 .jcat-pass .jtick{left:3px;top:2px;width:18px;height:18px;border-radius:50%;background:var(--card);border:5px solid #ff6600}
 .jstop.major .jtick{left:3px;top:2px;width:18px;height:18px;border-radius:50%;background:#ff6600;border:none}
 .jcat-resolve .jtick{background:#0e9f6e}
@@ -317,7 +317,7 @@ tbody td{padding:14px 16px;vertical-align:middle}
 .lm-ring{width:15px;height:15px;border-radius:50%;background:var(--card);border:4px solid #ff6600;box-sizing:border-box}
 .lm-start{width:14px;height:14px;border-radius:50%;background:#ff6600}
 .lm-end{width:14px;height:14px;border-radius:50%;background:#0e9f6e}
-.jbody{min-width:0}
+.jbody{grid-column:2;min-width:0}
 .jname{font-size:13.5px;font-weight:600;color:var(--t);line-height:1.35}
 .jdesc{margin-top:5px;font-size:13px;color:var(--t2);line-height:1.5;white-space:pre-wrap}
 .jmeta{font-size:11.5px;color:var(--t3);margin-top:3px;display:flex;align-items:center;gap:6px}
@@ -2496,7 +2496,7 @@ function renderStepper(st){
 window.setStatus=function(s){ if(!curIssue||!curId)return; issuesRef().doc(curId).update({status:s,updatedAt:FV.serverTimestamp()}); issuesRef().doc(curId).collection('messages').add({type:'system',event:'status',text:ME.first+' moved this to “'+(sm[s]?sm[s][1]:s)+'”.',authorMid:ME.mid,authorUid:ME.uid,authorName:ME.name,createdAt:FV.serverTimestamp()}); };
 window.resolveIssue=function(){ if(!curIssue||!curId)return; var canResolve=(curIssue.raiserMid&&curIssue.raiserMid===ME.mid)||isAdmin; if(!canResolve)return; if(!confirm('Mark this issue as resolved?'))return; issuesRef().doc(curId).update({status:'done',ballMid:null,resolvedAt:FV.serverTimestamp(),updatedAt:FV.serverTimestamp()}); issuesRef().doc(curId).collection('messages').add({type:'system',event:'resolve',text:ME.first+' marked this resolved.',authorMid:ME.mid,authorUid:ME.uid,authorName:ME.name,createdAt:FV.serverTimestamp()}); };
 /* ---------- HOLDING THE BALL: current owner of the next action; moves through the lifecycle ---------- */
-function canPassBall(i){ if(!i||i.status==='done') return false; return isAdmin || i.leaderMid===ME.mid; }
+function canPassBall(i){ if(!i||i.status==='done') return false; return isAdmin || i.ballMid===ME.mid; }
 function canTakeBall(i){ if(!i||i.status==='done') return false; if(i.ballMid===ME.mid) return false; return isAdmin || i.leaderMid===ME.mid; }
 function kindPill(i){ if(!i.kind) return ''; return i.kind==='fyi'?'<span class="kpill fyi">FYI</span>':'<span class="kpill act">Action</span>'; }
 function ballInline(i){ if(i.status==='done'||!i.ballMid) return ''; var mine=i.ballMid===ME.mid; return '<span class="ball'+(mine?' mine':'')+'" style="font-size:11px"><span class="dot"></span>'+(mine?'Your move':esc(personName(i.ballMid)))+'</span>'; }
