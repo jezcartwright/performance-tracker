@@ -717,7 +717,20 @@ body:has(#cohome.active){background:#fff}
 .pf-issue:hover{border-color:var(--strip)}
 .pf-issue .pfi-t{flex:1;font-weight:600;font-size:14px}
 .pf-issue .pfi-role{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--t3)}
-.pf-empty{color:var(--t3);font-size:13px;padding:8px 2px}
+.pf-empty{color:var(--t3);font-size:13px;padding:16px;background:var(--card);border:1px dashed var(--b);border-radius:11px}
+.rel-board{display:inline-block;border:1px solid var(--strip);color:var(--strip);background:var(--strip-soft);border-radius:9px;padding:6px 13px;font-weight:700;font-size:13px}
+.pf-rel2{border-top:1px solid var(--b2);border-bottom:1px solid var(--b2);padding:16px 0;margin:4px 0 8px}
+.pf-rel-row{margin-bottom:2px}
+.pf-team{margin-top:16px}
+.pf-team .rel-lbl{margin-bottom:10px}
+.pf-orgchart{overflow-x:auto;padding:8px 0 4px}
+.pf-orgchart .tree{margin:0}
+.pf-orgchart .pcard{width:118px;padding:10px 7px;border-radius:11px}
+.pf-orgchart .pcard .av{width:32px;height:32px;font-size:12px;margin-bottom:6px}
+.pf-orgchart .pcard .pn{font-size:12px;line-height:1.2}
+.pf-orgchart .pcard .pr{font-size:10.5px}
+.pf-h3{margin:28px 0 14px}
+.pf-issue{padding:15px 17px;margin-bottom:11px;border-radius:12px}
 .showdone{margin-left:auto;display:flex;align-items:center;gap:7px;font-size:12.5px;font-weight:600;color:var(--t2);cursor:pointer;user-select:none}
 .showdone input{width:15px;height:15px;accent-color:var(--strip);cursor:pointer;margin:0}
 tr.rowdone td{opacity:.5}
@@ -1317,6 +1330,7 @@ tr.rowdone:hover td{opacity:.78}
       <div class="panel" style="grid-column:1/-1">
         <h3>People &amp; structure</h3>
         <p class="psub">Add, move, promote or remove anyone right here — drag a card to change who reports to whom, use a card's ⋯ menu to promote, or tap a person to view, invite or make them an admin.</p>
+        <div id="admLeadLabel"></div>
         <div id="admOrgWrap"></div>
       </div>
 
@@ -2693,6 +2707,8 @@ function renderAdmin(){
     }).join('') : '<div class="psub">No companies yet. Add one below, or seed the test data.</div>';
   }
   // departments, leaders, people & reporting are now managed in the org chart (goTeam)
+  var lle=document.getElementById('admLeadLabel');
+  if(lle){ if(!activeCid){ lle.innerHTML=''; } else { var _ll=(company&&company.leadershipLabel)||'Leadership Team'; lle.innerHTML='<div class="frow" style="gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:14px"><span class="rel-lbl" style="margin:0">Top level label</span><input class="adm-input" id="leadLabelIn" style="margin:0;max-width:240px" value="'+esc(_ll)+'"'+(isAdmin?'':' disabled')+'><button class="tinybtn" onclick="saveLeadLabel()"'+(isAdmin?'':' disabled')+'>Save</button></div>'; } }
   // membership panel
   var mp=document.getElementById('admMembership');
   if(mp){ if(!activeCid){ mp.innerHTML='<div class="psub">No company selected.</div>'; }
@@ -2804,7 +2820,8 @@ function controlsBar(){
   var oz=(ORGVIEW==='chart')?'<div class="ozc"><button class="ozb" onclick="orgZoom(-0.15)" aria-label="Zoom out" title="Zoom out">\u2212</button><button class="ozb ozp" id="ozPct" onclick="orgZoomReset()" title="Reset zoom">100%</button><button class="ozb" onclick="orgZoom(0.15)" aria-label="Zoom in" title="Zoom in">+</button></div>':'';
   var teamSel='';
   if(ORGVIEW==='chart'){
-    var fopts='<option value="">\uD83D\uDC65 Whole org</option>'+deptList().filter(function(fid){return fnsLeader(fid)!==company.ceoMemberId;}).map(function(fid){return '<option value="'+fid+'"'+(FOCUSFID===fid?' selected':'')+'>'+esc(fns[fid].name||'Team')+'</option>';}).join('');
+    var leadOpt=(company.ceoMemberId&&members[company.ceoMemberId])?('<option value="__lead"'+(FOCUSFID==='__lead'?' selected':'')+'>'+esc(company.leadershipLabel||'Leadership Team')+'</option>'):'';
+    var fopts='<option value="">\uD83D\uDC65 Whole org</option>'+leadOpt+deptList().filter(function(fid){return fnsLeader(fid)!==company.ceoMemberId;}).map(function(fid){return '<option value="'+fid+'"'+(FOCUSFID===fid?' selected':'')+'>'+esc(fns[fid].name||'Team')+'</option>';}).join('');
     teamSel='<select class="teamsel" onchange="setFocusTeam(this.value)" title="Show just one team">'+fopts+'</select>';
   }
   var search='<div class="orgsearch-wrap"><span class="oss-ico">\uD83D\uDD0D</span><input id="orgSearch" class="orgsearch" type="search" placeholder="Search people\u2026" autocomplete="off" oninput="orgSearchInput(this.value)" onkeydown="if(event.key===\'Enter\'){event.preventDefault();orgSearchEnter();}" onblur="setTimeout(orgSearchClose,160)"><div class="orgsearch-res" id="orgSearchResults"></div></div>';
@@ -2843,7 +2860,11 @@ function renderTeam(){
   var seen={};
   var ceo=company.ceoMemberId;
   var tree;
-  if(FOCUSFID && fns[FOCUSFID]){
+  if(FOCUSFID==='__lead' && ceo && members[ceo]){
+    var leadReps=deptList().map(function(f){return fnsLeader(f);}).filter(function(x){return x&&members[x]&&x!==ceo;});
+    var leadLis=leadReps.map(function(r){return '<li>'+orgCard(r,'leader')+'</li>';}).join('');
+    tree='<div class="tree"><ul><li>'+orgCard(ceo,'ceo')+'<ul>'+leadLis+'</ul></li></ul></div>';
+  } else if(FOCUSFID && fns[FOCUSFID]){
     tree='<div class="tree"><ul>'+leaderNode(FOCUSFID,seen)+'</ul></div>';
   } else {
     var leaderLis=deptList().filter(function(fid){return fnsLeader(fid)!==company.ceoMemberId;}).map(function(fid){return leaderNode(fid,seen);}).join('');
@@ -2925,6 +2946,7 @@ function orgListFn(){
 }
 window.setOrgView=function(v){ ORGVIEW=v; if(v==='list'&&MANAGING){ MANAGING=false; } if(openOcm){openOcm.classList.remove('on');openOcm=null;} renderTeam(); };
 window.setFocusTeam=function(fid){ FOCUSFID=fid||null; if(FOCUSFID&&ORGVIEW!=='chart')ORGVIEW='chart'; if(openOcm){openOcm.classList.remove('on');openOcm=null;} renderTeam(); };
+window.saveLeadLabel=function(){ if(!isAdmin||!activeCid)return; var i=document.getElementById('leadLabelIn'); if(!i)return; var v=(i.value||'').trim()||'Leadership Team'; cRef().update({leadershipLabel:v}).then(function(){ renderTeam(); }).catch(function(e){alert('Could not save: '+e.message); }); };
 window.orgSearchInput=function(q){
   q=(q||'').trim().toLowerCase();
   var box=document.getElementById('orgSearchResults'); if(!box)return;
@@ -3180,10 +3202,20 @@ function renderProfileRel(mid){
   var el=document.getElementById('pfRel'); if(!el)return; var m=members[mid]; if(!m){el.innerHTML='';return;}
   var isCeo=company.ceoMemberId===mid; var fid=m.functionId; var lead=fnsLeader(fid)===mid;
   var rt = isCeo?null:(lead?company.ceoMemberId:effMgr(mid,fid));
-  var reps = isCeo ? deptList().map(function(f){return fnsLeader(f);}).filter(function(x){return x&&members[x];}) : childrenOf(mid,fid);
-  var rtH = (rt&&members[rt]) ? '<button class="rel-link" onclick="openProfile(\''+rt+'\')">'+esc(personName(rt))+'</button>' : '<span class="muted">—</span>';
-  var repsH = reps.length ? reps.map(function(r){return '<button class="rel-rep" onclick="openProfile(\''+r+'\')"><span class="rmini" style="'+avBg(r)+'">'+avBody(r)+'</span><span>'+esc(personName(r))+'</span></button>';}).join('') : '<span class="muted">None</span>';
-  el.innerHTML='<div class="rel-grid"><div class="rel-block"><span class="rel-lbl">Reports to</span><div>'+rtH+'</div></div><div class="rel-block"><span class="rel-lbl">Direct reports'+(reps.length?(' · '+reps.length):'')+'</span><div class="rel-reps">'+repsH+'</div></div></div>';
+  var reps = (isCeo ? deptList().map(function(f){return fnsLeader(f);}) : childrenOf(mid,fid)).filter(function(x){return x&&members[x]&&x!==mid;});
+  var rtH = isCeo ? '<span class="rel-board">Board</span>' : ((rt&&members[rt]) ? '<button class="rel-link" onclick="openProfile(\''+rt+'\')">'+esc(personName(rt))+'</button>' : '<span class="muted">—</span>');
+  var teamLbl = isCeo ? (company.leadershipLabel||'Leadership Team') : 'Direct reports';
+  var teamH;
+  if(reps.length){
+    var _mg=MANAGING; MANAGING=false;
+    var topKind = isCeo?'ceo':(lead?'leader':'member');
+    var repLis = reps.map(function(r){ var rk=(company.ceoMemberId===r)?'ceo':(fnsLeader(members[r]&&members[r].functionId)===r?'leader':'member'); return '<li>'+orgCard(r,rk)+'</li>'; }).join('');
+    teamH='<div class="pf-team"><span class="rel-lbl">'+esc(teamLbl)+' · '+reps.length+'</span><div class="orgchart pf-orgchart"><div class="tree"><ul><li>'+orgCard(mid,topKind)+'<ul>'+repLis+'</ul></li></ul></div></div></div>';
+    MANAGING=_mg;
+  } else {
+    teamH='<div class="pf-team"><span class="rel-lbl">'+esc(teamLbl)+'</span><div class="muted" style="font-size:13px;margin-top:6px">None</div></div>';
+  }
+  el.innerHTML='<div class="pf-rel2"><div class="pf-rel-row"><span class="rel-lbl">Reports to</span><div style="margin-top:6px">'+rtH+'</div></div>'+teamH+'</div>';
 }
 function renderProfileIssues(mid){
   var vis=applyVisibility(issues.slice());
