@@ -176,7 +176,7 @@ tbody td{padding:14px 16px;vertical-align:middle}
 .st{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:700;padding:5px 11px;border-radius:20px;color:#fff;letter-spacing:.02em}
 .st .d{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.9)}
 .st-open{background:var(--open)}
-.st-prog{background:var(--strip)}
+.st-prog{background:#ff6600}
 .st-done{background:var(--green)}
 .conv{font-size:10.5px;font-weight:700;padding:3px 8px;border-radius:5px;letter-spacing:.04em}
 .conv-y{background:#12936a;color:#fff}
@@ -196,7 +196,7 @@ tbody td{padding:14px 16px;vertical-align:middle}
 .back:hover{color:var(--strip)}
 .dgrid{display:grid;grid-template-columns:1fr 372px;gap:20px;align-items:start}
 .dtitle{font-family:var(--display);font-weight:600;font-size:30px;line-height:1.08;letter-spacing:.005em;margin-bottom:16px}
-.meta{display:flex;flex-wrap:wrap;gap:20px;padding:15px 0;border-top:1px solid var(--b);border-bottom:1px solid var(--b);margin-bottom:18px}
+.meta{display:flex;flex-wrap:wrap;gap:20px;padding:15px 0;border-bottom:1px solid var(--b);margin-bottom:18px}
 .meta .k{font-family:var(--ui);font-size:10px;text-transform:uppercase;letter-spacing:1.3px;color:var(--t3);margin-bottom:5px;font-weight:700}
 .meta .v{font-weight:600;display:flex;align-items:center;gap:7px;font-size:13.5px}
 .dperson{display:inline-flex;align-items:center;gap:6px}
@@ -209,6 +209,7 @@ tbody td{padding:14px 16px;vertical-align:middle}
 .step{flex:1;text-align:center;padding:9px;border-radius:7px;font-family:var(--ui);font-size:12px;font-weight:700;border:1px solid var(--b);color:var(--t3);background:var(--card)}
 .step.done{background:var(--strip-soft);color:var(--strip-ink);border-color:var(--strip-mid)}
 .step.cur{background:var(--strip);color:#fff;border-color:var(--strip)}
+.step.cur.s-prog{background:#ff6600;border-color:#ff6600;color:#fff}
 .note{font-size:11.5px;color:var(--t3);margin-top:7px}
 
 /* Chat */
@@ -284,6 +285,8 @@ tbody td{padding:14px 16px;vertical-align:middle}
 #ri-kind button:first-child.sel{background:#e5484d;border-color:#e5484d}
 #ri-kind button:last-child.sel{background:#ff6600;border-color:#ff6600}
 .dactions{display:flex;gap:8px;justify-content:flex-end;margin:0 0 12px}
+.dhead{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;border-bottom:1px solid var(--b);padding-bottom:14px;margin-bottom:18px}
+.dhead .dtitle{margin-bottom:0}
 .dact{display:inline-flex;align-items:center;gap:5px;padding:7px 13px;border:1.5px solid var(--b);background:#fff;border-radius:8px;font-weight:600;font-size:13px;color:var(--t2);cursor:pointer}
 .dact:hover{background:#faf7f3}
 .dact.danger{color:#e5252b;border-color:#f3b5b0}
@@ -293,15 +296,27 @@ tbody td{padding:14px 16px;vertical-align:middle}
 .ball-backbtn .bb-sub{font-weight:500;font-size:11.5px;color:var(--t2);margin-left:auto}
 .jhead{display:flex;align-items:center;gap:8px;cursor:pointer;user-select:none}
 .jcount{font-weight:700;color:var(--t3);font-size:13px}
-.jhead .jcaret{margin-left:auto;color:var(--t3);font-size:13px;transition:transform .15s}
+.jhead .jcaret{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;margin-right:9px;border:1px solid var(--b);border-radius:6px;color:var(--t2);font-size:11px;line-height:1;transition:transform .15s}
 #journeySec.collapsed .jcaret{transform:rotate(-90deg)}
-#journeySec.collapsed #journey{display:none}
-.jmap{margin-top:8px}
-.jstop{display:grid;grid-template-columns:22px 1fr;gap:12px;position:relative;padding-bottom:16px}
+#journeySec.collapsed #journey,#journeySec.collapsed #jlegend{display:none}
+.jmap{margin-top:10px}
+.jstop{display:grid;grid-template-columns:24px 1fr;gap:13px;position:relative;padding-bottom:18px}
 .jstop:last-child{padding-bottom:2px}
-.jstop:not(:last-child)::before{content:"";position:absolute;left:9.5px;top:5px;bottom:0;width:3px;background:var(--strip);border-radius:2px;opacity:.85}
-.jtick{width:13px;height:13px;border-radius:50%;background:var(--card);border:3px solid var(--t3);margin:3px auto 0;position:relative;z-index:1;box-sizing:border-box}
-.jstop.major .jtick{width:19px;height:19px;border-width:4px;margin-top:0}
+.jstop::before{content:"";position:absolute;left:8px;top:0;bottom:0;width:8px;background:#ff6600;border-radius:0}
+.jstop:first-child::before{top:10px}
+.jstop:last-child::before{bottom:auto;height:10px}
+.jstop:only-child::before{display:none}
+.jtick{width:24px;height:5px;border-radius:2px;background:#ff6600;margin:7px 0 0;position:relative;z-index:1;box-sizing:border-box}
+.jcat-pass .jtick{width:18px;height:18px;border-radius:50%;background:var(--card);border:5px solid #ff6600;margin:1px auto 0}
+.jstop.major .jtick{width:18px;height:18px;border-radius:50%;background:#ff6600;border:3px solid #ff6600;margin:1px auto 0}
+.jcat-resolve .jtick{background:#0e9f6e;border-color:#0e9f6e}
+.jlegend{display:flex;flex-wrap:wrap;gap:12px 18px;margin-top:14px;padding-top:13px;border-top:1px solid var(--b)}
+.jleg{display:inline-flex;align-items:center;gap:8px;font-size:12px;color:var(--t2)}
+.jleg .lm{flex:0 0 auto}
+.lm-tick{width:18px;height:5px;border-radius:2px;background:#ff6600}
+.lm-ring{width:15px;height:15px;border-radius:50%;background:var(--card);border:4px solid #ff6600;box-sizing:border-box}
+.lm-start{width:14px;height:14px;border-radius:50%;background:#ff6600}
+.lm-end{width:14px;height:14px;border-radius:50%;background:#0e9f6e}
 .jbody{min-width:0}
 .jname{font-size:13.5px;font-weight:600;color:var(--t);line-height:1.35}
 .jdesc{margin-top:5px;font-size:13px;color:var(--t2);line-height:1.5;white-space:pre-wrap}
@@ -512,7 +527,7 @@ body:has(#cohome.active){background:#fff}
 .pcard .pc{margin-top:8px;font-size:11px;font-weight:700;color:var(--strip-ink);background:var(--card);border:1px solid var(--strip-mid);border-radius:20px;padding:2px 9px;display:inline-block}
 .ocbadge{position:absolute;top:-7px;right:-7px;min-width:21px;height:21px;padding:0 5px;border-radius:11px;background:#e5484d;color:#fff;font:800 11.5px var(--ui);display:flex;align-items:center;justify-content:center;box-shadow:0 1px 5px rgba(0,0,0,.28);z-index:3}
 .kpill{font-size:10px;font-weight:800;letter-spacing:.4px;text-transform:uppercase;border-radius:6px;padding:2px 7px;display:inline-block;vertical-align:middle}
-.kpill.act{background:#ffe0df;color:#e5252b}
+.kpill.act{background:#e5252b;color:#fff}
 .kpill.fyi{background:#edf0f2;color:#5b554d}
 .ball{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:var(--t2);vertical-align:middle}
 .ball .dot{width:9px;height:9px;border-radius:50%;background:#e5252b;flex:0 0 auto}
@@ -1010,10 +1025,9 @@ tr.rowdone:hover td{opacity:.78}
     <button class="back" onclick="goDash()">
       <svg viewBox="0 0 24 24" width="15" fill="none" stroke="currentColor" stroke-width="2"><path d="m15 18-6-6 6-6"/></svg> All issues
     </button>
-    <div class="dactions" id="dActions"></div>
+    <div class="dhead"><h1 class="dtitle" id="dT">Reporting dashboard data is 48h stale</h1><div class="dactions" id="dActions"></div></div>
     <div class="dgrid">
       <div>
-        <h1 class="dtitle" id="dT">Reporting dashboard data is 48h stale</h1>
         <div class="meta">
           <div style="flex:1 1 auto"><div class="v" id="dPeopleBlock"></div></div>
           <div><div class="k">Spoken</div><div class="v" id="dConv"></div></div>
@@ -1029,8 +1043,14 @@ tr.rowdone:hover td{opacity:.78}
           <p class="note">Leader or participants move it along. Only the person who raised it can mark it <strong>Resolved</strong>.</p>
         </div>
         <div class="sec" id="journeySec">
-          <h3 class="jhead" onclick="toggleJourney()">Progress <span class="jcount" id="jcount"></span><span class="jcaret">▾</span></h3>
+          <h3 class="jhead" onclick="toggleJourney()"><span class="jcaret" aria-hidden="true">▾</span>Progress <span class="jcount" id="jcount"></span></h3>
           <div class="journey jmap" id="journey"></div>
+          <div class="jlegend" id="jlegend">
+            <span class="jleg"><span class="lm lm-tick"></span>Update</span>
+            <span class="jleg"><span class="lm lm-ring"></span>Ball hand-off</span>
+            <span class="jleg"><span class="lm lm-start"></span>Raised</span>
+            <span class="jleg"><span class="lm lm-end"></span>Resolved</span>
+          </div>
         </div>
       </div>
 
@@ -2466,7 +2486,7 @@ function renderStepper(st){
   var canMove=curIssue&&(curIssue.leaderMid===ME.mid||(curIssue.participants||[]).indexOf(ME.mid)>=0||isAdmin);
   var canResolve=curIssue&&((curIssue.raiserMid&&curIssue.raiserMid===ME.mid)||isAdmin);
   var html=order.map(function(o,n){
-    var cls='step'+(n<idx?' done':'')+(n===idx?' cur':''); var oc='', cur='';
+    var cls='step s-'+o[0]+(n<idx?' done':'')+(n===idx?' cur':''); var oc='', cur='';
     if(o[0]==='done'){ if(canResolve && st!=='done'){ oc='onclick="resolveIssue()"'; cur='cursor:pointer'; } }
     else { if(canMove && n>idx){ oc='onclick="setStatus(\''+o[0]+'\')"'; cur='cursor:pointer'; } }
     return '<div class="'+cls+'" style="'+cur+'" '+oc+'>'+o[1]+'</div>';
@@ -2476,8 +2496,8 @@ function renderStepper(st){
 window.setStatus=function(s){ if(!curIssue||!curId)return; issuesRef().doc(curId).update({status:s,updatedAt:FV.serverTimestamp()}); issuesRef().doc(curId).collection('messages').add({type:'system',event:'status',text:ME.first+' moved this to “'+(sm[s]?sm[s][1]:s)+'”.',authorMid:ME.mid,authorUid:ME.uid,authorName:ME.name,createdAt:FV.serverTimestamp()}); };
 window.resolveIssue=function(){ if(!curIssue||!curId)return; var canResolve=(curIssue.raiserMid&&curIssue.raiserMid===ME.mid)||isAdmin; if(!canResolve)return; if(!confirm('Mark this issue as resolved?'))return; issuesRef().doc(curId).update({status:'done',ballMid:null,resolvedAt:FV.serverTimestamp(),updatedAt:FV.serverTimestamp()}); issuesRef().doc(curId).collection('messages').add({type:'system',event:'resolve',text:ME.first+' marked this resolved.',authorMid:ME.mid,authorUid:ME.uid,authorName:ME.name,createdAt:FV.serverTimestamp()}); };
 /* ---------- HOLDING THE BALL: current owner of the next action; moves through the lifecycle ---------- */
-function canPassBall(i){ if(!i||i.status==='done') return false; return isAdmin || i.ballMid===ME.mid; }
-function canTakeBall(i){ if(!i||i.status==='done') return false; if(i.ballMid===ME.mid) return false; return isAdmin || i.raiserMid===ME.mid || i.leaderMid===ME.mid || (i.participants||[]).indexOf(ME.mid)>=0; }
+function canPassBall(i){ if(!i||i.status==='done') return false; return isAdmin || i.leaderMid===ME.mid; }
+function canTakeBall(i){ if(!i||i.status==='done') return false; if(i.ballMid===ME.mid) return false; return isAdmin || i.leaderMid===ME.mid; }
 function kindPill(i){ if(!i.kind) return ''; return i.kind==='fyi'?'<span class="kpill fyi">FYI</span>':'<span class="kpill act">Action</span>'; }
 function ballInline(i){ if(i.status==='done'||!i.ballMid) return ''; var mine=i.ballMid===ME.mid; return '<span class="ball'+(mine?' mine':'')+'" style="font-size:11px"><span class="dot"></span>'+(mine?'Your move':esc(personName(i.ballMid)))+'</span>'; }
 function ballBoxHTML(i){
@@ -2549,7 +2569,7 @@ function renderJourney(arr){
     if(cat==='note'){
       var op=!!journeyOpen[m.id];
       return '<div class="jstop jcat-note'+(op?' open':'')+'">'+
-        '<span class="jtick" style="border-color:'+def.c+'"></span>'+
+        '<span class="jtick"></span>'+
         '<div class="jbody">'+
           '<div class="jname jtoggle" onclick="jToggle(\''+m.id+'\',this)"><span>Note from '+esc(m.authorName||personName(who))+'</span><span class="jchev">\u203a</span></div>'+
           '<div class="jnote">'+esc(m.text)+'</div>'+
@@ -2557,8 +2577,8 @@ function renderJourney(arr){
         '</div></div>';
     }
     var jdesc=(cat==='raise'&&curIssue&&curIssue.description)?('<div class="jdesc">'+esc(curIssue.description)+'</div>'):'';
-    return '<div class="jstop'+(def.major?' major':'')+'">'+
-      '<span class="jtick" style="border-color:'+def.c+'"></span>'+
+    return '<div class="jstop jcat-'+cat+(def.major?' major':'')+'">'+
+      '<span class="jtick"></span>'+
       '<div class="jbody">'+
         '<div class="jname">'+esc(m.text)+'</div>'+jdesc+
         '<div class="jmeta">'+av+' '+time+'</div>'+
