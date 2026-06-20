@@ -1034,7 +1034,7 @@ tr.rowdone:hover td{opacity:.78}
 
         </div>
         <div class="ballbox" id="dBallWrap"></div>
-        <div class="ta" id="ball-ta" style="display:none;margin:-6px 0 14px"><div id="ball-back"></div><input id="ball-input" class="ta-input" type="text" placeholder="Pass the ball to…" autocomplete="off" oninput="ballSearch(this)" onfocus="ballSearch(this)" onblur="taBlur('ball-list')"><div id="ball-list" class="ta-list" style="display:none"></div></div>
+        <div class="ta" id="ball-ta" style="display:none;margin:-6px 0 14px"><div id="ball-back"></div><input id="ball-input" class="ta-input" type="text" placeholder="Move responsibility &amp; ownership over to…" autocomplete="off" oninput="ballSearch(this)" onfocus="ballSearch(this)" onblur="taBlur('ball-list')"><div id="ball-list" class="ta-list" style="display:none"></div></div>
         <div class="sec"><h3>Description</h3><p id="dDesc">—</p></div>
         <div class="sec" id="docsSec"><h3>Documents</h3><div id="dDocs"></div></div>
         <div class="sec">
@@ -2506,7 +2506,7 @@ function ballBoxHTML(i){
   else if(i.ballMid){ var mine=i.ballMid===ME.mid; status='<span class="ball'+(mine?' mine':'')+'"><span class="dot"></span>'+(mine?'Your move':('Ball with '+esc(personName(i.ballMid))))+'</span>'; }
   else { status='<span class="ball none"><span class="dot"></span>No action owed \u00b7 FYI</span>'; }
   var ctrls='';
-  if(canPassBall(i)){ ctrls+='<button class="dact" onclick="ballHandOpen()">\u21aa Pass the ball to\u2026</button>'; }
+  if(canPassBall(i)){ ctrls+='<button class="dact" onclick="ballHandOpen()">\u21aa Move responsibility &amp; ownership over to\u2026</button>'; }
   if(canTakeBall(i)){ ctrls+='<button class="dact" onclick="ballTake()">\u270b Take it</button>'; }
   return tag+status+'<span class="bspace"></span>'+ctrls;
 }
@@ -2515,7 +2515,7 @@ function ballSetTo(mid){
   var prevHolder=(curIssue&&curIssue.ballMid)||null;
   var fromMid=(prevHolder&&prevHolder!==mid)?prevHolder:((curIssue&&(curIssue.ballFromMid||curIssue.raiserMid))||null);
   if(fromMid===mid) fromMid=null;
-  var txt=(mid===ME.mid)?(ME.first+' took the ball.'):(ME.first+' passed the ball to '+personName(mid)+'.');
+  var txt=(mid===ME.mid)?(ME.first+' took the ball.'):('Responsibility & ownership has moved over to '+personName(mid)+'.');
   issuesRef().doc(curId).update({ballMid:mid, ballFromMid:fromMid, kind:'action', updatedAt:FV.serverTimestamp()}).then(function(){
     issuesRef().doc(curId).collection('messages').add({type:'system',event:'pass',text:txt,authorMid:ME.mid,authorUid:ME.uid,authorName:ME.name,createdAt:FV.serverTimestamp()});
   }).catch(function(e){ alert('Could not pass the ball: '+e.message); });
