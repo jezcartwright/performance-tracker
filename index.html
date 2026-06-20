@@ -210,6 +210,7 @@ tbody td{padding:14px 16px;vertical-align:middle}
 .step.done{background:var(--strip-soft);color:var(--strip-ink);border-color:var(--strip-mid)}
 .step.cur{background:var(--strip);color:#fff;border-color:var(--strip)}
 .step.cur.s-prog{background:#ff6600;border-color:#ff6600;color:#fff}
+.step.cur.s-done{background:#0e9f6e;border-color:#0e9f6e;color:#fff}
 .note{font-size:11.5px;color:var(--t3);margin-top:7px}
 
 /* Chat */
@@ -1047,7 +1048,7 @@ tr.rowdone:hover td{opacity:.78}
           <div class="journey jmap" id="journey"></div>
           <div class="jlegend" id="jlegend">
             <span class="jleg"><span class="lm lm-tick"></span>Update</span>
-            <span class="jleg"><span class="lm lm-ring"></span>Ball hand-off</span>
+            <span class="jleg"><span class="lm lm-ring"></span>Ownership change</span>
             <span class="jleg"><span class="lm lm-start"></span>Raised</span>
             <span class="jleg"><span class="lm lm-end"></span>Resolved</span>
           </div>
@@ -2515,7 +2516,7 @@ function ballSetTo(mid){
   var prevHolder=(curIssue&&curIssue.ballMid)||null;
   var fromMid=(prevHolder&&prevHolder!==mid)?prevHolder:((curIssue&&(curIssue.ballFromMid||curIssue.raiserMid))||null);
   if(fromMid===mid) fromMid=null;
-  var txt=(mid===ME.mid)?(ME.first+' took the ball.'):('Responsibility & ownership has moved over to '+personName(mid)+'.');
+  var txt='Ownership & responsibility has moved to '+personName(mid)+'.';
   issuesRef().doc(curId).update({ballMid:mid, ballFromMid:fromMid, kind:'action', updatedAt:FV.serverTimestamp()}).then(function(){
     issuesRef().doc(curId).collection('messages').add({type:'system',event:'pass',text:txt,authorMid:ME.mid,authorUid:ME.uid,authorName:ME.name,createdAt:FV.serverTimestamp()});
   }).catch(function(e){ alert('Could not pass the ball: '+e.message); });
@@ -2557,6 +2558,7 @@ function jcat(m){
   if(t.indexOf('edited')>=0) return 'edit';
   return 'event';
 }
+function ownText(t){ t=t||''; var k=' passed the ball to '; var i=t.indexOf(k); if(i>=0) return 'Ownership & responsibility has moved to '+t.slice(i+k.length); var k3='Responsibility & ownership has moved over to '; if(t.indexOf(k3)===0) return 'Ownership & responsibility has moved to '+t.slice(k3.length); var sfx=' took the ball.'; if(t.length>sfx.length && t.slice(-sfx.length)===sfx) return 'Ownership & responsibility has moved to '+t.slice(0,t.length-sfx.length)+'.'; return t; }
 function renderJourney(arr){
   var host=document.getElementById('journey'); if(!host) return;
   var cnt=document.getElementById('jcount'); if(cnt) cnt.textContent=arr.length?('· '+arr.length):'';
@@ -2580,7 +2582,7 @@ function renderJourney(arr){
     return '<div class="jstop jcat-'+cat+(def.major?' major':'')+'">'+
       '<span class="jtick"></span>'+
       '<div class="jbody">'+
-        '<div class="jname">'+esc(m.text)+'</div>'+jdesc+
+        '<div class="jname">'+esc(ownText(m.text))+'</div>'+jdesc+
         '<div class="jmeta">'+av+' '+time+'</div>'+
       '</div></div>';
   }).join('');
@@ -2593,7 +2595,7 @@ function subscribeMsgs(id){
   msgsUnsub=issuesRef().doc(id).collection('messages').orderBy('createdAt','asc').onSnapshot(function(qs){
     var html=''; var arr=[];
     qs.forEach(function(d){ var m=d.data(); m.id=d.id; arr.push(m);
-      if(m.type==='system'){ html+='<div class="sys">'+esc(m.text)+'</div>'; return; }
+      if(m.type==='system'){ html+='<div class="sys">'+esc(ownText(m.text))+'</div>'; return; }
       var meMsg=(m.authorMid&&m.authorMid===ME.mid);
       html+='<div class="msg'+(meMsg?' me':'')+'"><span class="mini" style="'+avBg(m.authorMid)+'">'+avBody(m.authorMid)+'</span><div class="bub"><div class="nm">'+esc(m.authorName||personName(m.authorMid))+'</div>'+esc(m.text)+'<div class="tm">'+timeAgo(m.createdAt)+'</div></div></div>';
     });
