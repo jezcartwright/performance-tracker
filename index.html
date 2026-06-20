@@ -159,6 +159,19 @@ tbody td{padding:14px 16px;vertical-align:middle}
 .who{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--t2);font-weight:500}
 .tagmini{display:flex;flex-wrap:wrap;gap:4px}
 .mini{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;font-size:10px;font-weight:700;color:#fff;flex-shrink:0}
+.pblock{display:flex;flex-direction:column;gap:6px}
+.pb-sm{gap:5px}
+.prow{display:flex;align-items:center;gap:7px}
+.prole{font-size:11px;color:var(--t3);width:50px;flex:0 0 auto}
+.prole.wide{width:80px;font-size:12px}
+.pnm{font-size:12.5px;color:var(--t)}
+.pb-sm .mini{width:20px;height:20px;font-size:8px}
+.pb-sm .pnm{font-size:12px}
+.avstack{display:flex}
+.avstack .mini{margin-left:-7px;border:2px solid var(--card)}
+.avstack .mini:first-child{margin-left:0}
+.tagwrap{display:flex;flex-wrap:wrap;gap:7px 14px}
+.pri-people{display:inline-block}
 /* BOLD status pills (solid fills) */
 .st{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:700;padding:5px 11px;border-radius:20px;color:#fff;letter-spacing:.02em}
 .st .d{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.9)}
@@ -862,8 +875,7 @@ tr.rowdone:hover td{opacity:.78}
       <table>
         <thead><tr>
           <th>Issue</th>
-          <th class="hs">Raised by</th>
-          <th class="hs">Tagged</th>
+          <th class="hs">People</th>
           <th class="hs">Spoken</th>
           <th>Status</th>
           <th class="hs">Raised</th>
@@ -1003,8 +1015,7 @@ tr.rowdone:hover td{opacity:.78}
       <div>
         <h1 class="dtitle" id="dT">Reporting dashboard data is 48h stale</h1>
         <div class="meta">
-          <div><div class="k">Raised by</div><div class="v"><span class="mini" id="dRav" style="background:#db2777">AD</span><span id="dR">Amara Diallo</span></div></div>
-          <div><div class="k">People tagged</div><div class="v" id="dPeople"></div></div>
+          <div style="flex:1 1 auto"><div class="v" id="dPeopleBlock"></div></div>
           <div><div class="k">Spoken</div><div class="v" id="dConv"></div></div>
 
         </div>
@@ -2249,24 +2260,28 @@ function spokenToggle(i){ var on=!!i.conversationHad; var can=canToggleSpoken(i)
 window.toggleSpoken=function(id){ var i=null; for(var k=0;k<issues.length;k++){ if(issues[k].id===id){ i=issues[k]; break; } } if(!i&&curIssue&&curIssue.id===id)i=curIssue; if(!i)return; if(!canToggleSpoken(i))return; issuesRef().doc(id).update({conversationHad:!i.conversationHad, updatedAt:FV.serverTimestamp()}).catch(function(e){ alert('Could not update: '+e.message); }); };
 function taggedList(i){ return (i.participants||[]).filter(function(m){return m&&m!==i.raiserMid;}); }
 function taggedMinis(i){ var t=taggedList(i); if(!t.length) return '<span class="dnobody">\u2014</span>'; return '<div class="tagmini">'+t.map(function(m){ return '<span class="mini" style="'+avBg(m)+'" title="'+esc(personName(m))+'">'+avBody(m)+'</span>'; }).join('')+'</div>'; }
+function firstName(mid){ var n=personName(mid)||''; return n.split(' ')[0]||n; }
+function pbPersonRow(label, mid, full, fb){ var w=full?' wide':''; if(!mid) return '<div class="prow"><span class="prole'+w+'">'+label+'</span><span class="dnobody">\u2014</span></div>'; var nm=full?(personName(mid)||fb||''):(firstName(mid)||fb||''); return '<div class="prow"><span class="prole'+w+'">'+label+'</span><span class="mini" style="'+avBg(mid)+'">'+avBody(mid)+'</span><span class="pnm">'+esc(nm)+'</span></div>'; }
+function pbTagRow(label, ids, full){ var w=full?' wide':''; var lab='<span class="prole'+w+'">'+label+'</span>'; ids=(ids||[]).filter(function(m){return m&&members[m];}); if(!ids.length) return '<div class="prow">'+lab+'<span class="dnobody">\u2014</span></div>'; if(full){ return '<div class="prow" style="align-items:flex-start">'+lab+'<div class="tagwrap">'+ids.map(function(m){return '<span class="prow" style="gap:6px"><span class="mini" style="'+avBg(m)+'">'+avBody(m)+'</span><span class="pnm">'+esc(personName(m))+'</span></span>';}).join('')+'</div></div>'; } return '<div class="prow">'+lab+'<span class="avstack">'+ids.map(function(m){return '<span class="mini" style="'+avBg(m)+'" title="'+esc(personName(m))+'">'+avBody(m)+'</span>';}).join('')+'</span></div>'; }
+function issuePeopleHTML(i, full){ var to=i.leaderMid; var tagged=(i.participants||[]).filter(function(m){return m&&m!==i.raiserMid&&m!==to;}); var L=full?{r:'Raised by',t:'To',g:'Also tagged'}:{r:'Raised',t:'To',g:'Tagged'}; return '<div class="pblock'+(full?'':' pb-sm')+'">'+pbPersonRow(L.r,i.raiserMid,full,i.raiserName)+pbPersonRow(L.t,to,full,i.leaderName)+pbTagRow(L.g,tagged,full)+'</div>'; }
+function priPeopleHTML(p, full){ var L=full?{o:'Owner',i:'Involves'}:{o:'Owner',i:'Involves'}; return '<div class="pblock'+(full?'':' pb-sm')+'">'+pbPersonRow(L.o,p.ownerMid,full,p.ownerName)+pbTagRow(L.i,(p.involves||[]),full)+'</div>'; }
 function rowHTML(i){
   var fc=i.color||(fns[i.functionId]&&fns[i.functionId].color)||'var(--strip)';
   var cls=(i.status==='done'&&boardMode!=='done')?' class="rowdone"':'';
   return '<tr'+cls+' onclick="openIssue(\''+i.id+'\')">'
    +'<td><div class="t-title">'+esc(i.title)+'</div><div class="t-sub">'+esc((i.description||'').slice(0,72))+'</div>'+((kindPill(i)||ballInline(i))?('<div class="t-meta">'+kindPill(i)+ballInline(i)+'</div>'):'')+'</td>'
-   +'<td class="hs"><div class="who"><span class="mini" style="'+avBg(i.raiserMid)+'">'+avBody(i.raiserMid)+'</span>'+esc(i.raiserName||personName(i.raiserMid))+'</div></td>'
-   +'<td class="hs">'+taggedMinis(i)+'</td>'
+   +'<td class="hs">'+issuePeopleHTML(i,false)+'</td>'
    +'<td class="hs">'+spokenToggle(i)+'</td>'
    +'<td><span class="st '+sm[i.status][0]+'"><span class="d"></span>'+sm[i.status][1]+'</span></td>'
    +'<td class="hs" style="color:var(--t3);font-size:12.5px">'+timeAgo(i.createdAt)+'</td></tr>';
 }
-function grpRow(label,color,count){ return '<tr class="grp"><td colspan="6"><span class="grp-lab"><span class="fn-dot" style="background:'+color+'"></span>'+esc(label)+'<span class="ct">· '+count+'</span></span></td></tr>'; }
+function grpRow(label,color,count){ return '<tr class="grp"><td colspan="5"><span class="grp-lab"><span class="fn-dot" style="background:'+color+'"></span>'+esc(label)+'<span class="ct">· '+count+'</span></span></td></tr>'; }
 function render(){
   refreshAux();
   var el=document.getElementById('rows'); if(!el)return;
-  if(!activeCid){ el.innerHTML='<tr class="empty-row"><td colspan="6">'+(ME.isSuper?'No company yet — open Admin &amp; Setup to create one or seed the test data.':'We couldn’t match your email to an invitation — check you signed in with the address you were invited on, or ask your admin to confirm it.')+'</td></tr>'; return; }
+  if(!activeCid){ el.innerHTML='<tr class="empty-row"><td colspan="5">'+(ME.isSuper?'No company yet — open Admin &amp; Setup to create one or seed the test data.':'We couldn’t match your email to an invitation — check you signed in with the address you were invited on, or ask your admin to confirm it.')+'</td></tr>'; return; }
   var list=visibleIssues();
-  if(!list.length){ var msg = boardMode==='done' ? 'No completed issues yet — resolved issues land here.' : (boardMode==='mine' ? 'You haven\'t raised any issues yet.' : 'No open issues — tap “Raise an issue” to add one.'); el.innerHTML='<tr class="empty-row"><td colspan="6">'+msg+'</td></tr>'; return; }
+  if(!list.length){ var msg = boardMode==='done' ? 'No completed issues yet — resolved issues land here.' : (boardMode==='mine' ? 'You haven\'t raised any issues yet.' : 'No open issues — tap “Raise an issue” to add one.'); el.innerHTML='<tr class="empty-row"><td colspan="5">'+msg+'</td></tr>'; return; }
   var byNew=function(a,b){return ms(b.createdAt)-ms(a.createdAt);};
   var html='';
   if(sortKey==='newest'){ list.sort(function(a,b){return asc?ms(a.createdAt)-ms(b.createdAt):ms(b.createdAt)-ms(a.createdAt);}); html=list.map(rowHTML).join(''); }
@@ -2405,9 +2420,7 @@ function fillDetail(i){
   var fc=i.color||(fns[i.functionId]&&fns[i.functionId].color)||'var(--strip)';
   document.getElementById('dT').textContent=i.title;
   var f=document.getElementById('dF'); if(f){ f.textContent=i.functionName||''; f.style.background=fc; }
-  var dp=document.getElementById('dPeople'); if(dp){ var tg=(i.participants||[]).filter(function(m){return m&&m!==i.raiserMid;}); dp.innerHTML=tg.length?tg.map(function(m){ return '<span class="dperson"><span class="mini" style="'+avBg(m)+'">'+avBody(m)+'</span><span>'+esc(personName(m))+'</span></span>'; }).join(''):'<span class="dnobody">No one tagged</span>'; }
-  var ra=document.getElementById('dRav'); ra.innerHTML=avBody(i.raiserMid); ra.style.background=(members[i.raiserMid]&&members[i.raiserMid].photo)?'transparent':personColor(i.raiserMid);
-  document.getElementById('dR').textContent=i.raiserName||personName(i.raiserMid);
+  var dpb=document.getElementById('dPeopleBlock'); if(dpb) dpb.innerHTML=issuePeopleHTML(i,true);
   var cv=document.getElementById('dConv'); if(cv) cv.innerHTML=spokenToggle(i);
   document.getElementById('dDesc').textContent=i.description||'—';
   var _dd=document.getElementById('dDocs'); if(_dd)renderDocs(i);
@@ -3278,7 +3291,7 @@ function priCardHTML(p,canDrag,canEdit,canAgree){
   var titleClick=canEdit?(' onclick="priEditTitle(\''+p.id+'\')" style="cursor:pointer"'):'';
   var invClick=canEdit?(' onclick="priEditInvolves(\''+p.id+'\')" title="Edit who is involved"'):'';
   var note=p.note?('<div class="pri-noteline">'+esc(p.note)+'</div>'):'';
-  return '<li class="pri-card" data-pri="'+p.id+'">'+handle+'<span class="pri-rank"></span><div class="pri-main"><div class="pri-title"'+titleClick+'>'+esc(p.title||'Untitled priority')+'</div>'+note+'<div class="pri-meta"><span class="pri-involves"'+invClick+'>Involves '+priInvolvesHTML(p)+'</span>'+priDocsBadge(p)+'</div></div><div class="pri-right">'+statusBtn+agree+del+'</div></li>';
+  return '<li class="pri-card" data-pri="'+p.id+'">'+handle+'<span class="pri-rank"></span><div class="pri-main"><div class="pri-title"'+titleClick+'>'+esc(p.title||'Untitled priority')+'</div>'+note+'<div class="pri-meta"><span class="pri-people"'+invClick+'>'+priPeopleHTML(p,false)+'</span>'+priDocsBadge(p)+'</div></div><div class="pri-right">'+statusBtn+agree+del+'</div></li>';
 }
 /* contextual "+ New" button — label + action follow the active screen */
 function syncNewBtn(screen){
