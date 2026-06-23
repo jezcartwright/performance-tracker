@@ -2519,7 +2519,7 @@ function ballBoxHTML(i){
   else if(i.ballMid){ var mine=i.ballMid===ME.mid; status='<span class="ball'+(mine?' mine':'')+'"><span class="dot"></span>'+(mine?'Your move':('with '+esc(personName(i.ballMid))))+'</span>'; }
   else { status='<span class="ball none"><span class="dot"></span>No action owed \u00b7 FYI</span>'; }
   var ctrls='';
-  if(canPassBall(i)){ ctrls+='<button class="dact" onclick="ballHandOpen()">\u21aa Move responsibility &amp; ownership over to\u2026</button>'; }
+  if(canPassBall(i)){ ctrls+='<button class="dact" style="display:inline-block;text-align:center;line-height:1.2" onclick="ballHandOpen()">Ownership &amp;<br>Responsibility</button>'; }
   if(canTakeBall(i)){ ctrls+='<button class="dact" onclick="ballTake()">\u270b Take it</button>'; }
   return tag+status+'<span class="bspace"></span>'+ctrls;
 }
@@ -2530,7 +2530,7 @@ function ballSetTo(mid){
   if(fromMid===mid) fromMid=null;
   var txt='Ownership & responsibility has moved to '+personName(mid)+'.';
   issuesRef().doc(curId).update({ballMid:mid, ballFromMid:fromMid, kind:'action', updatedAt:FV.serverTimestamp()}).then(function(){
-    issuesRef().doc(curId).collection('messages').add({type:'system',event:'pass',text:txt,authorMid:ME.mid,authorUid:ME.uid,authorName:ME.name,createdAt:FV.serverTimestamp()});
+    issuesRef().doc(curId).collection('messages').add({type:'system',event:'pass',text:txt,subjectMid:mid,authorMid:ME.mid,authorUid:ME.uid,authorName:ME.name,createdAt:FV.serverTimestamp()});
   }).catch(function(e){ alert('Could not move it: '+e.message); });
 }
 window.ballTake=function(){ if(curIssue&&canTakeBall(curIssue)) ballSetTo(ME.mid); };
@@ -2577,7 +2577,10 @@ function renderJourney(arr){
   if(!arr.length){ host.innerHTML='<div class="sys">No activity yet.</div>'; return; }
   host.innerHTML=arr.map(function(m){
     var cat=jcat(m); var def=JCAT[cat]||JCAT.event;
-    var who=m.authorMid;
+    var who=(function(){ var w=m.authorMid;
+      if(m.event==='raise'){ if(curIssue&&curIssue.raiserMid&&members[curIssue.raiserMid]) return curIssue.raiserMid; }
+      else if(m.event==='pass'){ if(m.subjectMid&&members[m.subjectMid]) return m.subjectMid; var _pm=(m.text||'').match(/(?:moved over to|moved to|passed the ball to) (.+?)\.?$/); if(_pm){ for(var _k in members){ if(members[_k]&&personName(_k)===_pm[1]) return _k; } } }
+      return w; })();
     var av='<span class="mini jav" style="'+avBg(who)+'">'+avBody(who)+'</span>';
     var time=timeAgo(m.createdAt);
     if(cat==='note'){
