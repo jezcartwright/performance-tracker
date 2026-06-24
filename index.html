@@ -59,6 +59,31 @@ input,textarea,select{font-family:inherit;font-size:inherit}
 #app.cansuper .logo,#app.cansuper .mast-id{cursor:pointer}
 #app.home .navbar{display:none}
 #app.home #coWrap{display:none!important}
+.enq-back{font-family:var(--ui);font-size:13px;font-weight:600;color:var(--strip-ink);background:none;border:none;padding:0;margin:0 0 14px;cursor:pointer}
+.enq-head{display:flex;align-items:center;gap:14px;margin-bottom:16px;flex-wrap:wrap}
+.enq-h1{font-family:var(--display);font-weight:600;font-size:30px;line-height:1;color:var(--t);margin:0}
+.enq-badge{font-family:var(--ui);font-size:12px;font-weight:700;color:#fff;background:var(--strip);border-radius:20px;padding:3px 10px}
+.enq-tabs{margin-left:auto;display:flex;gap:18px}
+.enq-tab{font-family:var(--ui);font-size:13px;font-weight:600;color:var(--t3);background:none;border:none;padding:6px 2px;cursor:pointer;border-bottom:2px solid transparent}
+.enq-tab.on{color:var(--strip-ink);border-bottom-color:var(--strip)}
+#enqList{background:var(--card);border:1px solid var(--b);border-radius:16px;overflow:hidden}
+.enq-empty{padding:30px 20px;text-align:center;color:var(--t3);font-size:14px}
+.enq-row{display:flex;gap:13px;padding:16px 20px;border-bottom:1px solid var(--b)}
+.enq-row:last-child{border-bottom:none}
+.enq-dot{flex-shrink:0;width:9px;height:9px;border-radius:50%;background:var(--strip);margin-top:6px}
+.enq-row.done .enq-dot{background:var(--b)}
+.enq-main{flex:1;min-width:0}
+.enq-top{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+.enq-nm{font-weight:600;font-size:15px;color:var(--t)}
+.enq-row.done .enq-nm{color:var(--t3)}
+.enq-co{font-size:13px;color:var(--t2)}
+.enq-em{font-size:13px;color:var(--strip-ink);text-decoration:none}
+.enq-date{margin-left:auto;font-family:var(--serif);font-size:12px;color:var(--t3);white-space:nowrap}
+.enq-msg{margin:5px 0 0;font-size:13.5px;color:var(--t2);line-height:1.5}
+.enq-actions{display:flex;gap:8px;margin-top:11px}
+.enq-btn{font-family:var(--ui);font-size:12.5px;font-weight:600;border-radius:8px;padding:7px 12px;cursor:pointer;border:1px solid var(--b);background:var(--card);color:var(--t);text-decoration:none;display:inline-flex;align-items:center;gap:5px}
+.enq-btn.rep{border-color:var(--strip);color:var(--strip-ink)}
+.enq-row.done .enq-btn.mk{color:var(--t3);border-color:var(--b)}
 .cohome-head{margin:4px 0 22px}
 .cohome-h1{font-family:var(--display);font-size:34px;font-weight:600;letter-spacing:.005em;margin:10px 0 7px;color:var(--t)}
 .cohome-sub{color:var(--t2);font-size:14px;max-width:580px;margin:0;line-height:1.5}
@@ -1362,8 +1387,9 @@ tr.rowdone:hover td{opacity:.78}
 
   <!-- COMPANIES DASHBOARD (super admin home) -->
   <section class="screen" id="cohome">
-    <div class="cohome-head">
-      <h1 class="cohome-h1">Companies</h1>
+    <div class="cohome-head" style="display:flex;align-items:center;gap:14px">
+      <h1 class="cohome-h1" style="margin-bottom:0">Companies</h1>
+      <button class="tg" id="enqOpen" onclick="goEnquiries()" style="display:none;margin-left:auto">Enquiries <span class="ct" id="enqCount">0</span></button>
     </div>
     <div class="cohome-grid" id="cohomeGrid"></div>
     <div class="cohome-tools">
@@ -1375,6 +1401,21 @@ tr.rowdone:hover td{opacity:.78}
       <input id="gpsInput" class="gps-input" placeholder="🔍  Search people across all companies…" oninput="gpsRender()" autocomplete="off">
       <div id="gpsResults" class="gps-results"></div>
     </div>
+  </section>
+
+  <!-- PT_ENQUIRIES_V1 -->
+  <section class="screen" id="enquiries">
+    <button class="enq-back" onclick="goCompaniesHome()">&larr; Companies</button>
+    <div class="enq-head">
+      <h1 class="enq-h1">Enquiries</h1>
+      <span class="enq-badge" id="enqBadge" style="display:none">0 new</span>
+      <div class="enq-tabs" id="enqTabs">
+        <button class="enq-tab on" data-f="all" onclick="setEnqFilter('all',this)">All</button>
+        <button class="enq-tab" data-f="new" onclick="setEnqFilter('new',this)">New</button>
+        <button class="enq-tab" data-f="handled" onclick="setEnqFilter('handled',this)">Handled</button>
+      </div>
+    </div>
+    <div id="enqList"></div>
   </section>
 
   <!-- ADMIN -->
@@ -1679,6 +1720,7 @@ var POLICY_VERSION='2026-06-07';
 var DPA_VERSION='2026-06-07';
 var activeCid=null, companies={}, company={}, fns={}, members={}, issues=[];
 var isAdmin=false;
+var LEADS=[], leadFilter='all', subLeads=null;
 var sortKey='newest', asc=false, boardMode='active', showCompleted=false;
 var curId=null, curIssue=null, msgsUnsub=null, lastSeenAt=0, newFnColor=PALETTE[0];
 var subC=null, subF=null, subM=null, subI=null, subA=null, subPri=null;
@@ -1958,6 +2000,8 @@ function maybeReveal(){ if(revealPending && themeSeen && membersSeen) revealApp(
 function startApp(){
   renderCoSwitch();
   document.getElementById('superFlag').style.display=ME.isSuper?'':'none';
+  var _eo=document.getElementById('enqOpen'); if(_eo)_eo.style.display=ME.isSuper?'':'none';
+  if(ME.isSuper && !subLeads){ subLeads=db.collection('leads').orderBy('createdAt','desc').onSnapshot(function(qs){ LEADS=[]; qs.forEach(function(d){ LEADS.push(Object.assign({id:d.id},d.data())); }); renderEnquiries(); updateEnqBadge(); }, function(e){ console.warn('leads',e); }); }
   document.getElementById('coPanel').style.display='none';
   var appEl=document.getElementById('app'); if(appEl)appEl.classList.toggle('cansuper',!!ME.isSuper);
   try{ var _t=(activeCid&&companies[activeCid]&&companies[activeCid].theme)?companies[activeCid].theme:JSON.parse(localStorage.getItem('ptTheme')||'null'); if(_t&&_t.strip)applyTheme(_t); }catch(e){}
@@ -2034,6 +2078,11 @@ window.goTeam=function(){ setHome(false); clearTabs(); var t=document.getElement
 window.goDash=function(){ setHome(false); clearTabs(); var t=document.getElementById('tabAll'); if(t)t.classList.add('active'); boardMode='active'; updateSortbarUI(); show('dashboard'); setIssueSegUI(); render(); };
 window.goAdmin=function(){ setHome(false); clearTabs(); var t=document.getElementById('tabAdmin'); if(t)t.classList.add('active'); show('admin'); renderAdmin(); renderTeam(); };
 function setHome(on){ var a=document.getElementById('app'); if(a)a.classList.toggle('home',!!on); }
+function renderEnquiries(){ var host=document.getElementById('enqList'); if(!host)return; var rows=LEADS.filter(function(l){ return leadFilter==='all' || (l.status||'new')===leadFilter; }); if(!rows.length){ host.innerHTML='<div class="enq-empty">'+(LEADS.length?'Nothing in this view.':'No enquiries yet. New Request-access submissions will land here.')+'</div>'; return; } host.innerHTML=rows.map(function(l){ var handled=((l.status||'new')==='handled'); var subj='Re: Your enquiry \u2014 Progress Tracker'; var mailto='mailto:'+esc(l.email||'')+'?subject='+encodeURIComponent(subj); return '<div class="enq-row'+(handled?' done':'')+'"><span class="enq-dot"></span><div class="enq-main"><div class="enq-top"><span class="enq-nm">'+esc(l.name||'\u2014')+'</span>'+(l.company?'<span class="enq-co">'+esc(l.company)+'</span>':'')+'<a class="enq-em" href="mailto:'+esc(l.email||'')+'">'+esc(l.email||'')+'</a><span class="enq-date">'+timeAgo(l.createdAt)+'</span></div><p class="enq-msg">'+esc(l.message||'')+'</p><div class="enq-actions"><a class="enq-btn rep" href="'+mailto+'">Reply</a><button class="enq-btn mk" onclick="toggleLead(\''+l.id+'\')">'+(handled?'Handled':'Mark handled')+'</button></div></div></div>'; }).join(''); }
+function updateEnqBadge(){ var n=0; for(var i=0;i<LEADS.length;i++){ if((LEADS[i].status||'new')==='new')n++; } var b=document.getElementById('enqBadge'); if(b){ b.textContent=n+' new'; b.style.display=n?'':'none'; } var c=document.getElementById('enqCount'); if(c){ c.textContent=n; c.style.display=n?'':'none'; } }
+window.setEnqFilter=function(f,btn){ leadFilter=f; var t=document.querySelectorAll('#enqTabs .enq-tab'); for(var i=0;i<t.length;i++)t[i].classList.remove('on'); if(btn)btn.classList.add('on'); renderEnquiries(); };
+window.toggleLead=function(id){ var l=null; for(var i=0;i<LEADS.length;i++){ if(LEADS[i].id===id){l=LEADS[i];break;} } if(!l)return; var ns=((l.status||'new')==='handled')?'new':'handled'; db.collection('leads').doc(id).update({status:ns}).catch(function(e){ alert('Could not update enquiry: '+e.message); }); };
+window.goEnquiries=function(){ clearTabs(); setHome(true); show('enquiries'); renderEnquiries(); };
 window.homeClick=function(){ if(ME.isSuper) goCompaniesHome(); };
 window.goCompaniesHome=function(){
   [subC,subF,subM,subI,subPri].forEach(function(u){ if(u)u(); }); subC=subF=subM=subI=subPri=null;

@@ -212,6 +212,22 @@ service cloud.firestore {
       allow read, write: if signedIn() && userUid == uid();
     }
 
+    // ------------------------------ leads (public enquiries) -----------------
+    // Anyone (even signed-out visitors) may submit ONE validated enquiry.
+    // Only a super-admin can read or manage them. Honeypot 'hp' must be empty.
+    match /leads/{leadId} {
+      allow read, update, delete: if isSuper();
+      allow create: if request.resource.data.keys().hasOnly(['name','company','email','message','status','hp','source','createdAt'])
+        && request.resource.data.name is string && request.resource.data.name.size() > 0 && request.resource.data.name.size() <= 120
+        && request.resource.data.company is string && request.resource.data.company.size() <= 160
+        && request.resource.data.email is string && request.resource.data.email.size() > 3 && request.resource.data.email.size() <= 200
+        && request.resource.data.message is string && request.resource.data.message.size() > 0 && request.resource.data.message.size() <= 4000
+        && request.resource.data.status == 'new'
+        && request.resource.data.hp == ''
+        && request.resource.data.source is string && request.resource.data.source.size() <= 40
+        && request.resource.data.createdAt == request.time;
+    }
+
     // ------------------------------ archive ----------------------------------
     match /archive/{aid} {
       allow read:   if isSuper()
