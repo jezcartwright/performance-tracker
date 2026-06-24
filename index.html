@@ -2656,7 +2656,7 @@ function renderJourney(arr){
       if(m.event==='raise'){ if(curIssue&&curIssue.raiserMid&&members[curIssue.raiserMid]) return curIssue.raiserMid; }
       else if(m.event==='pass'){ if(m.subjectMid&&members[m.subjectMid]) return m.subjectMid; var _pm=(m.text||'').match(/(?:moved over to|moved to|passed the ball to) (.+?)\.?$/); if(_pm){ for(var _k in members){ if(members[_k]&&personName(_k)===_pm[1]) return _k; } } }
       return w; })();
-    var av='<span class="mini jav" style="'+avBg(who)+'">'+avBody(who)+'</span>';
+    var av='<span class="mini jav" style="'+avBg(who)+'" title="'+esc(personName(who))+'">'+avBody(who)+'</span>';
     var time=timeAgo(m.createdAt);
     if(cat==='note'){
       var op=!!journeyOpen[m.id];
@@ -2792,7 +2792,7 @@ function renderAdmin(){
   // membership panel
   var mp=document.getElementById('admMembership');
   if(mp){ if(!activeCid){ mp.innerHTML='<div class="psub">No company selected.</div>'; }
-    else if(ME.mid){ var fn=members[ME.mid]&&members[ME.mid].functionId&&fns[members[ME.mid].functionId]; mp.innerHTML='<div class="frow"><span class="mini" style="'+avBg(ME.mid)+';width:24px;height:24px;font-size:10px">'+avBody(ME.mid)+'</span><span class="nm" style="font-size:13px">'+esc(ME.name)+' <span class="ld">· you</span></span><span class="ld">'+(fn?esc(fn.name):'no function')+'</span></div>'; }
+    else if(ME.mid){ var fn=members[ME.mid]&&members[ME.mid].functionId&&fns[members[ME.mid].functionId]; mp.innerHTML='<div class="frow"><span class="mini" style="'+avBg(ME.mid)+';width:24px;height:24px;font-size:10px">'+avBody(ME.mid)+'</span><span class="nm" style="font-size:13px">'+esc(ME.name)+'</span><span class="ld">'+(fn?esc(fn.name):'no function')+'</span></div>'; }
     else { mp.innerHTML='<div class="psub">You’re not a member of this company. Join to raise and discuss issues here.</div><button class="tg" style="width:100%;justify-content:center" onclick="joinCompanyBtn()">Join '+esc((company&&company.name)||'this company')+'</button>'; }
   }
   var dp=document.getElementById('dataPanel'); if(dp) dp.style.display=ME.isSuper?'':'none';
