@@ -887,7 +887,7 @@ tr.rowdone:hover td{opacity:.78}
       <p class="req-alt">Prefer email? Reach me at <a href="mailto:jc@jezcartwright.com" style="color:var(--strip-ink)">jc@jezcartwright.com</a></p>
     </div>
     <div id="req-done" style="display:none">
-      <p class="req-sub">Thank you for your enquiry, I&rsquo;ll come back to you as soon as I can. Look forward to talking.<br><span class="req-sign">Cheers Jez</span></p>
+      <p class="req-sub">Dear <span id="req-done-name">there</span>,<br>Thank you for your enquiry and I will come back to you as soon as I can.<br>I look forward to talking with you.<br><span class="req-sign">Cheers Jez</span></p>
     </div>
     <div class="login-msg" id="req-msg"></div>
   </div>
@@ -1580,7 +1580,7 @@ window.submitLead=function(){ var msg=document.getElementById('req-msg'); if(msg
   if(!/.+@.+\..+/.test(email)){ if(msg)msg.textContent='That email looks off \u2014 mind checking it?'; return; }
   var go=document.getElementById('req-go'); if(go)go.disabled=true;
   db.collection('leads').add({name:name,company:company,email:email,message:message,phone:phone,status:'new',hp:'',source:'web',createdAt:FV.serverTimestamp()}).then(function(){
-    var f=document.getElementById('req-fields'); if(f)f.style.display='none'; var d=document.getElementById('req-done'); if(d)d.style.display='block';
+    var f=document.getElementById('req-fields'); if(f)f.style.display='none'; var dn=document.getElementById('req-done-name'); if(dn)dn.textContent=((name.split(' ')[0])||'there'); var d=document.getElementById('req-done'); if(d)d.style.display='block';
   }).catch(function(e){ if(go)go.disabled=false; if(msg)msg.textContent='Could not send \u2014 please email jc@jezcartwright.com.'; });
 };
 window.authMode=function(mode){ authModeCur=(mode==='create')?'create':'signin'; var create=(authModeCur==='create');
