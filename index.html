@@ -881,7 +881,7 @@ body{font-family:var(--ui);background:var(--bg);color:var(--t);-webkit-font-smoo
 .cta-row{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin:30px 0}
 .prose{font-family:var(--serif);font-size:clamp(16px,1.45vw,19px);line-height:1.7;color:var(--t2);max-width:760px;margin:0 auto 16px;text-align:left}
 .focus{margin-top:34px}
-.frow{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;align-items:start}
+.frow{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;align-items:stretch}
 @media(max-width:820px){.frow{grid-template-columns:1fr;max-width:460px;margin:0 auto}}
 .fcol{border:1px solid var(--b);border-radius:14px;overflow:hidden;background:#fff;display:flex;flex-direction:column;cursor:pointer;transition:.14s}
 .fcol:hover{border-color:var(--strip-mid);box-shadow:0 12px 30px -22px rgba(217,88,0,.55)}
@@ -889,8 +889,8 @@ body{font-family:var(--ui);background:var(--bg);color:var(--t);-webkit-font-smoo
 .fhead .fx{position:absolute;right:14px;top:50%;transform:translateY(-50%);width:26px;height:26px;border-radius:50%;background:#fff;color:var(--strip-ink);font-size:0}.fhead .fx::before,.fhead .fx::after{content:&quot;&quot;;position:absolute;left:50%;top:50%;background:currentColor;border-radius:1px}.fhead .fx::before{width:2px;height:12px;transform:translate(-50%,-50%)}.fhead .fx::after{width:12px;height:2px;transform:translate(-50%,-50%)}.fhead.active .fx::before{display:none}
 .focus[data-open] .fhead:not(.active){background:var(--strip-mid);color:var(--strip-ink)}
 .focus[data-open] .fhead:not(.active) .fx{background:var(--strip-ink);color:#fff}
-.fprev{padding:16px;background:var(--strip-soft);height:330px;overflow:hidden;position:relative}
-.fprev::after{content:&quot;&quot;;position:absolute;left:0;right:0;bottom:0;height:54px;background:linear-gradient(to bottom,rgba(255,244,238,0),#fff4ee)}
+/* PL_PREVIEW_V1 */.fprev{padding:16px;background:var(--strip-soft);height:auto;overflow:visible;position:relative;flex:1 1 auto}
+.fprev::after{display:none}
 .focus[data-open] .fprev{display:none}
 .fexpand{display:none;background:var(--orange);color:#fff;border-radius:16px;padding:clamp(20px,3vw,36px);margin-top:16px}
 .fx-in{max-width:1040px;margin:0 auto;text-align:center}
