@@ -1025,7 +1025,7 @@ function ftoggle(k){var f=document.getElementById('focus');var cur=f.getAttribut
 function fclose(){var f=document.getElementById('focus');var k=f.getAttribute('data-open');if(k)ftoggle(k);f.scrollIntoView({behavior:'smooth',block:'start'});}
 function openFocus(k){closeMenu();show('home');var f=document.getElementById('focus');if(f.getAttribute('data-open')!==k)ftoggle(k);setTimeout(function(){f.scrollIntoView({behavior:'smooth',block:'start'});},60);}
 </script>
-<script>(function(){function ph(){try{parent.postMessage({plHeight:document.documentElement.scrollHeight},'*');}catch(e){}}window.addEventListener('load',ph);window.addEventListener('resize',ph);if(window.ResizeObserver){try{new ResizeObserver(ph).observe(document.body);}catch(e){}}setInterval(ph,1500);})();</script></body></html>"></iframe>
+<script>/* PL_RESIZE_V2 */(function(){function H(){return Math.max(document.body.scrollHeight,document.documentElement.scrollHeight,document.body.offsetHeight,document.documentElement.offsetHeight);}function ph(){try{parent.postMessage({plHeight:H()+2},'*');}catch(e){}}window.addEventListener('load',ph);window.addEventListener('resize',ph);document.addEventListener('DOMContentLoaded',ph);if(window.ResizeObserver){try{new ResizeObserver(ph).observe(document.documentElement);}catch(e){}}setTimeout(ph,150);setTimeout(ph,600);setInterval(ph,1000);})();</script></body></html>"></iframe>
 </div>
 <div id="req-form" style="display:none">
   <div class="login-card" style="max-width:440px;text-align:left">
@@ -3679,6 +3679,6 @@ function syncNewBtn(screen){
 window.newBtnAction=function(){ var btn=document.getElementById('newBtn'); var act=btn?btn.dataset.act:''; if(act==='priority')openRaisePriority(null); else if(act==='issue')openRaise(); };
 
 </script>
-<script>/* PL_RESIZE_V1 */window.addEventListener("message",function(e){var f=document.getElementById("pl-frame");if(f&&e.data&&typeof e.data.plHeight==="number"){f.style.height=e.data.plHeight+"px";f.style.minHeight="0";}});</script>
+<script>/* PL_RESIZE_V1 PL_RESIZE_V2 */window.addEventListener("message",function(e){var f=document.getElementById("pl-frame");if(f&&e.data&&typeof e.data.plHeight==="number"){var nh=e.data.plHeight+"px";if(f.style.height!==nh){f.style.height=nh;f.style.minHeight="0";}}});</script>
 </body>
 </html>
