@@ -204,6 +204,14 @@ service cloud.firestore {
                                 .affectedKeys().hasOnly(['agreed','agreedBy','agreedAt','updatedAt']) );
 
         allow delete: if companyAdmin(cid) || ownsPriority(cid);
+
+        // PL_PRIDETAIL_V1 — progress log under each priority (mirrors issues/messages)
+        match /messages/{msgId} {
+          allow read: if canReadCompany(cid);
+          allow create: if companyAdmin(cid)
+                        || ( isMember(cid) && request.resource.data.authorUid == uid() );
+          allow update, delete: if companyAdmin(cid);
+        }
       }
     }
 

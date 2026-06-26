@@ -806,6 +806,15 @@ tr.rowdone:hover td{opacity:.78}
 .pri-placeholder{border:1.5px dashed var(--strip);border-radius:14px;background:var(--strip-soft);list-style:none}
 .pri-handle{cursor:grab;color:var(--t3);display:flex;align-items:center;justify-content:center;width:22px;touch-action:none}
 .pri-handle:active{cursor:grabbing}
+/* PL_PRIDETAIL_V1 priority detail */
+.pd-head{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.pd-badge{width:28px;height:28px;border-radius:50%;color:#fff;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;flex:0 0 auto}
+.pd-title{font-family:var(--display);font-size:26px;font-weight:600;line-height:1.18;margin:2px 0 6px}
+.pd-meta{font-size:13px;color:var(--t2);margin-bottom:16px}
+.pd-edit{margin-left:auto;font-size:13px;color:var(--t3);background:none;border:none;cursor:pointer}
+#priDetail .chat{display:block}
+#priDetail .msgs{min-height:120px}
+
 .pri-handle.ro{cursor:default;color:transparent;width:0}
 .pri-rank{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font-family:var(--ui);font-weight:700;font-size:14px;color:#fff}
 .pri-main{min-width:0}
@@ -1260,6 +1269,40 @@ function openFocus(k){closeMenu();show('home');var f=document.getElementById('fo
   </section>
 
   <!-- ADD / EDIT PRIORITY -->
+  
+<!-- PL_PRIDETAIL_V1 -->
+<section class="screen" id="priDetail">
+  <button class="back" onclick="goPriorities()">
+    <svg viewBox="0 0 24 24" width="15" fill="none" stroke="currentColor" stroke-width="2"><path d="m15 18-6-6 6-6"/></svg> My Priorities
+  </button>
+  <div class="form-card">
+    <div class="pd-head">
+      <div class="pd-badge" id="pdBadge"></div>
+      <div id="pdStatusPill"></div>
+      <button type="button" class="pd-edit" onclick="pdEdit()">Edit details</button>
+    </div>
+    <h1 class="pd-title" id="pdTitle">Priority</h1>
+    <div class="pd-meta" id="pdMeta"></div>
+    <div class="fld"><label>Status</label>
+      <select id="pd-status" onchange="pdSetStatus(this)">
+        <option value="Scoping">Scoping — still working it out</option>
+        <option value="Active">Active — underway</option>
+        <option value="Blocked">Blocked — waiting on something</option>
+        <option value="Review">Review — nearly there</option>
+        <option value="Done">Done — finished</option>
+      </select>
+    </div>
+    <div class="sec"><h3>Progress log</h3>
+      <div class="chat">
+        <div class="msgs" id="pdMsgs"></div>
+        <div class="comp">
+          <textarea id="pdInput" rows="1" placeholder="Add a progress update…"></textarea>
+          <button type="button" class="send" onclick="priSendMsg()"><svg viewBox="0 0 24 24" width="18" fill="none" stroke="currentColor" stroke-width="2"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg></button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
   <section class="screen" id="raisePriority">
     <button class="back" onclick="goPriorities()">
       <svg viewBox="0 0 24 24" width="15" fill="none" stroke="currentColor" stroke-width="2"><path d="m15 18-6-6 6-6"/></svg> My Priorities
@@ -3553,6 +3596,37 @@ function refreshAux(){ var tm=document.getElementById('team'),am=document.getEle
 
 /* ===================== MY PRIORITIES ===================== */
 function prioritiesRef(){ return cRef().collection('priorities'); }
+/* PL_PRIDETAIL_V1 */
+var curPid=null, curPri=null, subPM=null;
+function pdStatusPill(st){ var sc=PRI_SCOL[st]||PRI_SCOL.Scoping; return '<span class="st" style="background:'+sc[0]+';color:'+sc[1]+'">'+esc(st)+'</span>'; }
+function pdInvolvesHTML(p){ var inv=(p&&(p.involves||p.involve))||[]; var owner=personName(p.ownerMid||p.mid||ME.mid)||'You'; var s='Owner: '+esc(owner); if(inv&&inv.length){ var ns=inv.map(function(m){return esc(personName(m));}).filter(Boolean).join(', '); if(ns) s+=' \u00b7 Involves '+ns; } return s; }
+function pdBadgeHTML(p,idx){ return (p.status==='Done')?'<svg viewBox="0 0 24 24" width="15" fill="none" stroke="#fff" stroke-width="2.4"><path d="m5 13 4 4L19 7"/></svg>':(idx>=0?String(idx+1):''); }
+function openPriority(id){
+  curPid=id; curPri=priById(id); if(!curPri){ goPriorities(); return; }
+  var p=curPri; var sc=PRI_SCOL[p.status]||PRI_SCOL.Scoping;
+  var idx=-1; for(var i=0;i<priorities.length;i++){ if(priorities[i].id===id){ idx=i; break; } }
+  var bd=document.getElementById('pdBadge'); if(bd){ bd.style.background=sc[1]; bd.innerHTML=pdBadgeHTML(p,idx); }
+  var tt=document.getElementById('pdTitle'); if(tt) tt.textContent=p.title||'Untitled priority';
+  var sp=document.getElementById('pdStatusPill'); if(sp) sp.innerHTML=pdStatusPill(p.status||'Scoping');
+  var mt=document.getElementById('pdMeta'); if(mt) mt.innerHTML=pdInvolvesHTML(p);
+  var sel=document.getElementById('pd-status'); if(sel) sel.value=p.status||'Scoping';
+  if(subPM){ try{ subPM(); }catch(e){} subPM=null; }
+  var c=document.getElementById('pdMsgs'); if(c) c.innerHTML='<div class="sys">Loading\u2026</div>';
+  subPM=prioritiesRef().doc(id).collection('messages').orderBy('createdAt','asc').onSnapshot(function(qs){
+    var html='';
+    qs.forEach(function(d){ var m=d.data();
+      if(m.type==='system'){ html+='<div class="sys">'+esc(m.text)+'</div>'; return; }
+      var meMsg=(m.authorMid&&m.authorMid===ME.mid);
+      html+='<div class="msg'+(meMsg?' me':'')+'"><span class="mini" style="'+avBg(m.authorMid)+'">'+avBody(m.authorMid)+'</span><div class="bub"><div class="nm">'+esc(m.authorName||personName(m.authorMid))+'</div>'+esc(m.text)+'<div class="tm">'+timeAgo(m.createdAt)+'</div></div></div>';
+    });
+    var cc=document.getElementById('pdMsgs'); if(cc){ cc.innerHTML=html||'<div class="sys">No updates yet \u2014 add the first below.</div>'; cc.scrollTop=cc.scrollHeight; }
+  });
+  show('priDetail');
+}
+function priSendMsg(){ var t=document.getElementById('pdInput'); if(!t)return; var v=t.value.trim(); if(!v||!curPid)return; var ref=prioritiesRef().doc(curPid); ref.collection('messages').add({type:'msg',text:v,authorMid:ME.mid,authorUid:ME.uid,authorName:ME.name,createdAt:FV.serverTimestamp()}); ref.update({updatedAt:FV.serverTimestamp()}); t.value=''; }
+function pdSetStatus(sel){ if(!curPid||!sel)return; var ns=sel.value; var old=(curPri&&curPri.status)||''; if(ns===old)return; var ref=prioritiesRef().doc(curPid); ref.update({status:ns,updatedAt:FV.serverTimestamp()}); var txt=(ns==='Done')?'Completed.':('Moved to '+ns+'.'); ref.collection('messages').add({type:'system',event:'status',text:txt,authorMid:ME.mid,authorUid:ME.uid,authorName:ME.name,createdAt:FV.serverTimestamp()}); if(curPri) curPri.status=ns; var sp=document.getElementById('pdStatusPill'); if(sp) sp.innerHTML=pdStatusPill(ns); var sc=PRI_SCOL[ns]||PRI_SCOL.Scoping; var idx=-1; for(var i=0;i<priorities.length;i++){ if(priorities[i].id===curPid){ idx=i; break; } } var bd=document.getElementById('pdBadge'); if(bd){ bd.style.background=sc[1]; bd.innerHTML=pdBadgeHTML(curPri||{status:ns},idx); } }
+function pdEdit(){ if(curPid) openRaisePriority(curPid); }
+
 var PRI_STAGES=['Scoping','Active','Blocked','Review','Done'];
 var PRI_SCOL={Scoping:['#efece5','#6c675d'],Active:['#e7eefa','#2f5fa0'],Blocked:['#fce8e7','#e0413b'],Review:['#fbf0d9','#c98a13'],Done:['#e2f1ea','#2e7d5b']};
 function myPriorities(){ return priorities.filter(function(p){return p.ownerMid===ME.mid;}); }
@@ -3654,7 +3728,7 @@ window.savePriority=function(){
     prioritiesRef().add({ownerMid:ME.mid, ownerName:ME.name, title:title, note:note, involves:inv, status:status, attachments:prDocs.slice(), agreed:false, agreedBy:null, order:max+1, createdAt:FV.serverTimestamp(), updatedAt:FV.serverTimestamp()}).then(function(){ goPriorities(); }).catch(function(e){alert('Could not add: '+e.message);});
   }
 };
-/*PL_PRICARD_V1*/function priCardOpen(e,id){if(e.target.closest('.pri-handle,.pri-status,.pri-agree,.pri-del,.pri-people,.doc-chip,button,a'))return;openRaisePriority(id);}/* surface the optional detail line on the card */
+/*PL_PRICARD_V1*/function priCardOpen(e,id){if(e.target.closest('.pri-handle,.pri-status,.pri-agree,.pri-del,.pri-people,.doc-chip,button,a'))return;openPriority(id);}/* surface the optional detail line on the card */
 function priCardHTML(p,canDrag,canEdit,canAgree){
   var sc=PRI_SCOL[p.status]||PRI_SCOL.Scoping;
   var statusBtn='<button class="pri-status" style="background:'+sc[0]+';color:'+sc[1]+'"'+(canEdit?(' onclick="priCycleStatus(\''+p.id+'\')"'):' disabled')+'>'+esc(p.status||'Scoping')+'</button>';
