@@ -801,13 +801,13 @@ tr.rowdone:hover td{opacity:.78}
 .pri-sub{color:var(--t2);font-size:13.5px;margin:5px 0 0;max-width:62ch;line-height:1.5}
 .pri-note{color:var(--t2);font-size:13.5px;background:var(--card);border:1px solid var(--b);border-radius:12px;padding:16px 18px;line-height:1.55}
 .pri-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:11px}
-.pri-card{display:grid;grid-template-columns:auto auto 1fr auto;gap:14px;align-items:center;background:var(--card);border:1px solid var(--b);border-radius:14px;box-shadow:0 1px 2px rgba(26,26,24,.04),0 8px 22px rgba(26,26,24,.05);padding:14px 16px}
+.pri-card{display:grid;grid-template-columns:auto auto 1fr auto;gap:14px;align-items:center;background:var(--card);border:1px solid var(--b);border-radius:14px;box-shadow:0 1px 2px rgba(26,26,24,.04),0 8px 22px rgba(26,26,24,.05);padding:14px 16px}.pri-card[onclick]{cursor:pointer}.pri-card[onclick]:hover{box-shadow:0 2px 4px rgba(26,26,24,.06),0 14px 30px rgba(26,26,24,.10);border-color:#dcd6cd}
 .pri-card.pri-dragging{box-shadow:0 18px 40px rgba(26,26,24,.22);border-color:var(--strip)}
 .pri-placeholder{border:1.5px dashed var(--strip);border-radius:14px;background:var(--strip-soft);list-style:none}
 .pri-handle{cursor:grab;color:var(--t3);display:flex;align-items:center;justify-content:center;width:22px;touch-action:none}
 .pri-handle:active{cursor:grabbing}
 .pri-handle.ro{cursor:default;color:transparent;width:0}
-.pri-rank{font-family:var(--display);font-size:21px;font-weight:700;color:var(--t);width:24px;text-align:center}
+.pri-rank{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font-family:var(--ui);font-weight:700;font-size:14px;color:#fff}
 .pri-main{min-width:0}
 .pri-title{font-family:var(--serif);font-weight:600;font-size:15.5px;color:var(--t);margin-bottom:7px;border-radius:6px;display:inline-block;padding:1px 4px;margin-left:-4px}
 .pri-title:hover{background:var(--strip-soft)}
@@ -3654,7 +3654,7 @@ window.savePriority=function(){
     prioritiesRef().add({ownerMid:ME.mid, ownerName:ME.name, title:title, note:note, involves:inv, status:status, attachments:prDocs.slice(), agreed:false, agreedBy:null, order:max+1, createdAt:FV.serverTimestamp(), updatedAt:FV.serverTimestamp()}).then(function(){ goPriorities(); }).catch(function(e){alert('Could not add: '+e.message);});
   }
 };
-/* surface the optional detail line on the card */
+/*PL_PRICARD_V1*/function priCardOpen(e,id){if(e.target.closest('.pri-handle,.pri-status,.pri-agree,.pri-del,.pri-people,.doc-chip,button,a'))return;openRaisePriority(id);}/* surface the optional detail line on the card */
 function priCardHTML(p,canDrag,canEdit,canAgree){
   var sc=PRI_SCOL[p.status]||PRI_SCOL.Scoping;
   var statusBtn='<button class="pri-status" style="background:'+sc[0]+';color:'+sc[1]+'"'+(canEdit?(' onclick="priCycleStatus(\''+p.id+'\')"'):' disabled')+'>'+esc(p.status||'Scoping')+'</button>';
@@ -3663,8 +3663,8 @@ function priCardHTML(p,canDrag,canEdit,canAgree){
   var del=canEdit?'<button class="pri-del" title="Remove priority" onclick="priDelete(\''+p.id+'\')">\u2715</button>':'';
   var titleClick=canEdit?(' onclick="priEditTitle(\''+p.id+'\')" style="cursor:pointer"'):'';
   var invClick=canEdit?(' onclick="priEditInvolves(\''+p.id+'\')" title="Edit who is involved"'):'';
-  var note=p.note?('<div class="pri-noteline">'+esc(p.note)+'</div>'):'';
-  return '<li class="pri-card" data-pri="'+p.id+'">'+handle+'<span class="pri-rank"></span><div class="pri-main"><div class="pri-title"'+titleClick+'>'+esc(p.title||'Untitled priority')+'</div>'+note+'<div class="pri-meta"><span class="pri-people"'+invClick+'>'+priPeopleHTML(p,false)+'</span>'+priDocsBadge(p)+'</div></div><div class="pri-right">'+statusBtn+agree+del+'</div></li>';
+  var note=p.note?('<div class="pri-noteline">'+esc(p.note)+'</div>'):'';var openAttr=canEdit?(' onclick="priCardOpen(event,\''+p.id+'\')"'):'';
+  return '<li class="pri-card" data-pri="'+p.id+'"'+openAttr+'>'+handle+'<span class="pri-rank" style="background:'+sc[1]+'"></span><div class="pri-main"><div class="pri-title">'+esc(p.title||'Untitled priority')+'</div>'+note+'<div class="pri-meta"><span class="pri-people"'+invClick+'>'+priPeopleHTML(p,false)+'</span>'+priDocsBadge(p)+'</div></div><div class="pri-right">'+statusBtn+agree+del+'</div></li>';
 }
 /* contextual "+ New" button — label + action follow the active screen */
 function syncNewBtn(screen){
