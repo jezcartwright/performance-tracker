@@ -806,6 +806,11 @@ tr.rowdone:hover td{opacity:.78}
 .pri-placeholder{border:1.5px dashed var(--strip);border-radius:14px;background:var(--strip-soft);list-style:none}
 .pri-handle{cursor:grab;color:var(--t3);display:flex;align-items:center;justify-content:center;width:22px;touch-action:none}
 .pri-handle:active{cursor:grabbing}
+/* PL_ISSORDER_V1 personal issues sort */
+.iss-handle{float:left;margin:1px 9px 0 0;color:var(--t3);cursor:grab;touch-action:none}
+.iss-handle:active{cursor:grabbing}
+tr.iss-dragging{opacity:.55;background:var(--strip-soft)}
+
 /* PL_PRIDETAIL_V1 priority detail */
 .pd-head{display:flex;align-items:center;gap:10px;margin-bottom:10px}
 .pd-badge{width:28px;height:28px;border-radius:50%;color:#fff;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;flex:0 0 auto}
@@ -1179,6 +1184,7 @@ function openFocus(k){closeMenu();show('home');var f=document.getElementById('fo
       <button class="schip" data-k="function">Function <span class="car">↓</span></button>
       <button class="schip" data-k="status">Status <span class="car">↓</span></button>
       <button class="schip" data-k="person">Person <span class="car">↓</span></button>
+      <button class="schip" data-k="mine">My order</button>
       <label class="showdone" id="showDoneWrap"><input type="checkbox" id="showDone" onchange="toggleShowDone()"> Show completed</label>
     </div>
     <div class="card">
@@ -1987,6 +1993,14 @@ function esc(s){return (s==null?'':String(s)).replace(/&/g,'&amp;').replace(/</g
 function initials(n){return (n||'').split(' ').filter(Boolean).map(function(w){return w[0];}).join('').slice(0,2).toUpperCase()||'?';}
 function newPid(){ return 'PT-'+Date.now().toString().slice(-6)+Math.floor(1000+Math.random()*9000); }
 function ms(ts){return ts&&ts.toMillis?ts.toMillis():(typeof ts==='number'?ts:0);}
+/* PL_ISSORDER_V1 */
+var myIssueOrder=[];
+function ISSGRIP(id){ return '<span class="iss-handle" data-iss="'+id+'" onclick="event.stopPropagation()" onpointerdown="issDown(event)"><svg width="13" height="20" viewBox="0 0 14 22" fill="currentColor"><circle cx="3" cy="3" r="2"/><circle cx="11" cy="3" r="2"/><circle cx="3" cy="11" r="2"/><circle cx="11" cy="11" r="2"/><circle cx="3" cy="19" r="2"/><circle cx="11" cy="19" r="2"/></svg></span>'; }
+var issDrag=null;
+function issDown(e){ e.preventDefault(); e.stopPropagation(); var tb=document.getElementById('rows'); var row=e.currentTarget.closest('tr'); if(!tb||!row)return; issDrag={tb:tb,row:row}; row.classList.add('iss-dragging'); document.addEventListener('pointermove',issMove); document.addEventListener('pointerup',issUp,{once:true}); }
+function issMove(e){ if(!issDrag)return; e.preventDefault(); var tb=issDrag.tb,row=issDrag.row; var rows=Array.prototype.slice.call(tb.querySelectorAll('tr')).filter(function(r){return r!==row;}); var placed=false; for(var i=0;i<rows.length;i++){ var rect=rows[i].getBoundingClientRect(); if(e.clientY<rect.top+rect.height/2){ tb.insertBefore(row,rows[i]); placed=true; break; } } if(!placed) tb.appendChild(row); }
+function issUp(){ document.removeEventListener('pointermove',issMove); if(!issDrag)return; var tb=issDrag.tb; issDrag.row.classList.remove('iss-dragging'); issDrag=null; var ids=Array.prototype.slice.call(tb.querySelectorAll('.iss-handle')).map(function(h){return h.getAttribute('data-iss');}); myIssueOrder=ids; if(ME.uid){ db.collection('users').doc(ME.uid).set({issueOrder:ids},{merge:true}).catch(function(e){console.warn('issueOrder',e);}); } }
+
 function ms2(iso){ if(!iso)return 0; var t=Date.parse(iso); return isNaN(t)?0:t; }
 function personColor(mid){var mm=members[mid]; if(mm&&mm.functionId&&fns[mm.functionId])return fns[mm.functionId].color; return 'var(--strip)';}
 function personName(mid){var mm=members[mid]; return mm?mm.name:'Someone';}
@@ -2009,6 +2023,7 @@ function loadProfile(user){
   var saved=localStorage.getItem('nameForSignIn'); var nm=null; try{nm=saved?JSON.parse(saved):null;}catch(e){}
   return db.collection('users').doc(user.uid).get().then(function(snap){
     var prof=snap.exists?(snap.data().profile||{}):{};
+    myIssueOrder=(snap.exists&&snap.data().issueOrder)||[];
     if(!prof.firstName && nm){ prof={firstName:nm.first,lastName:nm.last||'',email:user.email,joinedAt:new Date().toISOString()}; }
     if(!prof.firstName){ var dn=(user.displayName||user.email||'User'); prof.firstName=dn.split(' ')[0]; prof.lastName=dn.split(' ').slice(1).join(' '); prof.email=user.email; prof.joinedAt=prof.joinedAt||new Date().toISOString(); }
     ME.first=prof.firstName||'User'; ME.last=prof.lastName||''; ME.name=(ME.first+' '+ME.last).trim(); ME.initials=initials(ME.name);
@@ -2687,7 +2702,7 @@ function rowHTML(i){
   var fc=i.color||(fns[i.functionId]&&fns[i.functionId].color)||'var(--strip)';
   var cls=(i.status==='done'&&boardMode!=='done')?' class="rowdone"':'';
   return '<tr'+cls+' onclick="openIssue(\''+i.id+'\')">'
-   +'<td><div class="t-title">'+esc(i.title)+'</div><div class="t-sub">'+esc((i.description||'').slice(0,72))+'</div>'+((kindPill(i)||ballInline(i))?('<div class="t-meta">'+kindPill(i)+ballInline(i)+'</div>'):'')+'</td>'
+   +'<td>'+((typeof sortKey!=='undefined'&&sortKey==='mine')?ISSGRIP(i.id):'')+'<div class="t-title">'+esc(i.title)+'</div><div class="t-sub">'+esc((i.description||'').slice(0,72))+'</div>'+((kindPill(i)||ballInline(i))?('<div class="t-meta">'+kindPill(i)+ballInline(i)+'</div>'):'')+'</td>'
    +'<td class="hs">'+issuePeopleHTML(i,false)+'</td>'
    +'<td class="hs">'+spokenToggle(i)+'</td>'
    +'<td><span class="st '+sm[i.status][0]+'"><span class="d"></span>'+sm[i.status][1]+'</span></td>'
@@ -2705,6 +2720,7 @@ function render(){
   if(sortKey==='newest'){ list.sort(function(a,b){return asc?ms(a.createdAt)-ms(b.createdAt):ms(b.createdAt)-ms(a.createdAt);}); html=list.map(rowHTML).join(''); }
   else if(sortKey==='function'){ var ids=Object.keys(fns); if(asc)ids.reverse(); ids.forEach(function(fid){ var g=list.filter(function(i){return i.functionId===fid;}).sort(byNew); if(g.length) html+=grpRow(fns[fid].name,fns[fid].color,g.length)+g.map(rowHTML).join(''); }); var none=list.filter(function(i){return !fns[i.functionId];}); if(none.length) html+=grpRow('Other','var(--t3)',none.length)+none.map(rowHTML).join(''); }
   else if(sortKey==='status'){ (asc?stOrder.slice().reverse():stOrder).forEach(function(s){ var g=list.filter(function(i){return i.status===s;}).sort(byNew); if(g.length) html+=grpRow(sm[s][1],stCol[s],g.length)+g.map(rowHTML).join(''); }); }
+  else if(sortKey==='mine'){ var oset={}; myIssueOrder.forEach(function(id,ix){oset[id]=ix;}); list.sort(function(a,b){ var ai=(a.id in oset)?oset[a.id]:1e9, bi=(b.id in oset)?oset[b.id]:1e9; if(ai!==bi)return ai-bi; return ms(b.createdAt)-ms(a.createdAt); }); html=list.map(rowHTML).join(''); }
   else if(sortKey==='person'){ var seen={}; list.forEach(function(i){seen[i.raiserMid]=1;}); var keys=Object.keys(seen).sort(function(a,b){return (personName(a)||'').localeCompare(personName(b)||'');}); if(asc)keys.reverse(); keys.forEach(function(mid){ var g=list.filter(function(i){return i.raiserMid===mid;}).sort(byNew); html+=grpRow(personName(mid),personColor(mid),g.length)+g.map(rowHTML).join(''); }); }
   el.innerHTML=html;
 }
@@ -3646,8 +3662,8 @@ function priSendMsg(){ var t=document.getElementById('pdInput'); if(!t)return; v
 function pdSetStatus(sel){ if(!curPid||!sel)return; var ns=sel.value; var old=(curPri&&curPri.status)||''; if(ns===old)return; var ref=prioritiesRef().doc(curPid); ref.update({status:ns,updatedAt:FV.serverTimestamp()}); var txt=(ns==='Done')?'Completed.':('Moved to '+ns+'.'); ref.collection('messages').add({type:'system',event:'status',text:txt,authorMid:ME.mid,authorUid:ME.uid,authorName:ME.name,createdAt:FV.serverTimestamp()}); if(curPri) curPri.status=ns; var sp=document.getElementById('pdStatusPill'); if(sp) sp.innerHTML=pdStatusPill(ns); var sc=PRI_SCOL[ns]||PRI_SCOL.Scoping; var idx=-1; for(var i=0;i<priorities.length;i++){ if(priorities[i].id===curPid){ idx=i; break; } } var bd=document.getElementById('pdBadge'); if(bd){ bd.style.background=sc[1]; bd.innerHTML=pdBadgeHTML(curPri||{status:ns},idx); } }
 function pdEdit(){ if(curPid) openRaisePriority(curPid); }
 /* PL_PRIVIS_V1 */
-function priVisOf(p){ return (p&&p.visibility)||'manager'; }
-function canSeePriority(p){ if(!p)return false; if(isAdmin)return true; if(ME.mid&&p.ownerMid===ME.mid)return true; if((p.involves||[]).indexOf(ME.mid)>=0)return true; var v=priVisOf(p); if(v==='everyone')return true; var om=(typeof members!=='undefined'&&members[p.ownerMid])||{}; var me=(typeof members!=='undefined'&&members[ME.mid])||{}; if(v==='team')return !!(om.functionId&&me.functionId&&om.functionId===me.functionId); if(v==='manager')return !!(ME.mid&&om.managerMid===ME.mid); return false; }
+function priVisOf(p){ return (p&&p.visibility)||'private'; } /* PL_PRIVATE_DEFAULT_V1 */
+function canSeePriority(p){ if(!p)return false; if(isAdmin)return true; if(ME.mid&&p.ownerMid===ME.mid)return true; var v=priVisOf(p); if(v==='private')return false; if((p.involves||[]).indexOf(ME.mid)>=0)return true; if(v==='everyone')return true; var om=(typeof members!=='undefined'&&members[p.ownerMid])||{}; var me=(typeof members!=='undefined'&&members[ME.mid])||{}; if(v==='team')return !!(om.functionId&&me.functionId&&om.functionId===me.functionId); if(v==='manager')return !!(ME.mid&&om.managerMid===ME.mid); return false; }
 function pdRenderVis(){ var vs=document.getElementById('pd-vis'); if(vs&&curPri) vs.value=priVisOf(curPri); }
 function pdSetVisibility(sel){ if(!curPid||!sel)return; var nv=sel.value; var ov=priVisOf(curPri); if(nv===ov)return; prioritiesRef().doc(curPid).update({visibility:nv,updatedAt:FV.serverTimestamp()}); var L={private:'private \u2014 just you',manager:'you & your manager',team:'your team',everyone:'everyone'}; pdLog('Visibility set to '+(L[nv]||nv)+'.'); if(curPri)curPri.visibility=nv; }
 
