@@ -806,9 +806,10 @@ tr.rowdone:hover td{opacity:.78}
 .pri-placeholder{border:1.5px dashed var(--strip);border-radius:14px;background:var(--strip-soft);list-style:none}
 .pri-handle{cursor:grab;color:var(--t3);display:flex;align-items:center;justify-content:center;width:22px;touch-action:none}
 .pri-handle:active{cursor:grabbing}
-/* PL_ISSORDER_V1 personal issues sort */
-.iss-handle{float:left;margin:1px 9px 0 0;color:var(--t3);cursor:grab;touch-action:none}
+/* PL_ISSORDER_V1 personal issues sort */ /* PL_ISSORDER_V2 */
+.iss-handle{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--t3);cursor:grab;touch-action:none;line-height:0}
 .iss-handle:active{cursor:grabbing}
+td:has(> .iss-handle){position:relative;padding-left:32px}
 tr.iss-dragging{opacity:.55;background:var(--strip-soft)}
 
 /* PL_PRIDETAIL_V1 priority detail */
