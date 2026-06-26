@@ -1291,6 +1291,14 @@ function openFocus(k){closeMenu();show('home');var f=document.getElementById('fo
     </div>
     <h1 class="pd-title" id="pdTitle">Priority</h1>
     <div class="pd-meta" id="pdMeta"></div>
+    <div class="fld"><label>Who can see this</label>
+      <select id="pd-vis" onchange="pdSetVisibility(this)">
+        <option value="private">Private — just you</option>
+        <option value="manager">You &amp; your manager</option>
+        <option value="team">Your team</option>
+        <option value="everyone">Everyone</option>
+      </select>
+    </div>
     <div class="fld"><label>Status</label>
       <select id="pd-status" onchange="pdSetStatus(this)">
         <option value="Scoping">Scoping — still working it out</option>
@@ -3632,11 +3640,17 @@ function openPriority(id){
     });
     var cc=document.getElementById('pdMsgs'); if(cc){ cc.innerHTML=html||'<div class="sys">No updates yet \u2014 add the first below.</div>'; cc.scrollTop=cc.scrollHeight; }
   });
-  pdRenderDetail(); show('priDetail');
+  pdRenderDetail(); pdRenderVis(); show('priDetail');
 }
 function priSendMsg(){ var t=document.getElementById('pdInput'); if(!t)return; var v=t.value.trim(); if(!v||!curPid)return; var ref=prioritiesRef().doc(curPid); ref.collection('messages').add({type:'msg',text:v,authorMid:ME.mid,authorUid:ME.uid,authorName:ME.name,createdAt:FV.serverTimestamp()}); ref.update({updatedAt:FV.serverTimestamp()}); t.value=''; }
 function pdSetStatus(sel){ if(!curPid||!sel)return; var ns=sel.value; var old=(curPri&&curPri.status)||''; if(ns===old)return; var ref=prioritiesRef().doc(curPid); ref.update({status:ns,updatedAt:FV.serverTimestamp()}); var txt=(ns==='Done')?'Completed.':('Moved to '+ns+'.'); ref.collection('messages').add({type:'system',event:'status',text:txt,authorMid:ME.mid,authorUid:ME.uid,authorName:ME.name,createdAt:FV.serverTimestamp()}); if(curPri) curPri.status=ns; var sp=document.getElementById('pdStatusPill'); if(sp) sp.innerHTML=pdStatusPill(ns); var sc=PRI_SCOL[ns]||PRI_SCOL.Scoping; var idx=-1; for(var i=0;i<priorities.length;i++){ if(priorities[i].id===curPid){ idx=i; break; } } var bd=document.getElementById('pdBadge'); if(bd){ bd.style.background=sc[1]; bd.innerHTML=pdBadgeHTML(curPri||{status:ns},idx); } }
 function pdEdit(){ if(curPid) openRaisePriority(curPid); }
+/* PL_PRIVIS_V1 */
+function priVisOf(p){ return (p&&p.visibility)||'manager'; }
+function canSeePriority(p){ if(!p)return false; if(isAdmin)return true; if(ME.mid&&p.ownerMid===ME.mid)return true; if((p.involves||[]).indexOf(ME.mid)>=0)return true; var v=priVisOf(p); if(v==='everyone')return true; var om=(typeof members!=='undefined'&&members[p.ownerMid])||{}; var me=(typeof members!=='undefined'&&members[ME.mid])||{}; if(v==='team')return !!(om.functionId&&me.functionId&&om.functionId===me.functionId); if(v==='manager')return !!(ME.mid&&om.managerMid===ME.mid); return false; }
+function pdRenderVis(){ var vs=document.getElementById('pd-vis'); if(vs&&curPri) vs.value=priVisOf(curPri); }
+function pdSetVisibility(sel){ if(!curPid||!sel)return; var nv=sel.value; var ov=priVisOf(curPri); if(nv===ov)return; prioritiesRef().doc(curPid).update({visibility:nv,updatedAt:FV.serverTimestamp()}); var L={private:'private \u2014 just you',manager:'you & your manager',team:'your team',everyone:'everyone'}; pdLog('Visibility set to '+(L[nv]||nv)+'.'); if(curPri)curPri.visibility=nv; }
+
 /* PL_PRIDETAIL_V2 */
 var PD_ADD='<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>';
 function pdRenderDetail(){
@@ -3687,7 +3701,7 @@ function renderPriorities(){
   host.innerHTML=list.map(function(p){ return priCardHTML(p,true,canEditPriority(p),canAgreePriority(p)); }).join('');
   priRenumberIn(host); priBindDrag();
 }
-function renderProfilePriorities(mid){ ensurePriSub(); var el=document.getElementById('pfPriorities'); if(!el)return; var list=priorities.filter(function(p){return p.ownerMid===mid;}).sort(function(a,b){return (a.order||0)-(b.order||0);}); if(!list.length){ el.innerHTML='<div class="pf-empty">No priorities listed yet'+(mid===ME.mid?' \u2014 add some from the My Priorities tab.':'.')+'</div>'; return; } el.innerHTML='<ul class="pri-list pri-readonly">'+list.map(function(p){ var mine=(mid===ME.mid); return priCardHTML(p,false,(mine&&canEditPriority(p)),canAgreePriority(p)); }).join('')+'</ul>'; priRenumberIn(el.querySelector('.pri-list')); }
+function renderProfilePriorities(mid){ ensurePriSub(); var el=document.getElementById('pfPriorities'); if(!el)return; var list=priorities.filter(function(p){return p.ownerMid===mid && canSeePriority(p);}).sort(function(a,b){return (a.order||0)-(b.order||0);}); if(!list.length){ el.innerHTML='<div class="pf-empty">No priorities listed yet'+(mid===ME.mid?' \u2014 add some from the My Priorities tab.':'.')+'</div>'; return; } el.innerHTML='<ul class="pri-list pri-readonly">'+list.map(function(p){ var mine=(mid===ME.mid); return priCardHTML(p,false,(mine&&canEditPriority(p)),canAgreePriority(p)); }).join('')+'</ul>'; priRenumberIn(el.querySelector('.pri-list')); }
 
 window.goPriorities=function(){ setHome(false); clearTabs(); var t=document.getElementById('tabPri'); if(t)t.classList.add('active'); show('priorities'); renderPriorities(); };
 window.addPriority=function(){ if(!activeCid){alert('No company selected.');return;} if(!ME.mid){ alert('You need a person record in this company before you can own priorities. Ask an admin to add you in Team.'); return; } var title=(prompt('New priority \u2014 what are you working on?')||'').trim(); if(!title)return; var max=-1; myPriorities().forEach(function(p){ if((p.order||0)>max)max=(p.order||0); }); prioritiesRef().add({ownerMid:ME.mid, ownerName:ME.name, title:title, involves:[], status:'Scoping', agreed:false, agreedBy:null, order:max+1, createdAt:FV.serverTimestamp(), updatedAt:FV.serverTimestamp()}).catch(function(e){alert('Could not add: '+e.message);}); };
