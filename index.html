@@ -814,6 +814,14 @@ tr.rowdone:hover td{opacity:.78}
 .pd-edit{margin-left:auto;font-size:13px;color:var(--t3);background:none;border:none;cursor:pointer}
 #priDetail .chat{display:block}
 #priDetail .msgs{min-height:120px}
+/* PL_PRIDETAIL_V2 detail/people/docs */
+.pd-note{font-family:var(--serif);font-size:14.5px;line-height:1.5;color:var(--t)}
+.pd-empty{color:var(--t3)}
+.pd-sechead{display:flex;align-items:center;justify-content:space-between}
+.pd-mini-edit{background:none;border:none;color:var(--t3);cursor:pointer;padding:0}
+#pdPeople,#pdDocs{display:flex;flex-wrap:wrap;gap:8px}
+.pd-addchip{display:inline-flex;align-items:center;gap:5px;border:1px dashed #cfc9c0;border-radius:20px;padding:5px 12px;font-size:12.5px;color:var(--t3);cursor:pointer}
+
 
 .pri-handle.ro{cursor:default;color:transparent;width:0}
 .pri-rank{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font-family:var(--ui);font-weight:700;font-size:14px;color:#fff}
@@ -1292,7 +1300,10 @@ function openFocus(k){closeMenu();show('home');var f=document.getElementById('fo
         <option value="Done">Done — finished</option>
       </select>
     </div>
-    <div class="sec"><h3>Progress log</h3>
+    <div class="sec"><div class="pd-sechead"><h3>Detail</h3><button type="button" class="pd-mini-edit" onclick="pdEdit()" aria-label="Edit detail"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button></div><div class="pd-note" id="pdNote"></div></div>
+        <div class="sec"><h3>People</h3><div id="pdPeople"></div></div>
+        <div class="sec"><h3>Documents</h3><div id="pdDocs"></div></div>
+        <div class="sec"><h3>Progress log</h3>
       <div class="chat">
         <div class="msgs" id="pdMsgs"></div>
         <div class="comp">
@@ -3621,11 +3632,27 @@ function openPriority(id){
     });
     var cc=document.getElementById('pdMsgs'); if(cc){ cc.innerHTML=html||'<div class="sys">No updates yet \u2014 add the first below.</div>'; cc.scrollTop=cc.scrollHeight; }
   });
-  show('priDetail');
+  pdRenderDetail(); show('priDetail');
 }
 function priSendMsg(){ var t=document.getElementById('pdInput'); if(!t)return; var v=t.value.trim(); if(!v||!curPid)return; var ref=prioritiesRef().doc(curPid); ref.collection('messages').add({type:'msg',text:v,authorMid:ME.mid,authorUid:ME.uid,authorName:ME.name,createdAt:FV.serverTimestamp()}); ref.update({updatedAt:FV.serverTimestamp()}); t.value=''; }
 function pdSetStatus(sel){ if(!curPid||!sel)return; var ns=sel.value; var old=(curPri&&curPri.status)||''; if(ns===old)return; var ref=prioritiesRef().doc(curPid); ref.update({status:ns,updatedAt:FV.serverTimestamp()}); var txt=(ns==='Done')?'Completed.':('Moved to '+ns+'.'); ref.collection('messages').add({type:'system',event:'status',text:txt,authorMid:ME.mid,authorUid:ME.uid,authorName:ME.name,createdAt:FV.serverTimestamp()}); if(curPri) curPri.status=ns; var sp=document.getElementById('pdStatusPill'); if(sp) sp.innerHTML=pdStatusPill(ns); var sc=PRI_SCOL[ns]||PRI_SCOL.Scoping; var idx=-1; for(var i=0;i<priorities.length;i++){ if(priorities[i].id===curPid){ idx=i; break; } } var bd=document.getElementById('pdBadge'); if(bd){ bd.style.background=sc[1]; bd.innerHTML=pdBadgeHTML(curPri||{status:ns},idx); } }
 function pdEdit(){ if(curPid) openRaisePriority(curPid); }
+/* PL_PRIDETAIL_V2 */
+var PD_ADD='<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>';
+function pdRenderDetail(){
+  var p=curPri; if(!p)return;
+  var nb=document.getElementById('pdNote'); if(nb){ var n=(p.note||'').trim(); nb.innerHTML=n?esc(n):'<span class="pd-empty">No detail yet \u2014 add it via Edit details.</span>'; }
+  var pe=document.getElementById('pdPeople');
+  if(pe){ var owner=p.ownerMid||p.mid; var h=''; if(owner){ h+='<span class="rchip"><span class="mini" style="'+avBg(owner)+';width:22px;height:22px;font-size:9px">'+avBody(owner)+'</span>'+esc(personName(owner)||'You')+' \u00b7 Owner</span>'; } (p.involves||[]).forEach(function(m){ h+='<span class="rchip"><span class="mini" style="'+avBg(m)+';width:22px;height:22px;font-size:9px">'+avBody(m)+'</span>'+esc(personName(m)||'')+'<button type="button" onclick="pdRemovePerson(\''+m+'\')">\u00d7</button></span>'; }); h+='<span class="pd-addchip" onclick="pdAddPerson()">'+PD_ADD+' Add person</span>'; pe.innerHTML=h; }
+  var dc=document.getElementById('pdDocs');
+  if(dc){ var att=p.attachments||[]; var h=''; att.forEach(function(d,idx){ h+='<span class="rchip"><a href="'+esc(d.url)+'" target="_blank" rel="noopener" style="color:inherit;text-decoration:none;display:inline-flex;align-items:center;gap:6px">'+DOC_SVG+esc(d.name||d.url)+'</a><button type="button" onclick="pdRemoveDoc('+idx+')">\u00d7</button></span>'; }); h+='<span class="pd-addchip" onclick="pdAddDoc()">'+PD_ADD+' Add document</span>'; dc.innerHTML=h; }
+}
+function pdLog(text){ if(!curPid)return; prioritiesRef().doc(curPid).collection('messages').add({type:'system',event:'edit',text:text,authorMid:ME.mid,authorUid:ME.uid,authorName:ME.name,createdAt:FV.serverTimestamp()}); }
+function pdRemovePerson(mid){ if(!curPid||!curPri)return; var nv=(curPri.involves||[]).filter(function(m){return m!==mid;}); prioritiesRef().doc(curPid).update({involves:nv,updatedAt:FV.serverTimestamp()}); pdLog('Removed '+(personName(mid)||'someone')+' from people.'); curPri.involves=nv; pdRenderDetail(); }
+function pdAddPerson(){ if(curPid) openRaisePriority(curPid); }
+function pdRemoveDoc(idx){ if(!curPid||!curPri)return; var na=(curPri.attachments||[]).slice(); var d=na[idx]; if(!d)return; na.splice(idx,1); prioritiesRef().doc(curPid).update({attachments:na,updatedAt:FV.serverTimestamp()}); pdLog('Removed document'+(d.name?' \u201c'+d.name+'\u201d':'')+'.'); curPri.attachments=na; pdRenderDetail(); }
+function pdAddDoc(){ if(!curPid||!curPri)return; var u=prompt('Paste a web link to the document:'); if(!u)return; u=u.trim(); if(!/^https?:\/\//i.test(u)){ alert('That doesn\'t look like a valid web link.'); return; } var doc={name:(typeof docNameFromUrl==='function'?docNameFromUrl(u):u), url:u, by:(ME.mid||ME.uid||null), byName:(ME.name||ME.first||''), at:new Date().toISOString()}; var na=(curPri.attachments||[]).slice(); na.push(doc); prioritiesRef().doc(curPid).update({attachments:na,updatedAt:FV.serverTimestamp()}); pdLog('Added document \u201c'+doc.name+'\u201d.'); curPri.attachments=na; pdRenderDetail(); }
+
 
 var PRI_STAGES=['Scoping','Active','Blocked','Review','Done'];
 var PRI_SCOL={Scoping:['#efece5','#6c675d'],Active:['#e7eefa','#2f5fa0'],Blocked:['#fce8e7','#e0413b'],Review:['#fbf0d9','#c98a13'],Done:['#e2f1ea','#2e7d5b']};
