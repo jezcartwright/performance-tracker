@@ -873,7 +873,7 @@ body{font-family:var(--ui);background:var(--bg);color:var(--t);-webkit-font-smoo
 .menu{display:none;background:#fff;border-bottom:1px solid var(--b)}.menu.open{display:block}.menu-in{max-width:1100px;margin:0 auto}
 .menu button{display:block;width:100%;text-align:left;background:none;border:none;border-top:1px solid var(--b2);padding:15px clamp(20px,4vw,30px);font-family:var(--ui);font-size:clamp(15px,1.5vw,17px);font-weight:600;color:var(--t);cursor:pointer}
 .menu button:first-child{border-top:none}.menu button:hover{background:var(--strip-soft);color:var(--strip-ink)}.menu button.cta{color:var(--strip-ink)}
-.view{display:none;max-width:1100px;margin:0 auto;padding:clamp(26px,3vw,40px) clamp(18px,3vw,30px) 56px;text-align:center}.view.on{display:block}
+.view{display:none;max-width:1100px;margin:0 auto;padding:clamp(26px,3vw,40px) clamp(18px,3vw,30px) 56px;text-align:center}/* PL_BOTTOMFIX_V1 */#home{padding-bottom:0}.view.on{display:block}
 .tagline{font-family:var(--display);font-weight:600;font-size:clamp(13px,3.4vw,46px);line-height:1.1;letter-spacing:.01em;white-space:nowrap;margin:0 auto clamp(26px,3vw,40px)}
 .tagline .d{color:var(--orange);font-size:.58em;vertical-align:.12em;margin:0 clamp(.4em,1.2vw,.7em)}
 .applogo{width:clamp(112px,13vw,146px);height:auto;display:block;margin:0 auto 4px;filter:drop-shadow(0 8px 20px rgba(217,88,0,.22))}
@@ -1025,7 +1025,7 @@ function ftoggle(k){var f=document.getElementById('focus');var cur=f.getAttribut
 function fclose(){var f=document.getElementById('focus');var k=f.getAttribute('data-open');if(k)ftoggle(k);f.scrollIntoView({behavior:'smooth',block:'start'});}
 function openFocus(k){closeMenu();show('home');var f=document.getElementById('focus');if(f.getAttribute('data-open')!==k)ftoggle(k);setTimeout(function(){f.scrollIntoView({behavior:'smooth',block:'start'});},60);}
 </script>
-<script>/* PL_RESIZE_V2 */(function(){function H(){return Math.max(document.body.scrollHeight,document.documentElement.scrollHeight,document.body.offsetHeight,document.documentElement.offsetHeight);}function ph(){try{parent.postMessage({plHeight:H()+2},'*');}catch(e){}}window.addEventListener('load',ph);window.addEventListener('resize',ph);document.addEventListener('DOMContentLoaded',ph);if(window.ResizeObserver){try{new ResizeObserver(ph).observe(document.documentElement);}catch(e){}}setTimeout(ph,150);setTimeout(ph,600);setInterval(ph,1000);})();</script></body></html>"></iframe>
+<script>/* PL_RESIZE_V2 */(function(){function H(){return Math.max(document.body.scrollHeight,document.documentElement.scrollHeight,document.body.offsetHeight,document.documentElement.offsetHeight);}function ph(){try{parent.postMessage({plHeight:H()},'*');}catch(e){}}window.addEventListener('load',ph);window.addEventListener('resize',ph);document.addEventListener('DOMContentLoaded',ph);if(window.ResizeObserver){try{new ResizeObserver(ph).observe(document.documentElement);}catch(e){}}setTimeout(ph,150);setTimeout(ph,600);setInterval(ph,1000);})();</script></body></html>"></iframe>
 </div>
 <div id="req-form" style="display:none">
   <div class="login-card" style="max-width:440px;text-align:left">
