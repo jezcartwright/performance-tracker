@@ -191,7 +191,12 @@ service cloud.firestore {
       // fields and cannot move ownership — this backs the manager "Agree" tick
       // (the UI shows that control to the line manager only). Delete: owner/admin.
       match /priorities/{pid} {
-        allow read: if canReadCompany(cid);
+        // PL_PRIVATELOCK_V1 — private priorities are owner/admin-only at the DB level
+        allow read: if companyAdmin(cid)
+                    || ownsPriority(cid)
+                    || ( canReadCompany(cid)
+                         && resource.data.visibility != null
+                         && resource.data.visibility != 'private' );
 
         allow create: if companyAdmin(cid)
                       || ( isMember(cid) && ownsNewPriority(cid) );
