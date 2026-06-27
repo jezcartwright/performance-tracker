@@ -2026,6 +2026,7 @@ function issDown(e){ e.preventDefault(); e.stopPropagation(); var host=document.
 function issMove(e){ if(!issDrag)return; e.preventDefault(); issDrag.card.style.top=(e.clientY-issDrag.offY)+'px'; var others=Array.prototype.slice.call(issDrag.host.querySelectorAll('.iss-card:not(.pri-dragging)')); var placed=false; for(var i=0;i<others.length;i++){ var rr=others[i].getBoundingClientRect(); if(e.clientY<rr.top+rr.height/2){ issDrag.host.insertBefore(issDrag.ph,others[i]); placed=true; break; } } if(!placed)issDrag.host.appendChild(issDrag.ph); }
 function issUp(){ document.removeEventListener('pointermove',issMove); if(!issDrag)return; var host=issDrag.host; var c=issDrag.card; issDrag.ph.replaceWith(c); c.classList.remove('pri-dragging'); c.removeAttribute('style'); issDrag=null; var ids=Array.prototype.slice.call(host.querySelectorAll('.iss-handle')).map(function(h){return h.getAttribute('data-iss');}); myIssueOrder=ids; if(ME.uid){ db.collection('users').doc(ME.uid).set({issueOrder:ids},{merge:true}).catch(function(e){console.warn('issueOrder',e);}); } }
 function ms2(iso){ if(!iso)return 0; var t=Date.parse(iso); return isNaN(t)?0:t; }
+function cssColor(c){ if(c==null)return 'var(--strip)'; c=String(c).trim(); if(/^#[0-9a-fA-F]{3,8}$/.test(c))return c; if(/^var\(--[a-zA-Z0-9-]+\)$/.test(c))return c; if(/^(rgb|rgba|hsl|hsla)\([0-9.,%\/\s]+\)$/i.test(c))return c; if(/^[a-zA-Z]+$/.test(c))return c; return 'var(--strip)'; }
 function personColor(mid){var mm=members[mid]; if(mm&&mm.functionId&&fns[mm.functionId])return fns[mm.functionId].color; return 'var(--strip)';}
 function personName(mid){var mm=members[mid]; return mm?mm.name:'Someone';}
 function personInit(mid){var mm=members[mid]; return mm?mm.initials:'?';}
@@ -2075,7 +2076,7 @@ function ensureSuperBootstrap(){
 function loadCompanies(){
   companies={};
   if(ME.isSuper){
-    return companiesCol.get().then(function(qs){ qs.forEach(function(d){companies[d.id]=Object.assign({id:d.id},d.data());}); finalizeCompanyPick(); });
+    return companiesCol.get().then(function(qs){ qs.forEach(function(d){var _cd=d.data(); if(_cd&&_cd.theme&&typeof _cd.theme==='object'){['strip','ink','soft','mid'].forEach(function(_k){if(_cd.theme[_k]!=null)_cd.theme[_k]=cssColor(_cd.theme[_k]);});} companies[d.id]=Object.assign({id:d.id},_cd);}); finalizeCompanyPick(); });
   }
   var cids={};
   return db.collectionGroup('members').where('uid','==',ME.uid).get().then(function(msnap){
@@ -2104,7 +2105,7 @@ function loadCompanies(){
     asnap.forEach(function(d){ cids[d.id]=1; });
     return Promise.all(Object.keys(cids).map(function(id){ return companiesCol.doc(id).get(); }));
   }).then(function(docs){
-    docs.forEach(function(d){ if(d.exists) companies[d.id]=Object.assign({id:d.id},d.data()); });
+    docs.forEach(function(d){ if(d.exists) var _cd=d.data(); if(_cd&&_cd.theme&&typeof _cd.theme==='object'){['strip','ink','soft','mid'].forEach(function(_k){if(_cd.theme[_k]!=null)_cd.theme[_k]=cssColor(_cd.theme[_k]);});} companies[d.id]=Object.assign({id:d.id},_cd); });
     finalizeCompanyPick();
   });
 }
@@ -2322,7 +2323,7 @@ function startApp(){
     if(curProfile){ var _pe=document.getElementById('profile'); if(_pe&&_pe.classList.contains("active"))paintProfile(curProfile); }
     themeSeen=true; maybeReveal();
   },function(e){console.error('company',e);});
-  subF=fnsRef().onSnapshot(function(qs){ fns={}; qs.forEach(function(d){fns[d.id]=Object.assign({id:d.id},d.data());}); renderFnSelect(); renderAdmin(); render(); refreshAux(); if(curProfile){ var _pe=document.getElementById('profile'); if(_pe&&_pe.classList.contains("active"))paintProfile(curProfile); } tryPendingAppoint(); },function(e){console.error('fns',e);});
+  subF=fnsRef().onSnapshot(function(qs){ fns={}; qs.forEach(function(d){var _fd=d.data(); if(_fd&&_fd.color!=null)_fd.color=cssColor(_fd.color); fns[d.id]=Object.assign({id:d.id},_fd);}); renderFnSelect(); renderAdmin(); render(); refreshAux(); if(curProfile){ var _pe=document.getElementById('profile'); if(_pe&&_pe.classList.contains("active"))paintProfile(curProfile); } tryPendingAppoint(); },function(e){console.error('fns',e);});
   subM=membersRef().onSnapshot(function(qs){ members={}; qs.forEach(function(d){ var m=d.data(); m.mid=d.id; m.name=m.name||((m.first||'')+' '+(m.last||'')).trim(); m.initials=m.initials||initials(m.name); if(m.coach && m.uid!==ME.uid){ return; } members[d.id]=m; }); resolveMyMid(); ensurePriSub(); membersSeen=true; maybeReveal(); renderAdmin(); render(); refreshAux(); if(curIssue)fillDetail(curIssue); if(window.pendingProfileMid && members[window.pendingProfileMid]){ var _pm=window.pendingProfileMid; window.pendingProfileMid=null; openProfile(_pm); } tryPendingAppoint(); },function(e){console.error('members',e);});
   subI=issuesRef().orderBy('createdAt','desc').onSnapshot(function(qs){
     issues=[]; qs.forEach(function(d){var i=d.data(); i.id=d.id; issues.push(i);});
@@ -2730,7 +2731,7 @@ function pbTagRow(label, ids, full){ var w=full?' wide':''; var lab='<span class
 function issuePeopleHTML(i, full){ var to=i.leaderMid; var tagged=(i.participants||[]).filter(function(m){return m&&m!==i.raiserMid&&m!==to;}); var L=full?{r:'Raised by',t:'To',g:'Also tagged'}:{r:'Raised',t:'To',g:'Tagged'}; return '<div class="pblock'+(full?'':' pb-sm')+'">'+pbPersonRow(L.r,i.raiserMid,full,i.raiserName)+pbPersonRow(L.t,to,full,i.leaderName)+pbTagRow(L.g,tagged,full)+'</div>'; }
 function priPeopleHTML(p, full){ var L=full?{o:'Owner',i:'Involves'}:{o:'Owner',i:'Involves'}; return '<div class="pblock'+(full?'':' pb-sm')+'">'+pbPersonRow(L.o,p.ownerMid,full,p.ownerName)+pbTagRow(L.i,(p.involves||[]),full)+'</div>'; }
 function rowHTML(i){
-  var fc=i.color||(fns[i.functionId]&&fns[i.functionId].color)||'var(--strip)';
+  var fc=cssColor(i.color||(fns[i.functionId]&&fns[i.functionId].color)||'var(--strip)');
   var done=(i.status==='done'&&boardMode!=='done');
   var handle=(typeof sortKey!=='undefined'&&sortKey==='mine')?ISSGRIP(i.id):'<span class="pri-handle ro"></span>';
   var st=sm[i.status]||sm.open;
@@ -2892,7 +2893,7 @@ window.raiseIssue=function(){
 /* ---------- DETAIL ---------- */
 window.openIssue=function(id){ clearTabs(); curId=id; curIssue=null; for(var k=0;k<issues.length;k++){if(issues[k].id===id){curIssue=issues[k];break;}} if(!curIssue)return; fillDetail(curIssue); subscribeMsgs(id); show('detail'); };
 function fillDetail(i){
-  var fc=i.color||(fns[i.functionId]&&fns[i.functionId].color)||'var(--strip)';
+  var fc=cssColor(i.color||(fns[i.functionId]&&fns[i.functionId].color)||'var(--strip)');
   document.getElementById('dT').textContent=i.title;
   var f=document.getElementById('dF'); if(f){ f.textContent=i.functionName||''; f.style.background=fc; }
   var dpb=document.getElementById('dPeopleBlock'); if(dpb) dpb.innerHTML=issuePeopleHTML(i,true);
@@ -3081,7 +3082,7 @@ function renderNotif(){
   var list=issues.filter(function(i){ return involved(i)&&i.status!=='done'&&i.raiserMid!==ME.mid; }).slice(0,12);
   var el=document.getElementById('notifList');
   if(!list.length){ el.innerHTML='<div class="empty">Nothing needs your attention.</div>'; return; }
-  el.innerHTML=list.map(function(i){ return '<div class="ni" onclick="openIssue(\''+i.id+'\');hideMenus()"><span style="width:9px;height:9px;border-radius:50%;background:'+(i.color||'var(--strip)')+';flex-shrink:0;margin-top:5px"></span><div><div class="t">'+esc(i.title)+'</div><div class="s">'+esc(i.functionName||'')+' · '+sm[i.status][1]+' · '+timeAgo(i.updatedAt)+'</div></div></div>'; }).join('');
+  el.innerHTML=list.map(function(i){ return '<div class="ni" onclick="openIssue(\''+i.id+'\');hideMenus()"><span style="width:9px;height:9px;border-radius:50%;background:'+cssColor(i.color||'var(--strip)')+';flex-shrink:0;margin-top:5px"></span><div><div class="t">'+esc(i.title)+'</div><div class="s">'+esc(i.functionName||'')+' · '+sm[i.status][1]+' · '+timeAgo(i.updatedAt)+'</div></div></div>'; }).join('');
 }
 window.toggleMenu=function(e){ e.stopPropagation(); hideMenus('menu'); var mp=document.getElementById('miProfile'); if(mp)mp.style.display=(ME.mid&&members[ME.mid])?'':'none'; document.getElementById('userMenu').classList.toggle('on'); };
 window.goMyProfile=function(){ var mn=document.getElementById('userMenu'); if(mn)mn.classList.remove('on'); if(ME.mid&&members[ME.mid])openProfile(ME.mid); };
@@ -3664,7 +3665,7 @@ function renderProfileIssues(mid){
   var list=vis.filter(function(i){ return i.raiserMid===mid||i.leaderMid===mid||(i.participants||[]).indexOf(mid)>=0; }).sort(function(a,b){return ms(b.createdAt)-ms(a.createdAt);});
   var el=document.getElementById('pfIssues');
   if(!list.length){ el.innerHTML='<div class="pf-empty">No issues visible to you for this person.</div>'; return; }
-  el.innerHTML=list.map(function(i){ var fc=i.color||(fns[i.functionId]&&fns[i.functionId].color)||'var(--strip)'; var role=(i.raiserMid===mid)?'raised':((i.leaderMid===mid)?'leading':'tagged');
+  el.innerHTML=list.map(function(i){ var fc=cssColor(i.color||(fns[i.functionId]&&fns[i.functionId].color)||'var(--strip)'); var role=(i.raiserMid===mid)?'raised':((i.leaderMid===mid)?'leading':'tagged');
     return '<div class="pf-issue" onclick="openIssue(\''+i.id+'\')"><span class="fpill" style="background:'+fc+'">'+esc(i.functionName||'')+'</span><span class="pfi-t">'+esc(i.title)+'</span><span class="pfi-role">'+role+'</span><span class="st '+sm[i.status][0]+'"><span class="d"></span>'+sm[i.status][1]+'</span></div>';
   }).join('');
 }
