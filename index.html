@@ -2756,7 +2756,7 @@ window.psPick=function(m){ psMid=m; var inp=document.getElementById('ps-input');
 window.fromSearch=function(inp){ riFromMid=null; renderTaList('ri-from-list', inp.value, [], 'fromPick'); };
 window.fromPick=function(m){ riFromMid=m; var inp=document.getElementById('ri-from-input'); if(inp)inp.value=personName(m); hideTa('ri-from-list'); };
 window.addSearch=function(inp){ renderTaList('ri-add-list', inp.value, riOthers.concat([ME.mid]), 'addPick'); };
-window.addPick=function(m){ if(m!==ME.mid && riOthers.indexOf(m)<0){ riOthers.push(m); renderChips(); } var inp=document.getElementById('ri-add-input'); if(inp)inp.value=''; hideTa('ri-add-list'); };
+window.addPick=function(m){ if(m!==ME.mid && riOthers.indexOf(m)<0){ riOthers.push(m); renderChips(); } var inp=document.getElementById('ri-add-input'); if(inp){ inp.value=''; inp.focus(); } renderTaList('ri-add-list', '', riOthers.concat([ME.mid]), 'addPick'); };/* PL_TAGOTHERS_STAYOPEN_V1 */
 function renderChips(){ var c=document.getElementById('ri-chips'); if(!c)return; c.innerHTML=riOthers.map(function(m){ return '<span class="rchip"><span class="mini" style="'+avBg(m)+';width:22px;height:22px;font-size:9px">'+avBody(m)+'</span>'+esc(personName(m))+'<button type="button" onclick="riRemoveOther(\''+m+'\')">×</button></span>'; }).join(''); }
 function renderFnSelect(){
   var s=document.getElementById('fs'); if(s){ var opts='<option value="">Select…</option>'; Object.keys(fns).forEach(function(fid){ opts+='<option value="'+fid+'">'+esc(fns[fid].name)+'</option>'; }); s.innerHTML=opts; s.value=''; }
