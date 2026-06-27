@@ -806,7 +806,7 @@ tr.rowdone:hover td{opacity:.78}
 .iss-pills{display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap}
 .iss-card .pri-meta{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-top:6px}
 .iss-card .pri-right{display:flex;flex-direction:column;align-items:flex-start;gap:6px;align-self:stretch;border-left:1px solid var(--b2);padding-left:18px}
-.iss-card{position:relative;grid-template-columns:auto 1fr auto auto;align-items:start}
+.pri-card.iss-card{position:relative;grid-template-columns:auto 1fr auto auto;align-items:start}/* PL_ISS_LAYOUT_FIX_V1 */
 .iss-spine{position:absolute;left:0;top:0;bottom:0;width:5px;border-radius:12px 0 0 12px;cursor:default}
 .iss-spine-pop{position:absolute;left:10px;top:8px;z-index:60;background:var(--t);color:#fff;font:600 12px/1.4 var(--ui);padding:6px 9px;border-radius:8px;white-space:nowrap;display:none}
 .iss-spine:hover .iss-spine-pop{display:block}
@@ -821,7 +821,7 @@ tr.rowdone:hover td{opacity:.78}
 /* PL_ISS_LAYOUT_V1 */
 .iss-people{align-self:start}
 .iss-card .pb-sm .mini{width:22px;height:22px;font-size:9px}
-@media(max-width:560px){.iss-card{grid-template-columns:auto 1fr;grid-template-areas:none}.iss-people{grid-column:1/-1;margin-top:10px}.iss-card .pri-right{grid-column:1/-1;border-left:0;padding-left:0;flex-direction:row;align-items:center;gap:14px;margin-top:6px}}
+@media(max-width:560px){.pri-card.iss-card{grid-template-columns:auto 1fr;grid-template-areas:none}.iss-people{grid-column:1/-1;margin-top:10px}.iss-card .pri-right{grid-column:1/-1;border-left:0;padding-left:0;flex-direction:row;align-items:center;gap:14px;margin-top:6px}}
 /* ===== My Priorities ===== */
 .pri-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin:2px 0 18px}
 .pri-h1{font-family:var(--display);font-size:30px;font-weight:600;margin:0}
