@@ -811,7 +811,7 @@ tr.rowdone:hover td{opacity:.78}
 .iss-spine-pop{position:absolute;left:10px;top:8px;z-index:60;background:var(--t);color:#fff;font:600 12px/1.4 var(--ui);padding:6px 9px;border-radius:8px;white-space:nowrap;display:none}
 .iss-spine:hover .iss-spine-pop{display:block}
 .iss-actrow{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:10px}
-.iss-spoke{margin-left:auto}
+.iss-spoke{display:inline-flex;align-items:center;gap:7px}.iss-spoke-lbl{font-size:11px;color:var(--t3)}/* PL_ISS_SPOKE_FIX_V1 */
 .owner-av .mini{width:22px;height:22px;font-size:9px}
 .who{position:relative;cursor:help;border-bottom:1px dotted #cfc9c0}
 .who-av{position:relative;cursor:help}.mini.who-av{position:relative}
@@ -2739,7 +2739,7 @@ function rowHTML(i){
   var note=desc?('<div class="pri-noteline">'+esc(desc)+'</div>'):'';
   var ownerMid=(i.status!=='done')?(i.ballMid||i.leaderMid||''):'';
   var ownerAv=ownerMid?('<span class="who-av owner-av"><span class="mini" style="'+avBg(ownerMid)+'">'+avBody(ownerMid)+'</span>'+whoPop(ownerMid,'holds this')+'</span>'):'';
-  var actrow='<div class="iss-actrow">'+privPill(i)+kindPill(i)+ownerAv+'<span class="iss-spoke">'+spokenToggle(i)+'</span></div>';
+  var actrow='<div class="iss-actrow">'+privPill(i)+kindPill(i)+ownerAv+'<span class="iss-spoke"><span class="iss-spoke-lbl">Spoken</span>'+spokenToggle(i)+'</span></div>';
   return '<li class="pri-card iss-card'+(done?' rowdone':'')+'" onclick="openIssue(\''+i.id+'\')">'
     +'<span class="iss-spine" style="background:'+fc+'"><span class="iss-spine-pop">'+esc(fname)+'</span></span>'
     +handle
