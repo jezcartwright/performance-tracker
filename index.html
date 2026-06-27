@@ -30,7 +30,7 @@
   --b:#e8e4df; --b2:#f0ece8;
   --t:#1a1a1a; --t2:#5b554d; --t3:#9a948a;
 
-  --green:#0e9f6e;           /* bold resolved */
+  --green:#0e9f6e;/* PL_TOKENS_V1 */           /* bold resolved */
   --open:#5563d6;            /* bold open */
 
   --st:env(safe-area-inset-top,0px);
@@ -205,16 +205,16 @@ tbody td{padding:14px 16px;vertical-align:middle}
 .st-prog{background:#ff6600}
 .st-done{background:var(--green)}
 .conv{font-size:10.5px;font-weight:700;padding:3px 8px;border-radius:5px;letter-spacing:.04em}
-.conv-y{background:#12936a;color:#fff}
+.conv-y{background:var(--green);color:#fff}
 .conv-n{background:#cf3a2e;color:#fff}
 .sw-tog{display:inline-flex;align-items:center;gap:7px;cursor:pointer;vertical-align:middle}
 .sw-tog.ro{cursor:default;opacity:.7}
 .sw-track{width:38px;height:22px;border-radius:11px;background:#d6d0c7;position:relative;flex:none;transition:background .15s}
-.sw-track.on{background:#12936a}
+.sw-track.on{background:var(--green)}
 .sw-knob{position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.25);transition:left .15s}
 .sw-track.on .sw-knob{left:18px}
 .sw-lab{font-size:11px;font-weight:700;color:var(--t3)}
-.sw-lab.on{color:#12936a}
+.sw-lab.on{color:var(--green)}
 .pidchip{font-family:ui-monospace,Menlo,monospace;font-size:11px;font-weight:700;color:var(--t3);background:rgba(0,0,0,.05);border:1px solid rgba(0,0,0,.08);border-radius:5px;padding:1px 6px;margin-left:6px;letter-spacing:.02em;vertical-align:middle}
 
 /* Detail */
@@ -304,7 +304,7 @@ tbody td{padding:14px 16px;vertical-align:middle}
 .yn{display:flex;gap:9px}
 .yn button{flex:1;padding:11px;border-radius:8px;border:1.5px solid var(--b);font-weight:700;color:var(--t2);font-size:13.5px}
 .yn button.sel{color:#fff}
-.yn button:first-child.sel{border-color:#12936a;background:#12936a}
+.yn button:first-child.sel{border-color:var(--green);background:var(--green)}
 .yn button:last-child.sel{border-color:#cf3a2e;background:#cf3a2e}
 .seg{display:flex;gap:9px}
 .seg button{flex:1;padding:11px;border-radius:8px;border:1.5px solid var(--b);background:#fff;font-weight:700;color:var(--t2);font-size:13.5px;cursor:pointer}
@@ -394,7 +394,7 @@ tbody td{padding:14px 16px;vertical-align:middle}
 .orgbtn.primary-org{background:var(--strip);border-color:var(--strip);color:#fff}
 .agr-l{display:block;font-size:11px;font-weight:700;letter-spacing:.3px;text-transform:uppercase;color:var(--t3);margin-bottom:4px}
 .agr-ok{display:flex;gap:11px;align-items:flex-start;background:#f3faf6;border:1px solid #bfe6d6;border-radius:9px;padding:12px 13px}
-.agr-tick{flex:none;width:26px;height:26px;border-radius:50%;background:#12936a;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px}
+.agr-tick{flex:none;width:26px;height:26px;border-radius:50%;background:var(--green);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px}
 .agr-line{font-size:14px;color:var(--t)}
 .agr-sub{font-size:12px;color:var(--t2);margin-top:2px}
 .agr-no{font-size:13px;color:var(--t2);background:#fbf6f1;border:1px dashed var(--b);border-radius:9px;padding:12px 13px}
@@ -530,8 +530,8 @@ tbody td{padding:14px 16px;vertical-align:middle}
 .superbar{display:block;text-align:center;margin:0 0 12px}
 body:has(#cohome.active){background:#fff}
 #cohome .flag,#cohome .tg{background:#fff;color:#ff6600;border:1px solid var(--strip-mid)}
-.adminflag{display:inline-block;background:#ececea;color:#5a5550;border:1px solid #ddd8d2;font-size:10px;font-weight:800;letter-spacing:1.2px;padding:2px 8px;border-radius:6px;vertical-align:middle}
-.adminpill{display:inline-block;background:#ececea;color:#5a5550;border:1px solid #ddd8d2;font-size:9.5px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;padding:1px 7px;border-radius:20px;margin-left:6px;vertical-align:middle}
+.adminflag{display:inline-block;background:#ececea;color:var(--t2);border:1px solid #ddd8d2;font-size:10px;font-weight:800;letter-spacing:1.2px;padding:2px 8px;border-radius:6px;vertical-align:middle}
+.adminpill{display:inline-block;background:#ececea;color:var(--t2);border:1px solid #ddd8d2;font-size:9.5px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;padding:1px 7px;border-radius:20px;margin-left:6px;vertical-align:middle}
 .co-row{display:flex;align-items:center;gap:10px;padding:9px 0;border-top:1px solid var(--b2)}
 .co-row.clickrow{cursor:pointer;padding:11px 8px;border-radius:10px}
 .co-row.clickrow:hover{background:var(--strip-soft)}
@@ -678,7 +678,7 @@ body:has(#cohome.active){background:#fff}
 .ocmenu.on{display:block}
 .ocmenu div{padding:10px 14px;font-size:12.5px;font-weight:600;cursor:pointer}
 .ocmenu div:hover{background:var(--strip-soft)}
-.ocmenu .dz{color:#b42318}.ocmenu .dz:hover{background:#fbeaea}
+.ocmenu .dz{color:#e5252b}.ocmenu .dz:hover{background:#fbeaea}
 /* searchable company switcher */
 .co-switch{display:flex;align-items:center;border:1px solid var(--b);border-radius:6px;height:38px;padding:0 12px;font-family:var(--ui);font-size:13px;font-weight:700;color:var(--t2);background:var(--card);cursor:pointer;max-width:200px}
 .co-switch:hover{border-color:var(--strip)}
@@ -854,7 +854,7 @@ tr.iss-dragging{opacity:.55;background:var(--strip-soft)}
 .pri-agree{display:inline-flex;align-items:center;gap:8px;font-size:12px;font-weight:600;color:var(--t3);cursor:pointer;white-space:nowrap;user-select:none}
 .pri-agree.ro{cursor:default}
 .pri-box{width:19px;height:19px;border-radius:6px;border:1.5px solid var(--b);display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:800;background:var(--card)}
-.pri-agree.on .pri-box{background:#12936a;border-color:#12936a}
+.pri-agree.on .pri-box{background:var(--green);border-color:var(--green)}
 .pri-agree.on{color:#0a7d57}
 .pri-del{border:none;background:none;color:var(--t3);font-size:13px;cursor:pointer;padding:2px 5px;border-radius:6px}
 .pri-del:hover{color:#e5252b;background:#fbeaea}
@@ -942,7 +942,7 @@ body{font-family:var(--ui);background:var(--bg);color:var(--t);-webkit-font-smoo
 .pri-status{border:none;border-radius:999px;align-self:center;line-height:1.25;padding:6px 13px;font-family:var(--ui);font-size:12px;font-weight:700;white-space:nowrap}
 .pri-agree{display:inline-flex;align-items:center;gap:7px;font-size:11.5px;font-weight:600;color:var(--t3);white-space:nowrap}
 .pri-box{width:19px;height:19px;border-radius:6px;border:1.5px solid var(--b);display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:800;background:var(--card)}
-.pri-agree.on .pri-box{background:#12936a;border-color:#12936a}.pri-agree.on{color:#0a7d57}
+.pri-agree.on .pri-box{background:var(--green);border-color:var(--green)}.pri-agree.on{color:#0a7d57}
 .num-circle{width:28px;height:28px;flex:0 0 auto;border-radius:50%;display:grid;place-items:center;font-family:var(--ui);font-weight:700;font-size:14px;color:#fff}
 .iss-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:11px}
 .iss-row{display:flex;align-items:center;gap:12px;background:#fff;border:1px solid var(--b);border-radius:14px;padding:12px 14px}
@@ -1735,7 +1735,7 @@ function openFocus(k){closeMenu();show('home');var f=document.getElementById('fo
         <p class="psub">For data-subject requests. Export gives a full copy of this company's records; deletion permanently erases the company and everyone in it.</p>
         <div style="display:flex;gap:8px;flex-wrap:wrap">
           <button class="tinybtn" onclick="exportCompany()">⇩ Export company data (JSON)</button>
-          <button class="tinybtn" onclick="removeCompany()" style="background:#fbeaea;color:#b42318;border-color:#f3c9c4">Delete this company…</button>
+          <button class="tinybtn" onclick="removeCompany()" style="background:#fbeaea;color:#e5252b;border-color:#f3c9c4">Delete this company…</button>
         </div>
       </div>
 
