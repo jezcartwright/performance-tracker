@@ -2299,7 +2299,7 @@ function startApp(){
     themeSeen=true; maybeReveal();
   },function(e){console.error('company',e);});
   subF=fnsRef().onSnapshot(function(qs){ fns={}; qs.forEach(function(d){fns[d.id]=Object.assign({id:d.id},d.data());}); renderFnSelect(); renderAdmin(); render(); refreshAux(); if(curProfile){ var _pe=document.getElementById('profile'); if(_pe&&_pe.classList.contains("active"))paintProfile(curProfile); } tryPendingAppoint(); },function(e){console.error('fns',e);});
-  subM=membersRef().onSnapshot(function(qs){ members={}; qs.forEach(function(d){ var m=d.data(); m.mid=d.id; m.name=m.name||((m.first||'')+' '+(m.last||'')).trim(); m.initials=m.initials||initials(m.name); members[d.id]=m; }); resolveMyMid(); membersSeen=true; maybeReveal(); renderAdmin(); render(); refreshAux(); if(curIssue)fillDetail(curIssue); if(window.pendingProfileMid && members[window.pendingProfileMid]){ var _pm=window.pendingProfileMid; window.pendingProfileMid=null; openProfile(_pm); } tryPendingAppoint(); },function(e){console.error('members',e);});
+  subM=membersRef().onSnapshot(function(qs){ members={}; qs.forEach(function(d){ var m=d.data(); m.mid=d.id; m.name=m.name||((m.first||'')+' '+(m.last||'')).trim(); m.initials=m.initials||initials(m.name); if(m.coach && m.uid!==ME.uid){ return; } members[d.id]=m; }); resolveMyMid(); membersSeen=true; maybeReveal(); renderAdmin(); render(); refreshAux(); if(curIssue)fillDetail(curIssue); if(window.pendingProfileMid && members[window.pendingProfileMid]){ var _pm=window.pendingProfileMid; window.pendingProfileMid=null; openProfile(_pm); } tryPendingAppoint(); },function(e){console.error('members',e);});
   subI=issuesRef().orderBy('createdAt','desc').onSnapshot(function(qs){
     issues=[]; qs.forEach(function(d){var i=d.data(); i.id=d.id; issues.push(i);});
     render(); updateBadge();
@@ -2334,11 +2334,13 @@ function syncMeName(){
     setHeader();
   }
 }
-function joinCompany(){
+function joinCompany(asCoach){
   var ref=membersRef().doc();
-  return ref.set({first:ME.first,last:ME.last,name:ME.name,initials:ME.initials,email:ME.email,functionId:null,isLeader:false,uid:ME.uid,pid:newPid()}).then(function(){ ME.mid=ref.id; ensureAccess(ref.id); });
+  return ref.set({first:ME.first,last:ME.last,name:ME.name,initials:ME.initials,email:ME.email,functionId:null,isLeader:false,uid:ME.uid,pid:newPid(),coach:!!asCoach}).then(function(){ ME.mid=ref.id; ensureAccess(ref.id); });
 }
 window.joinCompanyBtn=function(){ joinCompany().then(function(){ renderAdmin(); render(); }); };
+/*PL_COACH_SEAT_V1*/
+window.joinAsCoach=function(){ var btn=document.getElementById('priJoinBtn'); if(btn){ btn.disabled=true; btn.textContent='Adding you…'; } joinCompany(true).then(function(){ renderAdmin(); render(); renderPriorities(); }).catch(function(e){ if(btn){ btn.disabled=false; btn.textContent='+ Add me to this company'; } alert('Could not add you to this company: '+((e&&e.message)||e)); }); };
 
 function applyTheme(t){ if(!t)return; var r=document.documentElement; r.style.setProperty('--strip',t.strip); r.style.setProperty('--strip-ink',t.ink); r.style.setProperty('--strip-soft',t.soft); r.style.setProperty('--strip-mid',t.mid); var mt=document.querySelector('meta[name=theme-color]'); if(mt)mt.setAttribute('content',t.strip); document.querySelectorAll('#sws .sw').forEach(function(x){x.classList.toggle('sel',x.dataset.c===t.strip);}); var bc=document.getElementById('brandCustom'); if(bc&&t.strip&&t.strip.charAt(0)==='#')bc.value=t.strip; try{localStorage.setItem('ptTheme',JSON.stringify({strip:t.strip,ink:t.ink,soft:t.soft,mid:t.mid}));}catch(e){} }
 
@@ -3717,7 +3719,7 @@ function renderPriorities(){
   ensurePriSub();
   var host=document.getElementById('priList'); var note=document.getElementById('priEmpty'); if(!host)return;
   if(!activeCid){ host.innerHTML=''; if(note)note.innerHTML='<div class="pri-note">No company selected.</div>'; return; }
-  if(!ME.mid){ host.innerHTML=''; if(note)note.innerHTML='<div class="pri-note">You don\'t have a person record in this company yet, so there\'s no priority list to own. Open <b>Team</b> and tap anyone to see and agree <i>their</i> priorities.</div>'; return; }
+  if(!ME.mid){ host.innerHTML=''; if(note){ if(isAdmin){ note.innerHTML='<div class="pri-note">You don\'t have a person record in this company yet. Add yourself to keep your own priorities here — <b>private to you</b>, and your seat stays hidden from this client\'s team.<div style="margin-top:12px"><button id="priJoinBtn" onclick="joinAsCoach()" style="font:600 14px/1 var(--ui,Inter),sans-serif;color:#fff;background:#ff6600;border:0;border-radius:10px;padding:10px 16px;cursor:pointer">+ Add me to this company</button></div></div>'; } else { note.innerHTML='<div class="pri-note">You don\'t have a person record in this company yet, so there\'s no priority list to own. Open <b>Team</b> and tap anyone to see and agree <i>their</i> priorities.</div>'; } } return; }
   if(note)note.innerHTML='';
   var list=myPriorities();
   if(!list.length){ host.innerHTML='<li class="pri-note">Nothing here yet \u2014 tap "Add priority" to start your list. Drag to reorder once you have a few.</li>'; return; }
