@@ -3716,7 +3716,7 @@ function priCardHTML(p,canDrag,canEdit,canAgree){
   var statusBtn='<button class="pri-status" style="background:'+sc[0]+';color:'+sc[1]+'"'+(canEdit?(' onclick="priCycleStatus(\''+p.id+'\')"'):' disabled')+'>'+esc(p.status||'Scoping')+'</button>';
   var agree='<span class="pri-agree'+(p.agreed?' on':'')+(canAgree?'':' ro')+'"'+(canAgree?(' onclick="priToggleAgree(\''+p.id+'\')"'):'')+'><span class="pri-box">'+(p.agreed?'\u2713':'')+'</span><span class="pri-agree-lbl">'+(p.agreed?'Manager agreed':(canAgree?'Agree priority':'Awaiting manager'))+'</span></span>';
   var handle=canDrag?'<span class="pri-handle" data-pri="'+p.id+'" title="Drag to reorder"><svg width="13" height="20" viewBox="0 0 14 22" fill="currentColor"><circle cx="3" cy="3" r="2"/><circle cx="11" cy="3" r="2"/><circle cx="3" cy="11" r="2"/><circle cx="11" cy="11" r="2"/><circle cx="3" cy="19" r="2"/><circle cx="11" cy="19" r="2"/></svg></span>':'<span class="pri-handle ro"></span>';
-  var del=canEdit?'<button class="pri-del" title="Remove priority" onclick="priDelete(\''+p.id+'\')">\u2715</button>':'';
+  var del='';/* PL_PRI_NOLISTDEL_V1 */
   var titleClick=canEdit?(' onclick="priEditTitle(\''+p.id+'\')" style="cursor:text"'):'';
   var invClick=canEdit?(' onclick="priEditInvolves(\''+p.id+'\')" title="Edit who is involved"'):'';
   return '<li class="pri-card" data-pri="'+p.id+'">'+handle+'<span class="pri-rank"></span><div class="pri-main"><div class="pri-title"'+titleClick+'>'+esc(p.title||'Untitled priority')+'</div><div class="pri-meta"><span class="pri-involves"'+invClick+'>Involves '+priInvolvesHTML(p)+'</span></div></div><div class="pri-right">'+statusBtn+agree+del+'</div></li>';
@@ -3807,7 +3807,7 @@ function priCardHTML(p,canDrag,canEdit,canAgree){
   var statusBtn='<button class="pri-status" style="background:'+sc[0]+';color:'+sc[1]+'"'+(canEdit?(' onclick="priCycleStatus(\''+p.id+'\')"'):' disabled')+'>'+esc(p.status||'Scoping')+'</button>';
   var agree='<span class="pri-agree'+(p.agreed?' on':'')+(canAgree?'':' ro')+'"'+(canAgree?(' onclick="priToggleAgree(\''+p.id+'\')"'):'')+'><span class="pri-box">'+(p.agreed?'\u2713':'')+'</span><span class="pri-agree-lbl">'+(p.agreed?'Manager agreed':(canAgree?'Agree priority':'Awaiting manager'))+'</span></span>';
   var handle=canDrag?'<span class="pri-handle" data-pri="'+p.id+'" title="Drag to reorder"><svg width="13" height="20" viewBox="0 0 14 22" fill="currentColor"><circle cx="3" cy="3" r="2"/><circle cx="11" cy="3" r="2"/><circle cx="3" cy="11" r="2"/><circle cx="11" cy="11" r="2"/><circle cx="3" cy="19" r="2"/><circle cx="11" cy="19" r="2"/></svg></span>':'<span class="pri-handle ro"></span>';
-  var del=canEdit?'<button class="pri-del" title="Remove priority" onclick="priDelete(\''+p.id+'\')">\u2715</button>':'';
+  var del='';/* PL_PRI_NOLISTDEL_V1 */
   var titleClick=canEdit?(' onclick="priEditTitle(\''+p.id+'\')" style="cursor:pointer"'):'';
   var invClick=canEdit?(' onclick="priEditInvolves(\''+p.id+'\')" title="Edit who is involved"'):'';
   var note=p.note?('<div class="pri-noteline">'+esc(p.note)+'</div>'):'';var openAttr=canEdit?(' onclick="priCardOpen(event,\''+p.id+'\')"'):'';
