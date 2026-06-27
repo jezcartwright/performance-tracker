@@ -2006,10 +2006,9 @@ function ms(ts){return ts&&ts.toMillis?ts.toMillis():(typeof ts==='number'?ts:0)
 var myIssueOrder=[];
 function ISSGRIP(id){ return '<span class="iss-handle" data-iss="'+id+'" onclick="event.stopPropagation()" onpointerdown="issDown(event)"><svg width="13" height="20" viewBox="0 0 14 22" fill="currentColor"><circle cx="3" cy="3" r="2"/><circle cx="11" cy="3" r="2"/><circle cx="3" cy="11" r="2"/><circle cx="11" cy="11" r="2"/><circle cx="3" cy="19" r="2"/><circle cx="11" cy="19" r="2"/></svg></span>'; }
 var issDrag=null;
-function issDown(e){ e.preventDefault(); e.stopPropagation(); var tb=document.getElementById('rows'); var row=e.currentTarget.closest('.iss-card'); if(!tb||!row)return; issDrag={tb:tb,row:row}; row.classList.add('iss-dragging'); document.addEventListener('pointermove',issMove); document.addEventListener('pointerup',issUp,{once:true}); }
-function issMove(e){ if(!issDrag)return; e.preventDefault(); var tb=issDrag.tb,row=issDrag.row; var rows=Array.prototype.slice.call(tb.querySelectorAll('.iss-card')).filter(function(r){return r!==row;}); var placed=false; for(var i=0;i<rows.length;i++){ var rect=rows[i].getBoundingClientRect(); if(e.clientY<rect.top+rect.height/2){ tb.insertBefore(row,rows[i]); placed=true; break; } } if(!placed) tb.appendChild(row); }
-function issUp(){ document.removeEventListener('pointermove',issMove); if(!issDrag)return; var tb=issDrag.tb; issDrag.row.classList.remove('iss-dragging'); issDrag=null; var ids=Array.prototype.slice.call(tb.querySelectorAll('.iss-handle')).map(function(h){return h.getAttribute('data-iss');}); myIssueOrder=ids; if(ME.uid){ db.collection('users').doc(ME.uid).set({issueOrder:ids},{merge:true}).catch(function(e){console.warn('issueOrder',e);}); } }
-
+function issDown(e){ e.preventDefault(); e.stopPropagation(); var host=document.getElementById('rows'); var card=e.currentTarget.closest('.iss-card'); if(!card||!host)return; var r=card.getBoundingClientRect(); var ph=document.createElement('li'); ph.className='pri-placeholder'; ph.style.height=r.height+'px'; card.after(ph); issDrag={host:host,card:card,ph:ph,offY:e.clientY-r.top}; card.classList.add('pri-dragging'); card.style.position='fixed'; card.style.width=r.width+'px'; card.style.left=r.left+'px'; card.style.top=r.top+'px'; card.style.zIndex=2000; card.style.margin='0'; document.addEventListener('pointermove',issMove); document.addEventListener('pointerup',issUp,{once:true}); }
+function issMove(e){ if(!issDrag)return; e.preventDefault(); issDrag.card.style.top=(e.clientY-issDrag.offY)+'px'; var others=Array.prototype.slice.call(issDrag.host.querySelectorAll('.iss-card:not(.pri-dragging)')); var placed=false; for(var i=0;i<others.length;i++){ var rr=others[i].getBoundingClientRect(); if(e.clientY<rr.top+rr.height/2){ issDrag.host.insertBefore(issDrag.ph,others[i]); placed=true; break; } } if(!placed)issDrag.host.appendChild(issDrag.ph); }
+function issUp(){ document.removeEventListener('pointermove',issMove); if(!issDrag)return; var host=issDrag.host; var c=issDrag.card; issDrag.ph.replaceWith(c); c.classList.remove('pri-dragging'); c.removeAttribute('style'); issDrag=null; var ids=Array.prototype.slice.call(host.querySelectorAll('.iss-handle')).map(function(h){return h.getAttribute('data-iss');}); myIssueOrder=ids; if(ME.uid){ db.collection('users').doc(ME.uid).set({issueOrder:ids},{merge:true}).catch(function(e){console.warn('issueOrder',e);}); } }
 function ms2(iso){ if(!iso)return 0; var t=Date.parse(iso); return isNaN(t)?0:t; }
 function personColor(mid){var mm=members[mid]; if(mm&&mm.functionId&&fns[mm.functionId])return fns[mm.functionId].color; return 'var(--strip)';}
 function personName(mid){var mm=members[mid]; return mm?mm.name:'Someone';}
@@ -2717,6 +2716,7 @@ function rowHTML(i){
   var done=(i.status==='done'&&boardMode!=='done');
   var handle=(typeof sortKey!=='undefined'&&sortKey==='mine')?ISSGRIP(i.id):'<span class="pri-handle ro"></span>';
   var st=sm[i.status]||sm.open;
+  var stcol=({open:'var(--open)',prog:'#ff6600',done:'var(--green)'})[i.status]||'var(--open)';/* PL_ISS_CARDS_FIX_V1 */
   var fname=(fns[i.functionId]&&fns[i.functionId].name)||'';
   var fnchip=fname?('<span class="iss-fn"><span class="fn-dot" style="background:'+fc+'"></span>'+esc(fname)+'</span>'):'';
   var desc=(i.description||'').slice(0,90);
@@ -2725,7 +2725,7 @@ function rowHTML(i){
   var meta='<div class="pri-meta">'+(pills?'<span class="iss-pills">'+pills+'</span>':'')+issuePeopleHTML(i,false)+spokenToggle(i)+'</div>';
   return '<li class="pri-card iss-card'+(done?' rowdone':'')+'" onclick="openIssue(\''+i.id+'\')">'
     +handle
-    +'<span class="pri-rank" style="background:'+fc+'" title="'+esc(fname)+'"></span>'
+    +'<span class="pri-rank" style="background:'+stcol+'" title="'+st[1]+'"></span>'
     +'<div class="pri-main"><div class="pri-title">'+esc(i.title)+'</div>'+note+meta+'</div>'
     +'<div class="pri-right"><span class="st '+st[0]+'"><span class="d"></span>'+st[1]+'</span><span class="iss-time">'+timeAgo(i.createdAt)+'</span></div>'
     +'</li>';
