@@ -2718,9 +2718,9 @@ function visibleIssues(){
   return list;
 }
 function canToggleSpoken(i){ return isAdmin || i.raiserUid===ME.uid || i.leaderUid===ME.uid || i.raiserMid===ME.mid || i.leaderMid===ME.mid || (i.participants||[]).indexOf(ME.mid)>=0; }
-function spokenToggle(i){ var on=!!i.conversationHad; var can=canToggleSpoken(i);
+function spokenToggle(i,verbose){/* PL_ISS_SPOKE_LABEL_V1 */ var on=!!i.conversationHad; var can=canToggleSpoken(i);
   var oc=can?(' onclick="event.stopPropagation();toggleSpoken(\''+i.id+'\')"'):'';
-  return '<span class="sw-tog'+(can?'':' ro')+'"'+oc+' title="'+(on?'Spoken':'Not spoken yet')+'"><span class="sw-track'+(on?' on':'')+'"><span class="sw-knob"></span></span><span class="sw-lab'+(on?' on':'')+'">'+(on?'Yes':'No')+'</span></span>'; }
+  return '<span class="sw-tog'+(can?'':' ro')+'"'+oc+' title="'+(on?'Spoken':'Not spoken yet')+'"><span class="sw-track'+(on?' on':'')+'"><span class="sw-knob"></span></span><span class="sw-lab'+(on?' on':'')+'">'+(on?(verbose?'Spoken':'Yes'):(verbose?'Not spoken':'No'))+'</span></span>'; }
 window.toggleSpoken=function(id){ var i=null; for(var k=0;k<issues.length;k++){ if(issues[k].id===id){ i=issues[k]; break; } } if(!i&&curIssue&&curIssue.id===id)i=curIssue; if(!i)return; if(!canToggleSpoken(i))return; issuesRef().doc(id).update({conversationHad:!i.conversationHad, updatedAt:FV.serverTimestamp()}).catch(function(e){ alert('Could not update: '+e.message); }); };
 function taggedList(i){ return (i.participants||[]).filter(function(m){return m&&m!==i.raiserMid;}); }
 function taggedMinis(i){ var t=taggedList(i); if(!t.length) return '<span class="dnobody">\u2014</span>'; return '<div class="tagmini">'+t.map(function(m){ return '<span class="mini" style="'+avBg(m)+'" title="'+esc(personName(m))+'">'+avBody(m)+'</span>'; }).join('')+'</div>'; }
@@ -2739,7 +2739,7 @@ function rowHTML(i){
   var note=desc?('<div class="pri-noteline">'+esc(desc)+'</div>'):'';
   var ownerMid=(i.status!=='done')?(i.ballMid||i.leaderMid||''):'';
   var ownerAv=ownerMid?('<span class="who-av owner-av"><span class="mini" style="'+avBg(ownerMid)+'">'+avBody(ownerMid)+'</span>'+whoPop(ownerMid,'holds this')+'</span>'):'';
-  var actrow='<div class="iss-actrow">'+privPill(i)+kindPill(i)+ownerAv+'<span class="iss-spoke"><span class="iss-spoke-lbl">Spoken</span>'+spokenToggle(i)+'</span></div>';
+  var actrow='<div class="iss-actrow">'+privPill(i)+kindPill(i)+ownerAv+'<span class="iss-spoke">'+spokenToggle(i,true)+'</span></div>';
   return '<li class="pri-card iss-card'+(done?' rowdone':'')+'" onclick="openIssue(\''+i.id+'\')">'
     +'<span class="iss-spine" style="background:'+fc+'"><span class="iss-spine-pop">'+esc(fname)+'</span></span>'
     +handle

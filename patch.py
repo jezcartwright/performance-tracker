@@ -1,10 +1,12 @@
 import sys
-PATH="index.html"; SENTINEL="/* PL_ISS_SPOKE_FIX_V1 */"
+PATH="index.html"; SENTINEL="/* PL_ISS_SPOKE_LABEL_V1 */"
 EDITS=[
-(".iss-spoke{margin-left:auto}",
- ".iss-spoke{display:inline-flex;align-items:center;gap:7px}.iss-spoke-lbl{font-size:11px;color:var(--t3)}"+SENTINEL),
-("'<span class=\"iss-spoke\">'+spokenToggle(i)+'</span></div>'",
- "'<span class=\"iss-spoke\"><span class=\"iss-spoke-lbl\">Spoken</span>'+spokenToggle(i)+'</span></div>'"),
+("function spokenToggle(i){ var on=!!i.conversationHad;",
+ "function spokenToggle(i,verbose){"+SENTINEL+" var on=!!i.conversationHad;"),
+("(on?'Yes':'No')",
+ "(on?(verbose?'Spoken':'Yes'):(verbose?'Not spoken':'No'))"),
+("'<span class=\"iss-spoke\"><span class=\"iss-spoke-lbl\">Spoken</span>'+spokenToggle(i)+'</span></div>'",
+ "'<span class=\"iss-spoke\">'+spokenToggle(i,true)+'</span></div>'"),
 ]
 s=open(PATH,encoding="utf-8").read()
 if SENTINEL in s:
@@ -15,4 +17,4 @@ for k,(o,n) in enumerate(EDITS):
         sys.stderr.write("ABORT edit %d: count=%d\n"%(k,c)); sys.exit(1)
     s=s.replace(o,n); print("  edit %d ok"%k)
 open(PATH,"w",encoding="utf-8").write(s)
-print("Applied PL_ISS_SPOKE_FIX_V1. New size: %d bytes."%len(s.encode("utf-8")))
+print("Applied PL_ISS_SPOKE_LABEL_V1. New size: %d bytes."%len(s.encode("utf-8")))
