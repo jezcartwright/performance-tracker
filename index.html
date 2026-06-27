@@ -1263,6 +1263,7 @@ function openFocus(k){closeMenu();show('home');var f=document.getElementById('fo
       <div class="fld">
         <label>Who can see this issue?</label>
         <select id="ri-vis" onchange="visChange(this)">
+          <option value="private">Just me — a private note only you can see</option>
           <option value="teamleader">The department leader only — just them &amp; you</option>
           <option value="participants">Just those involved — you &amp; anyone tagged in</option>
           <option value="dept">Team — the whole department</option>
@@ -2663,7 +2664,10 @@ window.openRaise=function(){ riEditId=null; clearTabs(); renderFnSelect(); var h
 window.riCancel=function(){ if(riEditId){ var id=riEditId; riEditId=null; openIssue(id); } else goDash(); };
 
 /* ---------- DASHBOARD ---------- */
+function privPill(i){ return (i&&(i.visibility||'')==='private')?'<span style="display:inline-block;font:600 11px/1 var(--ui,Inter),sans-serif;color:#6c675d;background:#efece5;border-radius:999px;padding:3px 8px;letter-spacing:.02em">Private</span>':''; }
+/*PL_ISSUE_PRIVATE_V1*/
 function canSeeIssue(i){
+  if((i.visibility||'team')==='private') return i.raiserMid===ME.mid;
   if(isAdmin) return true;
   if(i.raiserMid===ME.mid) return true;
   if(i.leaderMid===ME.mid) return true;
@@ -2703,7 +2707,7 @@ function rowHTML(i){
   var fc=i.color||(fns[i.functionId]&&fns[i.functionId].color)||'var(--strip)';
   var cls=(i.status==='done'&&boardMode!=='done')?' class="rowdone"':'';
   return '<tr'+cls+' onclick="openIssue(\''+i.id+'\')">'
-   +'<td>'+((typeof sortKey!=='undefined'&&sortKey==='mine')?ISSGRIP(i.id):'')+'<div class="t-title">'+esc(i.title)+'</div><div class="t-sub">'+esc((i.description||'').slice(0,72))+'</div>'+((kindPill(i)||ballInline(i))?('<div class="t-meta">'+kindPill(i)+ballInline(i)+'</div>'):'')+'</td>'
+   +'<td>'+((typeof sortKey!=='undefined'&&sortKey==='mine')?ISSGRIP(i.id):'')+'<div class="t-title">'+esc(i.title)+'</div><div class="t-sub">'+esc((i.description||'').slice(0,72))+'</div>'+((privPill(i)||kindPill(i)||ballInline(i))?('<div class="t-meta">'+privPill(i)+kindPill(i)+ballInline(i)+'</div>'):'')+'</td>'
    +'<td class="hs">'+issuePeopleHTML(i,false)+'</td>'
    +'<td class="hs">'+spokenToggle(i)+'</td>'
    +'<td><span class="st '+sm[i.status][0]+'"><span class="d"></span>'+sm[i.status][1]+'</span></td>'
@@ -2763,9 +2767,10 @@ function renderFnSelect(){
 function renderVisOptions(mode, ensureValue){
   var sel=document.getElementById('ri-vis'); if(!sel)return;
   var prev=ensureValue||sel.value;
-  var vals=(mode==='person')?['teamleader','participants','leader','team']:['teamleader','participants','dept','leader','team'];
+  var vals=(mode==='person')?['private','teamleader','participants','leader','team']:['private','teamleader','participants','dept','leader','team'];
   if(ensureValue && vals.indexOf(ensureValue)<0) vals=vals.concat([ensureValue]);
   var labels={
+    private:'Just me — a private note only you can see',
     teamleader:(mode==='person')?'Private — just them &amp; you':'The department leader only — just them &amp; you',
     participants:'Just those involved — you &amp; anyone tagged in',
     dept:(mode==='person')?'Their whole department':'Team — the whole department',
@@ -2776,7 +2781,7 @@ function renderVisOptions(mode, ensureValue){
   var want=(vals.indexOf(prev)>=0)?prev:(vals.indexOf('participants')>=0?'participants':vals[0]);
   sel.value=want; visPrev=want;
   var note=document.getElementById('ri-vis-note'); if(note)note.innerHTML=(mode==='person'?'The person you tag':'The leader you tag')+' and anyone added always sees it — this sets who <em>else</em> can.';
-  var of=document.getElementById('ri-others-fld'); if(of)of.style.display=(want==='teamleader')?'none':'';
+  var of=document.getElementById('ri-others-fld'); if(of)of.style.display=(want==='teamleader'||want==='private')?'none':'';
 }
 window.riSetMode=function(mode){
   riMode=mode;
@@ -2790,8 +2795,8 @@ window.riRemoveOther=function(m){ riOthers=riOthers.filter(function(x){return x!
 var visPrev='leader', visEl=null;
 window.visChange=function(sel){
   visEl=sel;
-  var of=document.getElementById('ri-others-fld'); if(of)of.style.display=(sel.value==='teamleader')?'none':'';
-  if(sel.value==='teamleader'){ riOthers=[]; renderChips(); }
+  var of=document.getElementById('ri-others-fld'); if(of)of.style.display=(sel.value==='teamleader'||sel.value==='private')?'none':'';
+  if(sel.value==='teamleader'||sel.value==='private'){ riOthers=[]; renderChips(); }
   if(sel.value==='team'){ document.getElementById('visWarnCo').textContent=(company&&company.name)||'this company'; document.getElementById('visWarn').classList.add('on'); } else { visPrev=sel.value; }
 };
 window.visWarnCancel=function(){ if(visEl)visEl.value=visPrev; document.getElementById('visWarn').classList.remove('on'); };
@@ -2828,6 +2833,7 @@ window.raiseIssue=function(){
   else { rMid=null; rUid=ME.uid; rName=ME.name; rInit=ME.initials; }
   var parts=[]; if(rMid)parts.push(rMid); if(leaderMid&&parts.indexOf(leaderMid)<0)parts.push(leaderMid);
   if(vis!=='teamleader'){ riOthers.forEach(function(m){ if(m&&parts.indexOf(m)<0)parts.push(m); }); }
+  if(vis==='private'){ leaderMid=null; leaderName=''; leaderUid=null; parts=rMid?[rMid]:[]; riKind='fyi'; }
   if(riEditId){
     var upd={ title:title, description:desc, functionId:fid, functionName:fName, color:color, leaderMid:leaderMid, leaderName:leaderName, leaderUid:leaderUid, conversationHad:!!raiseConv, visibility:vis, targetType:riMode, kind:riKind, ballMid:(riKind==='fyi'?null:(leaderMid||null)), ballFromMid:(riKind==='fyi'?null:((curIssue&&curIssue.raiserMid)||null)), updatedAt:FV.serverTimestamp() };
     if(leaderMid) upd.participants=FV.arrayUnion(leaderMid);
