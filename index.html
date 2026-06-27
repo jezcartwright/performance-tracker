@@ -818,8 +818,11 @@ tr.iss-dragging{opacity:.55;background:var(--strip-soft)}
 .pd-title{font-family:var(--display);font-size:26px;font-weight:600;line-height:1.18;margin:2px 0 6px}
 .pd-meta{font-size:13px;color:var(--t2);margin-bottom:16px}
 .pd-edit{margin-left:auto;font-size:13px;color:var(--t3);background:none;border:none;cursor:pointer}
-#priDetail .chat{display:block}
-#priDetail .msgs{min-height:120px}
+#priDetail .chat{display:block;height:auto}
+#priDetail .msgs{min-height:96px;max-height:420px}
+.pd-foot{margin-top:18px;padding-top:14px;border-top:1px solid var(--b);text-align:center}
+.pd-del{background:none;border:0;color:#c0392b;font:600 13px/1 var(--ui),sans-serif;cursor:pointer;padding:8px 12px;border-radius:8px}
+.pd-del:hover{background:#fdecea}
 /* PL_PRIDETAIL_V2 detail/people/docs */
 .pd-note{font-family:var(--serif);font-size:14.5px;line-height:1.5;color:var(--t)}
 .pd-empty{color:var(--t3)}
@@ -1328,6 +1331,7 @@ function openFocus(k){closeMenu();show('home');var f=document.getElementById('fo
         </div>
       </div>
     </div>
+      <div class="pd-foot"><button type="button" class="pd-del" onclick="deletePriority()">Delete priority</button></div>
   </div>
 </section>
   <section class="screen" id="raisePriority">
@@ -3643,6 +3647,8 @@ function refreshAux(){ var tm=document.getElementById('team'),am=document.getEle
 function prioritiesRef(){ return cRef().collection('priorities'); }
 /* PL_PRIDETAIL_V1 */
 var curPid=null, curPri=null, subPM=null;
+/* PL_PRI_DELETE_V1 */
+window.deletePriority=function(){ var id=curPid||(curPri&&curPri.id); if(!id)return; if(!confirm('Delete this priority? This cannot be undone.'))return; prioritiesRef().doc(id).delete().then(function(){ goPriorities(); }).catch(function(e){ alert('Could not delete: '+((e&&e.message)||e)); }); };
 function pdStatusPill(st){ var sc=PRI_SCOL[st]||PRI_SCOL.Scoping; return '<span class="st" style="background:'+sc[0]+';color:'+sc[1]+'">'+esc(st)+'</span>'; }
 function pdInvolvesHTML(p){ var inv=(p&&(p.involves||p.involve))||[]; var owner=personName(p.ownerMid||p.mid||ME.mid)||'You'; var s='Owner: '+esc(owner); if(inv&&inv.length){ var ns=inv.map(function(m){return esc(personName(m));}).filter(Boolean).join(', '); if(ns) s+=' \u00b7 Involves '+ns; } return s; }
 function pdBadgeHTML(p,idx){ return (p.status==='Done')?'<svg viewBox="0 0 24 24" width="15" fill="none" stroke="#fff" stroke-width="2.4"><path d="m5 13 4 4L19 7"/></svg>':(idx>=0?String(idx+1):''); }
