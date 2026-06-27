@@ -806,6 +806,18 @@ tr.rowdone:hover td{opacity:.78}
 .iss-pills{display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap}
 .iss-card .pri-meta{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-top:6px}
 .iss-card .pri-right{display:flex;flex-direction:column;align-items:flex-end;gap:6px}
+.iss-card{position:relative;grid-template-columns:auto 1fr auto}
+.iss-spine{position:absolute;left:0;top:0;bottom:0;width:5px;border-radius:12px 0 0 12px;cursor:default}
+.iss-spine-pop{position:absolute;left:10px;top:8px;z-index:60;background:var(--t);color:#fff;font:600 12px/1.4 var(--ui);padding:6px 9px;border-radius:8px;white-space:nowrap;display:none}
+.iss-spine:hover .iss-spine-pop{display:block}
+.iss-actrow{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:10px}
+.iss-spoke{margin-left:auto}
+.owner-av .mini{width:22px;height:22px;font-size:9px}
+.who{position:relative;cursor:help;border-bottom:1px dotted #cfc9c0}
+.who-av{position:relative;cursor:help}.mini.who-av{position:relative}
+.pop{position:absolute;top:135%;left:0;z-index:60;background:var(--t);color:#fff;font:400 12px/1.5 var(--ui);text-align:left;padding:7px 10px;border-radius:8px;white-space:nowrap;display:none}
+.pop b{font-weight:600}.popd{color:#b9b4ab}
+.who:hover>.pop,.who-av:hover>.pop{display:block}
 /* ===== My Priorities ===== */
 .pri-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin:2px 0 18px}
 .pri-h1{font-family:var(--display);font-size:30px;font-weight:600;margin:0}
@@ -2015,6 +2027,8 @@ function personName(mid){var mm=members[mid]; return mm?mm.name:'Someone';}
 function personInit(mid){var mm=members[mid]; return mm?mm.initials:'?';}
 function avBg(mid){ var m=members[mid]; return (m&&m.photo)?'':('background:'+personColor(mid)); }
 function avBody(mid){ var m=members[mid]; return (m&&m.photo)?'<img class="av-img" src="'+m.photo+'" alt="">':esc(personInit(mid)); }
+function deptName(mid){ var m=members[mid]; return (m&&m.functionId&&fns[m.functionId])?fns[m.functionId].name:''; }/* PL_ISS_CARDS_B_V1 */
+function whoPop(mid,extra){ var p=[]; var dn=deptName(mid); if(dn)p.push(dn); if(extra)p.push(extra); var sub=p.join(' \u00b7 '); return '<span class="pop"><b>'+esc(personName(mid))+'</b>'+(sub?'<br><span class="popd">'+esc(sub)+'</span>':'')+'</span>'; }
 function timeAgo(ts){ var d=ms(ts); if(!d)return 'just now'; var s=(Date.now()-d)/1000; if(s<60)return 'just now'; if(s<3600)return Math.floor(s/60)+'m ago'; if(s<86400)return Math.floor(s/3600)+'h ago'; var dd=Math.floor(s/86400); if(dd===1)return 'yesterday'; if(dd<7)return dd+' days ago'; return Math.floor(dd/7)+'w ago'; }
 var stCol={open:'var(--open)',prog:'var(--strip)',done:'var(--green)'};
 var sm={open:['st-open','Open'],prog:['st-prog','In Progress'],done:['st-done','Resolved']};
@@ -2707,8 +2721,8 @@ window.toggleSpoken=function(id){ var i=null; for(var k=0;k<issues.length;k++){ 
 function taggedList(i){ return (i.participants||[]).filter(function(m){return m&&m!==i.raiserMid;}); }
 function taggedMinis(i){ var t=taggedList(i); if(!t.length) return '<span class="dnobody">\u2014</span>'; return '<div class="tagmini">'+t.map(function(m){ return '<span class="mini" style="'+avBg(m)+'" title="'+esc(personName(m))+'">'+avBody(m)+'</span>'; }).join('')+'</div>'; }
 function firstName(mid){ var n=personName(mid)||''; return n.split(' ')[0]||n; }
-function pbPersonRow(label, mid, full, fb){ var w=full?' wide':''; if(!mid) return '<div class="prow"><span class="prole'+w+'">'+label+'</span><span class="dnobody">\u2014</span></div>'; var nm=full?(personName(mid)||fb||''):(firstName(mid)||fb||''); return '<div class="prow"><span class="prole'+w+'">'+label+'</span><span class="mini" style="'+avBg(mid)+'">'+avBody(mid)+'</span><span class="pnm">'+esc(nm)+'</span></div>'; }
-function pbTagRow(label, ids, full){ var w=full?' wide':''; var lab='<span class="prole'+w+'">'+label+'</span>'; ids=(ids||[]).filter(function(m){return m&&members[m];}); if(!ids.length) return '<div class="prow">'+lab+'<span class="dnobody">\u2014</span></div>'; if(full){ return '<div class="prow" style="align-items:flex-start">'+lab+'<div class="tagwrap">'+ids.map(function(m){return '<span class="prow" style="gap:6px"><span class="mini" style="'+avBg(m)+'">'+avBody(m)+'</span><span class="pnm">'+esc(personName(m))+'</span></span>';}).join('')+'</div></div>'; } return '<div class="prow">'+lab+'<span class="avstack">'+ids.map(function(m){return '<span class="mini" style="'+avBg(m)+'" title="'+esc(personName(m))+'">'+avBody(m)+'</span>';}).join('')+'</span></div>'; }
+function pbPersonRow(label, mid, full, fb){ var w=full?' wide':''; if(!mid) return '<div class="prow"><span class="prole'+w+'">'+label+'</span><span class="dnobody">\u2014</span></div>'; var nm=full?(personName(mid)||fb||''):(firstName(mid)||fb||''); return '<div class="prow"><span class="prole'+w+'">'+label+'</span><span class="mini" style="'+avBg(mid)+'">'+avBody(mid)+'</span><span class="pnm who">'+esc(nm)+whoPop(mid)+'</span></div>'; }
+function pbTagRow(label, ids, full){ var w=full?' wide':''; var lab='<span class="prole'+w+'">'+label+'</span>'; ids=(ids||[]).filter(function(m){return m&&members[m];}); if(!ids.length) return '<div class="prow">'+lab+'<span class="dnobody">\u2014</span></div>'; if(full){ return '<div class="prow" style="align-items:flex-start">'+lab+'<div class="tagwrap">'+ids.map(function(m){return '<span class="prow" style="gap:6px"><span class="mini" style="'+avBg(m)+'">'+avBody(m)+'</span><span class="pnm who">'+esc(personName(m))+whoPop(m)+'</span></span>';}).join('')+'</div></div>'; } return '<div class="prow">'+lab+'<span class="avstack">'+ids.map(function(m){return '<span class="mini who-av" style="'+avBg(m)+'">'+avBody(m)+whoPop(m)+'</span>';}).join('')+'</span></div>'; }
 function issuePeopleHTML(i, full){ var to=i.leaderMid; var tagged=(i.participants||[]).filter(function(m){return m&&m!==i.raiserMid&&m!==to;}); var L=full?{r:'Raised by',t:'To',g:'Also tagged'}:{r:'Raised',t:'To',g:'Tagged'}; return '<div class="pblock'+(full?'':' pb-sm')+'">'+pbPersonRow(L.r,i.raiserMid,full,i.raiserName)+pbPersonRow(L.t,to,full,i.leaderName)+pbTagRow(L.g,tagged,full)+'</div>'; }
 function priPeopleHTML(p, full){ var L=full?{o:'Owner',i:'Involves'}:{o:'Owner',i:'Involves'}; return '<div class="pblock'+(full?'':' pb-sm')+'">'+pbPersonRow(L.o,p.ownerMid,full,p.ownerName)+pbTagRow(L.i,(p.involves||[]),full)+'</div>'; }
 function rowHTML(i){
@@ -2716,17 +2730,16 @@ function rowHTML(i){
   var done=(i.status==='done'&&boardMode!=='done');
   var handle=(typeof sortKey!=='undefined'&&sortKey==='mine')?ISSGRIP(i.id):'<span class="pri-handle ro"></span>';
   var st=sm[i.status]||sm.open;
-  var stcol=({open:'var(--open)',prog:'#ff6600',done:'var(--green)'})[i.status]||'var(--open)';/* PL_ISS_CARDS_FIX_V1 */
-  var fname=(fns[i.functionId]&&fns[i.functionId].name)||'';
-  var fnchip=fname?('<span class="iss-fn"><span class="fn-dot" style="background:'+fc+'"></span>'+esc(fname)+'</span>'):'';
+  var fname=(fns[i.functionId]&&fns[i.functionId].name)||'No function';
   var desc=(i.description||'').slice(0,90);
   var note=desc?('<div class="pri-noteline">'+esc(desc)+'</div>'):'';
-  var pills=privPill(i)+kindPill(i)+ballInline(i)+fnchip;
-  var meta='<div class="pri-meta">'+(pills?'<span class="iss-pills">'+pills+'</span>':'')+issuePeopleHTML(i,false)+spokenToggle(i)+'</div>';
+  var ownerMid=(i.status!=='done')?(i.ballMid||i.leaderMid||''):'';
+  var ownerAv=ownerMid?('<span class="who-av owner-av"><span class="mini" style="'+avBg(ownerMid)+'">'+avBody(ownerMid)+'</span>'+whoPop(ownerMid,'holds this')+'</span>'):'';
+  var actrow='<div class="iss-actrow">'+privPill(i)+kindPill(i)+ownerAv+'<span class="iss-spoke">'+spokenToggle(i)+'</span></div>';
   return '<li class="pri-card iss-card'+(done?' rowdone':'')+'" onclick="openIssue(\''+i.id+'\')">'
+    +'<span class="iss-spine" style="background:'+fc+'"><span class="iss-spine-pop">'+esc(fname)+'</span></span>'
     +handle
-    +'<span class="pri-rank" style="background:'+stcol+'" title="'+st[1]+'"></span>'
-    +'<div class="pri-main"><div class="pri-title">'+esc(i.title)+'</div>'+note+meta+'</div>'
+    +'<div class="pri-main"><div class="pri-title">'+esc(i.title)+'</div>'+note+actrow+issuePeopleHTML(i,false)+'</div>'
     +'<div class="pri-right"><span class="st '+st[0]+'"><span class="d"></span>'+st[1]+'</span><span class="iss-time">'+timeAgo(i.createdAt)+'</span></div>'
     +'</li>';
 }
