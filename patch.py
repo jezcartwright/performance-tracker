@@ -1,19 +1,24 @@
-import re, sys
-PATH="index.html"; SENTINEL="/* PL_RADIUS_SCALE_V1 */"
-MAP={5:8,6:8,7:8,9:8,10:12,11:12,13:12,14:12,18:16,20:16,30:16}
-RX=re.compile(r'border-radius:\s*(\d+)px(?=\s*[;}"\'])')
-def remap(t):
-    return RX.sub(lambda m: 'border-radius:%dpx'%MAP.get(int(m.group(1)), int(m.group(1))), t)
+import base64, sys
+PATH="index.html"; SENTINEL="/* PL_ISS_CARDS_V1 */"
+EXP={"E4a":2,"E4b":2}
+EDITS=[
+("E1","PGRpdiBjbGFzcz0iY2FyZCI+CiAgICAgIDx0YWJsZT4KICAgICAgICA8dGhlYWQ+PHRyPgogICAgICAgICAgPHRoPklzc3VlPC90aD4KICAgICAgICAgIDx0aCBjbGFzcz0iaHMiPlBlb3BsZTwvdGg+CiAgICAgICAgICA8dGggY2xhc3M9ImhzIj5TcG9rZW48L3RoPgogICAgICAgICAgPHRoPlN0YXR1czwvdGg+CiAgICAgICAgICA8dGggY2xhc3M9ImhzIj5SYWlzZWQ8L3RoPgogICAgICAgIDwvdHI+PC90aGVhZD4KICAgICAgICA8dGJvZHkgaWQ9InJvd3MiPjwvdGJvZHk+CiAgICAgIDwvdGFibGU+CiAgICA8L2Rpdj4=","PHVsIGNsYXNzPSJpc3MtbGlzdCIgaWQ9InJvd3MiPjwvdWw+"),
+("E2","ZnVuY3Rpb24gcm93SFRNTChpKXsKICB2YXIgZmM9aS5jb2xvcnx8KGZuc1tpLmZ1bmN0aW9uSWRdJiZmbnNbaS5mdW5jdGlvbklkXS5jb2xvcil8fCd2YXIoLS1zdHJpcCknOwogIHZhciBjbHM9KGkuc3RhdHVzPT09J2RvbmUnJiZib2FyZE1vZGUhPT0nZG9uZScpPycgY2xhc3M9InJvd2RvbmUiJzonJzsKICByZXR1cm4gJzx0cicrY2xzKycgb25jbGljaz0ib3Blbklzc3VlKFwnJytpLmlkKydcJykiPicKICAgKyc8dGQ+JysoKHR5cGVvZiBzb3J0S2V5IT09J3VuZGVmaW5lZCcmJnNvcnRLZXk9PT0nbWluZScpP0lTU0dSSVAoaS5pZCk6JycpKyc8ZGl2IGNsYXNzPSJ0LXRpdGxlIj4nK2VzYyhpLnRpdGxlKSsnPC9kaXY+PGRpdiBjbGFzcz0idC1zdWIiPicrZXNjKChpLmRlc2NyaXB0aW9ufHwnJykuc2xpY2UoMCw3MikpKyc8L2Rpdj4nKygocHJpdlBpbGwoaSl8fGtpbmRQaWxsKGkpfHxiYWxsSW5saW5lKGkpKT8oJzxkaXYgY2xhc3M9InQtbWV0YSI+Jytwcml2UGlsbChpKStraW5kUGlsbChpKStiYWxsSW5saW5lKGkpKyc8L2Rpdj4nKTonJykrJzwvdGQ+JwogICArJzx0ZCBjbGFzcz0iaHMiPicraXNzdWVQZW9wbGVIVE1MKGksZmFsc2UpKyc8L3RkPicKICAgKyc8dGQgY2xhc3M9ImhzIj4nK3Nwb2tlblRvZ2dsZShpKSsnPC90ZD4nCiAgICsnPHRkPjxzcGFuIGNsYXNzPSJzdCAnK3NtW2kuc3RhdHVzXVswXSsnIj48c3BhbiBjbGFzcz0iZCI+PC9zcGFuPicrc21baS5zdGF0dXNdWzFdKyc8L3NwYW4+PC90ZD4nCiAgICsnPHRkIGNsYXNzPSJocyIgc3R5bGU9ImNvbG9yOnZhcigtLXQzKTtmb250LXNpemU6MTIuNXB4Ij4nK3RpbWVBZ28oaS5jcmVhdGVkQXQpKyc8L3RkPjwvdHI+JzsKfQ==","ZnVuY3Rpb24gcm93SFRNTChpKXsKICB2YXIgZmM9aS5jb2xvcnx8KGZuc1tpLmZ1bmN0aW9uSWRdJiZmbnNbaS5mdW5jdGlvbklkXS5jb2xvcil8fCd2YXIoLS1zdHJpcCknOwogIHZhciBkb25lPShpLnN0YXR1cz09PSdkb25lJyYmYm9hcmRNb2RlIT09J2RvbmUnKTsKICB2YXIgaGFuZGxlPSh0eXBlb2Ygc29ydEtleSE9PSd1bmRlZmluZWQnJiZzb3J0S2V5PT09J21pbmUnKT9JU1NHUklQKGkuaWQpOic8c3BhbiBjbGFzcz0icHJpLWhhbmRsZSBybyI+PC9zcGFuPic7CiAgdmFyIHN0PXNtW2kuc3RhdHVzXXx8c20ub3BlbjsKICB2YXIgZm5hbWU9KGZuc1tpLmZ1bmN0aW9uSWRdJiZmbnNbaS5mdW5jdGlvbklkXS5uYW1lKXx8Jyc7CiAgdmFyIGZuY2hpcD1mbmFtZT8oJzxzcGFuIGNsYXNzPSJpc3MtZm4iPjxzcGFuIGNsYXNzPSJmbi1kb3QiIHN0eWxlPSJiYWNrZ3JvdW5kOicrZmMrJyI+PC9zcGFuPicrZXNjKGZuYW1lKSsnPC9zcGFuPicpOicnOwogIHZhciBkZXNjPShpLmRlc2NyaXB0aW9ufHwnJykuc2xpY2UoMCw5MCk7CiAgdmFyIG5vdGU9ZGVzYz8oJzxkaXYgY2xhc3M9InByaS1ub3RlbGluZSI+Jytlc2MoZGVzYykrJzwvZGl2PicpOicnOwogIHZhciBwaWxscz1wcml2UGlsbChpKStraW5kUGlsbChpKStiYWxsSW5saW5lKGkpK2ZuY2hpcDsKICB2YXIgbWV0YT0nPGRpdiBjbGFzcz0icHJpLW1ldGEiPicrKHBpbGxzPyc8c3BhbiBjbGFzcz0iaXNzLXBpbGxzIj4nK3BpbGxzKyc8L3NwYW4+JzonJykraXNzdWVQZW9wbGVIVE1MKGksZmFsc2UpK3Nwb2tlblRvZ2dsZShpKSsnPC9kaXY+JzsKICByZXR1cm4gJzxsaSBjbGFzcz0icHJpLWNhcmQgaXNzLWNhcmQnKyhkb25lPycgcm93ZG9uZSc6JycpKyciIG9uY2xpY2s9Im9wZW5Jc3N1ZShcJycraS5pZCsnXCcpIj4nCiAgICAraGFuZGxlCiAgICArJzxzcGFuIGNsYXNzPSJwcmktcmFuayIgc3R5bGU9ImJhY2tncm91bmQ6JytmYysnIiB0aXRsZT0iJytlc2MoZm5hbWUpKyciPjwvc3Bhbj4nCiAgICArJzxkaXYgY2xhc3M9InByaS1tYWluIj48ZGl2IGNsYXNzPSJwcmktdGl0bGUiPicrZXNjKGkudGl0bGUpKyc8L2Rpdj4nK25vdGUrbWV0YSsnPC9kaXY+JwogICAgKyc8ZGl2IGNsYXNzPSJwcmktcmlnaHQiPjxzcGFuIGNsYXNzPSJzdCAnK3N0WzBdKyciPjxzcGFuIGNsYXNzPSJkIj48L3NwYW4+JytzdFsxXSsnPC9zcGFuPjxzcGFuIGNsYXNzPSJpc3MtdGltZSI+Jyt0aW1lQWdvKGkuY3JlYXRlZEF0KSsnPC9zcGFuPjwvZGl2PicKICAgICsnPC9saT4nOwp9"),
+("E3","ZnVuY3Rpb24gZ3JwUm93KGxhYmVsLGNvbG9yLGNvdW50KXsgcmV0dXJuICc8dHIgY2xhc3M9ImdycCI+PHRkIGNvbHNwYW49IjUiPjxzcGFuIGNsYXNzPSJncnAtbGFiIj48c3BhbiBjbGFzcz0iZm4tZG90IiBzdHlsZT0iYmFja2dyb3VuZDonK2NvbG9yKyciPjwvc3Bhbj4nK2VzYyhsYWJlbCkrJzxzcGFuIGNsYXNzPSJjdCI+wrcgJytjb3VudCsnPC9zcGFuPjwvc3Bhbj48L3RkPjwvdHI+JzsgfQ==","ZnVuY3Rpb24gZ3JwUm93KGxhYmVsLGNvbG9yLGNvdW50KXsgcmV0dXJuICc8bGkgY2xhc3M9Imlzcy1ncnAiPjxzcGFuIGNsYXNzPSJncnAtbGFiIj48c3BhbiBjbGFzcz0iZm4tZG90IiBzdHlsZT0iYmFja2dyb3VuZDonK2NvbG9yKyciPjwvc3Bhbj4nK2VzYyhsYWJlbCkrJzxzcGFuIGNsYXNzPSJjdCI+wrcgJytjb3VudCsnPC9zcGFuPjwvc3Bhbj48L2xpPic7IH0="),
+("E4a","PHRyIGNsYXNzPSJlbXB0eS1yb3ciPjx0ZCBjb2xzcGFuPSI1Ij4=","PGxpIGNsYXNzPSJwcmktbm90ZSBpc3MtZW1wdHkiPg=="),
+("E4b","JzwvdGQ+PC90cj4nOyByZXR1cm47IH0=","JzwvbGk+JzsgcmV0dXJuOyB9"),
+("E5a","dmFyIHJvdz1lLmN1cnJlbnRUYXJnZXQuY2xvc2VzdCgndHInKTs=","dmFyIHJvdz1lLmN1cnJlbnRUYXJnZXQuY2xvc2VzdCgnLmlzcy1jYXJkJyk7"),
+("E5b","dmFyIHJvd3M9QXJyYXkucHJvdG90eXBlLnNsaWNlLmNhbGwodGIucXVlcnlTZWxlY3RvckFsbCgndHInKSkuZmlsdGVyKA==","dmFyIHJvd3M9QXJyYXkucHJvdG90eXBlLnNsaWNlLmNhbGwodGIucXVlcnlTZWxlY3RvckFsbCgnLmlzcy1jYXJkJykpLmZpbHRlcig="),
+("E6","dHIucm93ZG9uZTpob3ZlciB0ZHtvcGFjaXR5Oi43OH0=","dHIucm93ZG9uZTpob3ZlciB0ZHtvcGFjaXR5Oi43OH0KLyogUExfSVNTX0NBUkRTX1YxICovCi5pc3MtbGlzdHtsaXN0LXN0eWxlOm5vbmU7ZGlzcGxheTpmbGV4O2ZsZXgtZGlyZWN0aW9uOmNvbHVtbjtnYXA6MTBweDttYXJnaW46MDtwYWRkaW5nOjB9Ci5pc3MtY2FyZHtjdXJzb3I6cG9pbnRlcn0KLmlzcy1jYXJkIC5pc3MtaGFuZGxle3Bvc2l0aW9uOnN0YXRpYzt0cmFuc2Zvcm06bm9uZTtsZWZ0OmF1dG87ZGlzcGxheTpmbGV4O2FsaWduLWl0ZW1zOmNlbnRlcn0KLmlzcy1jYXJkLnJvd2RvbmV7b3BhY2l0eTouNTV9Lmlzcy1jYXJkLnJvd2RvbmU6aG92ZXJ7b3BhY2l0eTouOH0KLmlzcy1ncnB7bGlzdC1zdHlsZTpub25lO21hcmdpbjoxNHB4IDAgMnB4O3BhZGRpbmc6MCAycHh9Lmlzcy1ncnA6Zmlyc3QtY2hpbGR7bWFyZ2luLXRvcDowfQouaXNzLWZue2Rpc3BsYXk6aW5saW5lLWZsZXg7YWxpZ24taXRlbXM6Y2VudGVyO2dhcDo2cHg7Zm9udC1zaXplOjExcHg7Zm9udC13ZWlnaHQ6NzAwO2NvbG9yOnZhcigtLXQyKX0KLmlzcy10aW1le2ZvbnQtc2l6ZToxMS41cHg7Y29sb3I6dmFyKC0tdDMpO3doaXRlLXNwYWNlOm5vd3JhcH0KLmlzcy1waWxsc3tkaXNwbGF5OmlubGluZS1mbGV4O2FsaWduLWl0ZW1zOmNlbnRlcjtnYXA6NnB4O2ZsZXgtd3JhcDp3cmFwfQouaXNzLWNhcmQgLnByaS1tZXRhe2Rpc3BsYXk6ZmxleDtmbGV4LXdyYXA6d3JhcDthbGlnbi1pdGVtczpjZW50ZXI7Z2FwOjEwcHg7bWFyZ2luLXRvcDo2cHh9Ci5pc3MtY2FyZCAucHJpLXJpZ2h0e2Rpc3BsYXk6ZmxleDtmbGV4LWRpcmVjdGlvbjpjb2x1bW47YWxpZ24taXRlbXM6ZmxleC1lbmQ7Z2FwOjZweH0=")
+]
 s=open(PATH,encoding="utf-8").read()
 if SENTINEL in s:
-    print("Already applied — no change.")
-else:
-    i=s.find('srcdoc="')+len('srcdoc="'); j=s.find('"', i)
-    head, src, tail = s[:i], s[i:j], s[j:]
-    s=remap(head)+src+remap(tail)
-    anc="--green:#0e9f6e;"
-    if s.count(anc)<1:
-        sys.stderr.write("ABORT: :root anchor missing\n"); sys.exit(1)
-    s=s.replace(anc, anc+SENTINEL, 1)
-    open(PATH,"w",encoding="utf-8").write(s)
-    print("Applied PL_RADIUS_SCALE_V1. New size: %d bytes."%len(s.encode("utf-8")))
+    print("Already applied — no change."); sys.exit(0)
+for tag,ob,nb in EDITS:
+    old=base64.b64decode(ob).decode("utf-8"); new=base64.b64decode(nb).decode("utf-8")
+    want=EXP.get(tag,1); n=s.count(old)
+    if n!=want:
+        sys.stderr.write("ABORT %s: count=%d want=%d\n"%(tag,n,want)); sys.exit(1)
+    s=s.replace(old,new); print("  %s ok (%d)"%(tag,n))
+open(PATH,"w",encoding="utf-8").write(s)
+print("Applied PL_ISS_CARDS_V1. New size: %d bytes."%len(s.encode("utf-8")))
