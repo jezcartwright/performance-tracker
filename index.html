@@ -823,6 +823,8 @@ tr.iss-dragging{opacity:.55;background:var(--strip-soft)}
 .pd-foot{margin-top:18px;padding-top:14px;border-top:1px solid var(--b);text-align:center}
 .pd-del{background:none;border:0;color:#c0392b;font:600 13px/1 var(--ui),sans-serif;cursor:pointer;padding:8px 12px;border-radius:8px}
 .pd-del:hover{background:#fdecea}
+.pd-addta{position:relative;display:block;margin:8px 0 0;max-width:420px}
+.pd-addta .ta-input{width:100%;box-sizing:border-box;border:1.5px solid var(--b);border-radius:8px;padding:9px 11px;font:14px/1.3 var(--ui),sans-serif}
 /* PL_PRIDETAIL_V2 detail/people/docs */
 .pd-note{font-family:var(--serif);font-size:14.5px;line-height:1.5;color:var(--t)}
 .pd-empty{color:var(--t3)}
@@ -3647,13 +3649,14 @@ function refreshAux(){ var tm=document.getElementById('team'),am=document.getEle
 function prioritiesRef(){ return cRef().collection('priorities'); }
 /* PL_PRIDETAIL_V1 */
 var curPid=null, curPri=null, subPM=null;
+var pdAdding=false;
 /* PL_PRI_DELETE_V1 */
 window.deletePriority=function(){ var id=curPid||(curPri&&curPri.id); if(!id)return; if(!confirm('Delete this priority? This cannot be undone.'))return; prioritiesRef().doc(id).delete().then(function(){ goPriorities(); }).catch(function(e){ alert('Could not delete: '+((e&&e.message)||e)); }); };
 function pdStatusPill(st){ var sc=PRI_SCOL[st]||PRI_SCOL.Scoping; return '<span class="st" style="background:'+sc[0]+';color:'+sc[1]+'">'+esc(st)+'</span>'; }
 function pdInvolvesHTML(p){ var inv=(p&&(p.involves||p.involve))||[]; var owner=personName(p.ownerMid||p.mid||ME.mid)||'You'; var s='Owner: '+esc(owner); if(inv&&inv.length){ var ns=inv.map(function(m){return esc(personName(m));}).filter(Boolean).join(', '); if(ns) s+=' \u00b7 Involves '+ns; } return s; }
 function pdBadgeHTML(p,idx){ return (p.status==='Done')?'<svg viewBox="0 0 24 24" width="15" fill="none" stroke="#fff" stroke-width="2.4"><path d="m5 13 4 4L19 7"/></svg>':(idx>=0?String(idx+1):''); }
 function openPriority(id){
-  curPid=id; curPri=priById(id); if(!curPri){ goPriorities(); return; }
+  pdAdding=false; curPid=id; curPri=priById(id); if(!curPri){ goPriorities(); return; }
   var p=curPri; var sc=PRI_SCOL[p.status]||PRI_SCOL.Scoping;
   var idx=-1; for(var i=0;i<priorities.length;i++){ if(priorities[i].id===id){ idx=i; break; } }
   var bd=document.getElementById('pdBadge'); if(bd){ bd.style.background=sc[1]; bd.innerHTML=pdBadgeHTML(p,idx); }
@@ -3689,13 +3692,17 @@ function pdRenderDetail(){
   var p=curPri; if(!p)return;
   var nb=document.getElementById('pdNote'); if(nb){ var n=(p.note||'').trim(); nb.innerHTML=n?esc(n):'<span class="pd-empty">No detail yet \u2014 add it via Edit details.</span>'; }
   var pe=document.getElementById('pdPeople');
-  if(pe){ var owner=p.ownerMid||p.mid; var h=''; if(owner){ h+='<span class="rchip"><span class="mini" style="'+avBg(owner)+';width:22px;height:22px;font-size:9px">'+avBody(owner)+'</span>'+esc(personName(owner)||'You')+' \u00b7 Owner</span>'; } (p.involves||[]).forEach(function(m){ h+='<span class="rchip"><span class="mini" style="'+avBg(m)+';width:22px;height:22px;font-size:9px">'+avBody(m)+'</span>'+esc(personName(m)||'')+'<button type="button" onclick="pdRemovePerson(\''+m+'\')">\u00d7</button></span>'; }); h+='<span class="pd-addchip" onclick="pdAddPerson()">'+PD_ADD+' Add person</span>'; pe.innerHTML=h; }
+  if(pe){ var owner=p.ownerMid||p.mid; var h=''; if(owner){ h+='<span class="rchip"><span class="mini" style="'+avBg(owner)+';width:22px;height:22px;font-size:9px">'+avBody(owner)+'</span>'+esc(personName(owner)||'You')+' \u00b7 Owner</span>'; } (p.involves||[]).forEach(function(m){ h+='<span class="rchip"><span class="mini" style="'+avBg(m)+';width:22px;height:22px;font-size:9px">'+avBody(m)+'</span>'+esc(personName(m)||'')+'<button type="button" onclick="pdRemovePerson(\''+m+'\')">\u00d7</button></span>'; }); if(pdAdding){ h+='<div class="ta pd-addta"><input id="pdPersonInput" class="ta-input" type="text" placeholder="Search to add someone\u2026" autocomplete="off" oninput="pdPersonSearch(this)" onfocus="pdPersonSearch(this)" onblur="taBlur(\'pdPersonList\')"><div id="pdPersonList" class="ta-list" style="display:none"></div></div><span class="pd-addchip" onclick="pdAddDone()" style="margin-top:8px">Done</span>'; } else { h+='<span class="pd-addchip" onclick="pdAddPerson()">'+PD_ADD+' Add person</span>'; } pe.innerHTML=h; if(pdAdding){ var _pi=document.getElementById('pdPersonInput'); if(_pi)_pi.focus(); } }
   var dc=document.getElementById('pdDocs');
   if(dc){ var att=p.attachments||[]; var h=''; att.forEach(function(d,idx){ h+='<span class="rchip"><a href="'+esc(d.url)+'" target="_blank" rel="noopener" style="color:inherit;text-decoration:none;display:inline-flex;align-items:center;gap:6px">'+DOC_SVG+esc(d.name||d.url)+'</a><button type="button" onclick="pdRemoveDoc('+idx+')">\u00d7</button></span>'; }); h+='<span class="pd-addchip" onclick="pdAddDoc()">'+PD_ADD+' Add document</span>'; dc.innerHTML=h; }
 }
 function pdLog(text){ if(!curPid)return; prioritiesRef().doc(curPid).collection('messages').add({type:'system',event:'edit',text:text,authorMid:ME.mid,authorUid:ME.uid,authorName:ME.name,createdAt:FV.serverTimestamp()}); }
 function pdRemovePerson(mid){ if(!curPid||!curPri)return; var nv=(curPri.involves||[]).filter(function(m){return m!==mid;}); prioritiesRef().doc(curPid).update({involves:nv,updatedAt:FV.serverTimestamp()}); pdLog('Removed '+(personName(mid)||'someone')+' from people.'); curPri.involves=nv; pdRenderDetail(); }
-function pdAddPerson(){ if(curPid) openRaisePriority(curPid); }
+function pdAddPerson(){ pdAdding=true; pdRenderDetail(); }
+/* PL_PRI_INLINEADD_V1 */
+window.pdPersonSearch=function(inp){ var ex=[]; if(curPri){ var _o=curPri.ownerMid||curPri.mid; if(_o)ex.push(_o); (curPri.involves||[]).forEach(function(m){ex.push(m);}); } renderTaList('pdPersonList', inp.value, ex, 'pdPersonPick'); };
+window.pdPersonPick=function(m){ if(!curPid||!curPri)return; var inv=(curPri.involves||[]).slice(); if(inv.indexOf(m)<0){ inv.push(m); prioritiesRef().doc(curPid).update({involves:inv,updatedAt:FV.serverTimestamp()}); pdLog('Added '+(personName(m)||'someone')+' to the people on this priority.'); curPri.involves=inv; } pdRenderDetail(); var pi=document.getElementById('pdPersonInput'); if(pi){ pi.value=''; pi.focus(); } };
+window.pdAddDone=function(){ pdAdding=false; pdRenderDetail(); };
 function pdRemoveDoc(idx){ if(!curPid||!curPri)return; var na=(curPri.attachments||[]).slice(); var d=na[idx]; if(!d)return; na.splice(idx,1); prioritiesRef().doc(curPid).update({attachments:na,updatedAt:FV.serverTimestamp()}); pdLog('Removed document'+(d.name?' \u201c'+d.name+'\u201d':'')+'.'); curPri.attachments=na; pdRenderDetail(); }
 function pdAddDoc(){ if(!curPid||!curPri)return; var u=prompt('Paste a web link to the document:'); if(!u)return; u=u.trim(); if(!/^https?:\/\//i.test(u)){ alert('That doesn\'t look like a valid web link.'); return; } var doc={name:(typeof docNameFromUrl==='function'?docNameFromUrl(u):u), url:u, by:(ME.mid||ME.uid||null), byName:(ME.name||ME.first||''), at:new Date().toISOString()}; var na=(curPri.attachments||[]).slice(); na.push(doc); prioritiesRef().doc(curPid).update({attachments:na,updatedAt:FV.serverTimestamp()}); pdLog('Added document \u201c'+doc.name+'\u201d.'); curPri.attachments=na; pdRenderDetail(); }
 
