@@ -1657,6 +1657,7 @@ function openFocus(k){closeMenu();show('home');var f=document.getElementById('fo
   <section class="screen" id="cohome">
     <div class="cohome-head" style="display:flex;align-items:center;gap:14px">
       <h1 class="cohome-h1" style="margin-bottom:0">Companies</h1>
+      <button class="tg" id="usageOpen" onclick="goUsage()" style="display:none;margin-left:auto">Usage</button>
       <button class="tg" id="enqOpen" onclick="goEnquiries()" style="display:none;margin-left:auto">Enquiries <span class="ct" id="enqCount">0</span></button>
     </div>
     <div class="cohome-grid" id="cohomeGrid"></div>
@@ -1669,6 +1670,39 @@ function openFocus(k){closeMenu();show('home');var f=document.getElementById('fo
       <input id="gpsInput" class="gps-input" placeholder="🔍  Search people across all companies…" oninput="gpsRender()" autocomplete="off">
       <div id="gpsResults" class="gps-results"></div>
     </div>
+  </section>
+
+  <!-- PT_USAGE_V1 -->
+  <style>
+    #usage .u-cards{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:0 0 16px}
+    #usage .u-card{background:var(--card);border:1px solid var(--b);border-radius:14px;padding:13px 15px}
+    #usage .u-cl{font-size:12px;color:var(--t2)}
+    #usage .u-cn{font-family:var(--display);font-size:24px;font-weight:700;color:var(--t);margin-top:2px}
+    #usage .u-legend{display:flex;align-items:center;gap:16px;font-size:11.5px;color:var(--t3);margin:0 2px 9px}
+    #usage .u-legend i{display:inline-block;width:9px;height:9px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+    #usage .u-tbl{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--b);border-radius:16px;overflow:hidden;font-size:13px}
+    #usage .u-tbl th{text-align:left;font-weight:600;font-size:11px;color:var(--t3);padding:11px 14px;border-bottom:1px solid var(--b)}
+    #usage .u-tbl td{padding:13px 14px;border-bottom:1px solid var(--b);color:var(--t);vertical-align:middle}
+    #usage .u-tbl tr:last-child td{border-bottom:none}
+    #usage .u-dot{display:inline-block;width:9px;height:9px;border-radius:3px;margin-right:8px;vertical-align:0}
+    #usage .u-bar{display:flex;width:64px;height:8px;border-radius:4px;overflow:hidden;background:var(--strip-soft)}
+    #usage .u-bar i{display:block;height:100%}
+    #usage .u-pill{font-size:11px;font-weight:700;padding:3px 9px;border-radius:999px;white-space:nowrap}
+    #usage .u-pill.u-ok{background:#e6f6ef;color:#0e7a54}
+    #usage .u-pill.u-mid{background:var(--strip-soft);color:var(--strip-ink)}
+    #usage .u-pill.u-warn{background:#fdeccf;color:#9a6a00}
+    #usage .u-pill.u-empty{background:#f1efec;color:var(--t3)}
+    #usage .u-act{text-align:right;white-space:nowrap}
+    #usage .u-tog,#usage .u-open{font-family:var(--ui);font-size:12px;font-weight:600;border-radius:8px;padding:6px 11px;cursor:pointer;border:1px solid var(--b);background:var(--card);color:var(--t2)}
+    #usage .u-tog.on{border-color:var(--strip);color:var(--strip-ink);background:var(--strip-soft)}
+    #usage .u-open{margin-left:8px;border-color:var(--strip);color:var(--strip-ink)}
+  </style>
+  <section class="screen" id="usage">
+    <button class="enq-back" onclick="goCompaniesHome()">&larr; Companies</button>
+    <div class="enq-head"><h1 class="enq-h1">Usage <span class="superflag">SUPER ADMIN</span></h1></div>
+    <p class="psub" style="margin:-4px 0 16px;max-width:620px">Adoption across every company. Engagement signals — active users and dormancy — fill in once activity tracking is enabled.</p>
+    <div class="u-cards" id="usageCards"></div>
+    <div id="usageBody"></div>
   </section>
 
   <!-- PT_ENQUIRIES_V1 -->
@@ -2250,6 +2284,58 @@ window.ovOpenPerson=function(mid){ window.pendingProfileMid=mid; openFullCompany
 window.ovOpenWeb=function(){ var w=ovCompany.web; if(w) window.open(/^https?:/.test(w)?w:('https://'+w),'_blank'); };
 window.backToAdmin=function(){ goCompaniesHome(); };
 window.openFullCompany=function(cid){ switchCompany(cid); };
+/* PT_USAGE_V1 — super-admin cross-company usage panel */
+window.goUsage=function(){ if(!ME.isSuper)return; clearTabs(); setHome(true); show('usage'); buildUsage(); };
+var usageData=null, usageLoading=false;
+function buildUsage(){
+  var grid=document.getElementById('usageBody'); if(!grid){return;}
+  if(usageLoading){return;}
+  usageLoading=true;
+  grid.innerHTML='<div class="psub">Gathering usage across every company…</div>';
+  var cids=Object.keys(companies);
+  var jobs=cids.map(function(cid){ var base=companiesCol.doc(cid);
+    return Promise.all([ base.collection('members').get(), base.collection('issues').get().catch(function(){return {forEach:function(){}};}) ]).then(function(r){
+      var total=0,claimed=0,pending=0;
+      r[0].forEach(function(d){ var m=d.data(); total++; if(m.uid){claimed++;} else if(m.email){pending++;} });
+      var io=0,ip=0,idn=0;
+      r[1].forEach(function(d){ var s=(d.data().status||''); if(s==='open'){io++;} else if(s==='prog'){ip++;} else if(s==='done'){idn++;} });
+      var co=companies[cid]||{};
+      return {cid:cid,name:co.name||cid,theme:(co.theme&&co.theme.strip)||'#ff6600',total:total,claimed:claimed,pending:pending,open:io,prog:ip,done:idn,visAdmins:!!co.usageVisibleToAdmins};
+    }).catch(function(){ var co=companies[cid]||{}; return {cid:cid,name:co.name||cid,theme:'#ff6600',total:0,claimed:0,pending:0,open:0,prog:0,done:0,visAdmins:!!co.usageVisibleToAdmins}; });
+  });
+  Promise.all(jobs).then(function(rows){ usageData=rows; usageLoading=false; renderUsage(); });
+}
+function usageHealth(r){
+  if(!r.total){ return {k:'empty',label:'Empty',cls:'u-empty'}; }
+  if(!r.claimed){ return {k:'notstarted',label:'Not started',cls:'u-warn'}; }
+  if(r.pending>0){ return {k:'onboarding',label:'Onboarding',cls:'u-mid'}; }
+  return {k:'active',label:'Active',cls:'u-ok'};
+}
+function renderUsage(){
+  var cards=document.getElementById('usageCards'), grid=document.getElementById('usageBody');
+  if(!usageData||!grid){return;}
+  var rows=usageData.slice();
+  var tSeat=0,tClaim=0,tPend=0,tOpen=0;
+  rows.forEach(function(r){ tSeat+=r.total; tClaim+=r.claimed; tPend+=r.pending; tOpen+=r.open; });
+  if(cards){ cards.innerHTML=[['Companies',rows.length],['Seats claimed',tClaim+' / '+tSeat],['Pending invites',tPend],['Open issues',tOpen]].map(function(c){ return '<div class="u-card"><div class="u-cl">'+c[0]+'</div><div class="u-cn">'+c[1]+'</div></div>'; }).join(''); }
+  var ord={empty:0,notstarted:1,onboarding:2,active:3};
+  rows.sort(function(a,b){ var ha=usageHealth(a),hb=usageHealth(b); if(ord[ha.k]!==ord[hb.k]){return ord[ha.k]-ord[hb.k];} if(b.pending!==a.pending){return b.pending-a.pending;} return (a.name||'').localeCompare(b.name||''); });
+  grid.innerHTML='<div class="u-legend"><span><i style="background:var(--open)"></i>Open</span><span><i style="background:var(--strip)"></i>In progress</span><span><i style="background:var(--green)"></i>Done</span><span style="margin-left:auto">Needs attention first</span></div>'+
+  '<table class="u-tbl"><thead><tr><th>Company</th><th>Seats</th><th>Pending</th><th>Issues</th><th>Status</th><th></th></tr></thead><tbody>'+
+  rows.map(function(r){ var h=usageHealth(r);
+    var bar='<span class="u-bar"><i style="flex:'+r.open+';background:var(--open)"></i><i style="flex:'+r.prog+';background:var(--strip)"></i><i style="flex:'+r.done+';background:var(--green)"></i></span>';
+    var tog='<button class="u-tog'+(r.visAdmins?' on':'')+'" onclick="event.stopPropagation();usageToggleAdmins(\''+r.cid+'\')">'+(r.visAdmins?'Admins: on':'Admins: off')+'</button>';
+    return '<tr><td><span class="u-dot" style="background:'+r.theme+'"></span>'+esc(r.name)+'</td>'+
+      '<td>'+r.claimed+' / '+r.total+'</td>'+
+      '<td>'+(r.pending||'·')+'</td>'+
+      '<td>'+bar+'</td>'+
+      '<td><span class="u-pill '+h.cls+'">'+h.label+'</span></td>'+
+      '<td class="u-act">'+tog+'<button class="u-open" onclick="openFullCompany(\''+r.cid+'\')">Open &rarr;</button></td></tr>';
+  }).join('')+'</tbody></table>';
+}
+window.usageToggleAdmins=function(cid){ if(!ME.isSuper)return; var r=null; (usageData||[]).forEach(function(x){ if(x.cid===cid){r=x;} }); if(!r)return; var nv=!r.visAdmins;
+  companiesCol.doc(cid).update({usageVisibleToAdmins:nv}).then(function(){ r.visAdmins=nv; if(companies[cid]){companies[cid].usageVisibleToAdmins=nv;} renderUsage(); }).catch(function(e){ alert('Could not update admin access: '+e.message); }); };
+
 window.openFullChart=function(cid){ ORGVIEW='chart'; switchCompany(cid); window.goTeam(); };
 window.openFullList=function(cid,lens){ ORGVIEW='list'; ORGLIST=lens||'line'; switchCompany(cid); window.goTeam(); };
 window.openFullAdmin=function(cid){ switchCompany(cid); window.goAdmin(); };
@@ -2304,6 +2390,7 @@ function startApp(){
   renderCoSwitch();
   document.getElementById('superFlag').style.display=ME.isSuper?'':'none';
   var _eo=document.getElementById('enqOpen'); if(_eo)_eo.style.display=ME.isSuper?'':'none';
+  var _uo=document.getElementById('usageOpen'); if(_uo)_uo.style.display=ME.isSuper?'':'none';
   if(ME.isSuper && !subLeads){ subLeads=db.collection('leads').orderBy('createdAt','desc').onSnapshot(function(qs){ LEADS=[]; qs.forEach(function(d){ LEADS.push(Object.assign({id:d.id},d.data())); }); renderEnquiries(); updateEnqBadge(); }, function(e){ console.warn('leads',e); }); }
   document.getElementById('coPanel').style.display='none';
   var appEl=document.getElementById('app'); if(appEl)appEl.classList.toggle('cansuper',!!ME.isSuper);
