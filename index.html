@@ -2027,6 +2027,12 @@ function issMove(e){ if(!issDrag)return; e.preventDefault(); issDrag.card.style.
 function issUp(){ document.removeEventListener('pointermove',issMove); if(!issDrag)return; var host=issDrag.host; var c=issDrag.card; issDrag.ph.replaceWith(c); c.classList.remove('pri-dragging'); c.removeAttribute('style'); issDrag=null; var ids=Array.prototype.slice.call(host.querySelectorAll('.iss-handle')).map(function(h){return h.getAttribute('data-iss');}); myIssueOrder=ids; if(ME.uid){ db.collection('users').doc(ME.uid).set({issueOrder:ids},{merge:true}).catch(function(e){console.warn('issueOrder',e);}); } }
 function ms2(iso){ if(!iso)return 0; var t=Date.parse(iso); return isNaN(t)?0:t; }
 function cssColor(c){ if(c==null)return 'var(--strip)'; c=String(c).trim(); if(/^#[0-9a-fA-F]{3,8}$/.test(c))return c; if(/^var\(--[a-zA-Z0-9-]+\)$/.test(c))return c; if(/^(rgb|rgba|hsl|hsla)\([0-9.,%\/\s]+\)$/i.test(c))return c; if(/^[a-zA-Z]+$/.test(c))return c; return 'var(--strip)'; }
+function adminUidList(c){ return (c&&c.adminUids)?c.adminUids:[]; }
+function adminEmailList(c){ return (c&&c.adminEmails)?c.adminEmails:[]; }
+function amAdminOf(c){ return !!(ME.isSuper || adminUidList(c).indexOf(ME.uid)>=0 || (ME.email && adminEmailList(c).indexOf(ME.email)>=0)); }
+function isPersonAdmin(m){ if(!m)return false; return !!((m.uid && adminUidList(company).indexOf(m.uid)>=0) || (m.email && adminEmailList(company).indexOf(m.email)>=0)); }
+function setPersonAdmin(m, makeAdmin){ if(!ME.isSuper || !activeCid || !m) return null; var up={}; if(makeAdmin){ if(m.uid) up.adminUids=FV.arrayUnion(m.uid); if(m.email) up.adminEmails=FV.arrayUnion(m.email); } else { if(m.uid) up.adminUids=FV.arrayRemove(m.uid); if(m.email) up.adminEmails=FV.arrayRemove(m.email); } if(!Object.keys(up).length) return null; return companiesCol.doc(activeCid).update(up); }
+window.removeAdminEmail=function(em){ if(!ME.isSuper||!activeCid)return; companiesCol.doc(activeCid).update({adminEmails:FV.arrayRemove(em)}).catch(function(e){ alert('Could not remove admin: '+e.message); }); };
 function personColor(mid){var mm=members[mid]; if(mm&&mm.functionId&&fns[mm.functionId])return fns[mm.functionId].color; return 'var(--strip)';}
 function personName(mid){var mm=members[mid]; return mm?mm.name:'Someone';}
 function personInit(mid){var mm=members[mid]; return mm?mm.initials:'?';}
@@ -2178,7 +2184,7 @@ function ovIni(p){return p.initials||initials(p.name);}
 function ovMono(){ var t=(ovCompany.code||initials(ovCompany.name||'')||'•').toUpperCase().slice(0,3); return '<span style="font-size:'+(t.length>=3?'15px':'22px')+'">'+esc(t)+'</span>'; }
 function ovLogoHTML(){ return ovCompany.logo?('<img src="'+ovCompany.logo+'" alt="">'):ovMono(); }
 window.openCompanyOverview=function(cid){
-  if(!ME.isSuper && !(companies[cid]&&(companies[cid].adminUids||[]).indexOf(ME.uid)>=0)) return;
+  if(!amAdminOf(companies[cid])) return;
   ovCid=cid;
   clearTabs(); var ta=document.getElementById('tabAdmin'); if(ta)ta.classList.add('active');
   document.getElementById('ovBody').innerHTML='<div class="psub">Loading…</div>'; show('overview');
@@ -2199,7 +2205,7 @@ function renderOverview(){
   var openN=ovIssues.filter(function(i){return i.status!=='done';}).length;
   var admN=(c.adminUids||[]).length;
   var webLine=c.web?('<span class="web" onclick="ovOpenWeb()">'+esc(c.web)+'</span>'):'<span style="color:var(--t3)">no website set</span>';
-  var canEdit=ME.isSuper||(c.adminUids||[]).indexOf(ME.uid)>=0;
+  var canEdit=amAdminOf(c);
   var head='<div class="ov-head"><div class="ov-clogo" style="background:'+(c.logo?'#fff':th)+'">'+ovLogoHTML()+'</div>'
     +'<div class="ov-htext"><h2>'+esc(c.name||c.id)+'</h2><div class="ov-row2">'+(c.code?('<span class="ov-code" style="background:'+ths+';color:'+thi+'">'+esc(String(c.code).toUpperCase())+'</span><span>·</span>'):'')+webLine+'</div></div>'
     +'<button class="tg" style="white-space:nowrap" onclick="openFullCompany(\''+c.id+'\')">Open this company →</button></div>';
@@ -2314,7 +2320,7 @@ function startApp(){
   else { document.getElementById('login-screen').style.display='none'; document.getElementById('app').style.display='none'; revealPending=true; themeSeen=false; membersSeen=false; clearTimeout(revealTimer); revealTimer=setTimeout(revealApp,2000); }
   subC=cRef().onSnapshot(function(s){
     company=s.exists?s.data():{}; company.adminUids=company.adminUids||[];
-    isAdmin=ME.isSuper || company.adminUids.indexOf(ME.uid)>=0;
+    isAdmin=amAdminOf(company);
     applyTheme(company.theme||DEFAULT_THEME);
     renderClientLogo();
     document.getElementById('tabAdmin').style.display=isAdmin?'':'none';
@@ -2559,11 +2565,11 @@ window.openPerson=function(opts){ if(!isAdmin)return; opts=opts||{};
   var ag=document.getElementById('ps-adminGrp'), acb=document.getElementById('ps-admin'), ahint=document.getElementById('ps-adminHint'), albl=document.getElementById('ps-adminLabel');
   if(ag&&acb){
     if(ME.isSuper && em){ ag.style.display='';
-      var hasUid=!!em.uid;
-      acb.disabled=!hasUid;
-      acb.checked=hasUid && (company.adminUids||[]).indexOf(em.uid)>=0;
-      if(albl)albl.classList.toggle('disabled',!hasUid);
-      if(ahint)ahint.textContent=hasUid?'Admins can manage people, structure and settings for this company.':'They need to sign in once before they can be made an admin.';
+      var canAdmin=!!(em.uid||em.email);
+      acb.disabled=!canAdmin;
+      acb.checked=isPersonAdmin(em);
+      if(albl)albl.classList.toggle('disabled',!canAdmin);
+      if(ahint)ahint.textContent=canAdmin?(em.uid?'Admins can manage people, structure and settings for this company.':'Admin rights take effect the first time they sign in with this email.'):'Add an email for this person first, then you can make them an admin.';
     } else { ag.style.display='none'; acb.checked=false; acb.disabled=true; }
   }
   var go=document.getElementById('ps-go'); go.textContent=em?'Save changes':'Add person'; go.disabled=em?false:true;
@@ -2632,9 +2638,8 @@ window.savePerson=function(){ if(!isAdmin)return;
         if(prevLeaderFid&&prevLeaderFid!==fid) tasks.push(fnsRef().doc(prevLeaderFid).update({leaderMid:null,leaderName:''}));
       } else if(prevLeaderFid){ tasks.push(fnsRef().doc(prevLeaderFid).update({leaderMid:null,leaderName:''})); }
       if(ME.isSuper){ var acb=document.getElementById('ps-admin'); var m0=members[mid];
-        if(m0 && m0.uid && acb && !acb.disabled){ var isA=(company.adminUids||[]).indexOf(m0.uid)>=0;
-          if(acb.checked && !isA) tasks.push(companiesCol.doc(activeCid).update({adminUids:FV.arrayUnion(m0.uid)}));
-          else if(!acb.checked && isA) tasks.push(companiesCol.doc(activeCid).update({adminUids:FV.arrayRemove(m0.uid)}));
+        if(m0 && acb && !acb.disabled){ var isA=isPersonAdmin(m0);
+          if(acb.checked!==isA){ var _t=setPersonAdmin(m0, acb.checked); if(_t) tasks.push(_t); }
         }
       }
       return Promise.all(tasks);
@@ -3561,20 +3566,25 @@ window.asAddNew=function(){
   closeAddSheet();
 };
 window.toggleCompanyAdmin=function(mid){ if(!ME.isSuper||!activeCid)return; var m=members[mid]; if(!m)return;
-  if(!m.uid){ alert(m.name+' needs to sign in once before they can be made an admin — admin rights are linked to their login.'); return; }
-  var admins=(company.adminUids||[]); var on=admins.indexOf(m.uid)>=0;
-  companiesCol.doc(activeCid).update({adminUids: on?FV.arrayRemove(m.uid):FV.arrayUnion(m.uid)}).catch(function(e){ alert('Could not update: '+e.message); });
-};
+  if(!m.uid && !m.email){ alert(m.name+' needs an email address first before they can be made an admin.'); return; }
+  var t=setPersonAdmin(m, !isPersonAdmin(m));
+  if(t) t.catch(function(e){ alert('Could not update: '+e.message); });
+}
 function renderAdminsList(){
   var box=document.getElementById('admAdminsWrap'); if(!box)return;
-  var uids=(company&&company.adminUids)?company.adminUids:[];
-  if(!uids.length){ box.innerHTML='<div class="psub">No admins yet — edit a person (or open their profile) to grant admin.</div>'; return; }
-  box.innerHTML=uids.map(function(u){
-    var mid=null; Object.keys(members).forEach(function(m){ if(members[m].uid===u) mid=m; });
-    var avatar,name,sub;
-    if(mid){ avatar='<span class="olav" style="'+avBg(mid)+'">'+avBody(mid)+'</span>'; name=esc(personName(mid)); sub=esc(roleLabelFor(mid)||'Team member'); }
-    else { avatar='<span class="olav empty">★</span>'; name=(u===ME.uid?'You':'External admin'); sub=(u===ME.uid?'Super admin':'Not a member of this company'); }
-    var rm=ME.isSuper?'<button class="tinybtn" onclick="removeAdminUid(\''+u+'\')">Remove</button>':'';
+  var uids=(company&&company.adminUids)?company.adminUids.slice():[];
+  var emails=(company&&company.adminEmails)?company.adminEmails.slice():[];
+  var rows=[], seen={};
+  uids.forEach(function(u){ var mid=null; Object.keys(members).forEach(function(m){ if(members[m].uid===u) mid=m; }); if(mid) seen[mid]=true; rows.push({kind:'uid',key:u,mid:mid}); });
+  emails.forEach(function(em){ var mid=null; Object.keys(members).forEach(function(m){ if((members[m].email||'')===em) mid=m; }); if(mid && seen[mid]) return; if(mid) seen[mid]=true; rows.push({kind:'email',key:em,mid:mid,pending:!(mid&&members[mid]&&members[mid].uid)}); });
+  if(!rows.length){ box.innerHTML='<div class="psub">No admins yet — edit a person (or open their profile) to grant admin.</div>'; return; }
+  box.innerHTML=rows.map(function(r){
+    var avatar,name,sub,rm;
+    if(r.mid){ avatar='<span class="olav" style="'+avBg(r.mid)+'">'+avBody(r.mid)+'</span>'; name=esc(personName(r.mid)); sub=esc(roleLabelFor(r.mid)||'Team member'); }
+    else if(r.kind==='uid'){ avatar='<span class="olav empty">★</span>'; name=(r.key===ME.uid?'You':'External admin'); sub=(r.key===ME.uid?'Super admin':'Not a member of this company'); }
+    else { avatar='<span class="olav empty">✉️</span>'; name=esc(r.key); sub='Invited as admin'; }
+    if(r.pending) sub=sub+' · pending first sign-in';
+    rm=ME.isSuper?(r.kind==='email'?'<button class="tinybtn" onclick="removeAdminEmail(\''+esc(r.key)+'\')">Remove</button>':'<button class="tinybtn" onclick="removeAdminUid(\''+r.key+'\')">Remove</button>'):'';
     return '<div class="olmrow" style="cursor:default">'+avatar+'<span class="olwho"><span class="olnm">'+name+'</span><span class="olrl">'+sub+'</span></span><span class="olsp"></span>'+rm+'</div>';
   }).join('');
 }
@@ -3605,7 +3615,7 @@ function renderArchive(){ var el=document.getElementById('archBody'); if(!el)ret
   el.innerHTML=archive.map(function(a){ return '<div class="arch-row"><span class="av" style="background:var(--t3)">'+esc(a.initials||initials(a.name))+'</span><div class="arch-meta"><div class="an">'+esc(a.name)+(a.pid?(' <span class="pidchip">'+esc(a.pid)+'</span>'):'')+'</div><div class="as">was '+esc(a.role||'')+(a.fromCompany?(' · '+esc(a.fromCompany)):'')+'</div></div><button class="tinybtn" onclick="reassignPick(\''+a.id+'\')">↪ Reassign</button></div>'; }).join('');
 }
 window.reassignPick=function(id){ var a=null; for(var i=0;i<archive.length;i++){if(archive[i].id===id){a=archive[i];break;}} if(!a)return;
-  var cids=Object.keys(companies).filter(function(c){return ME.isSuper||(companies[c].adminUids||[]).indexOf(ME.uid)>=0;});
+  var cids=Object.keys(companies).filter(function(c){return amAdminOf(companies[c]);});
   if(!cids.length){alert('No company you can manage.');return;}
   var p=prompt('Reassign '+a.name+' to which company?\n\n'+cids.map(function(c,i){return (i+1)+'. '+(companies[c].name||c);}).join('\n')); var ci=parseInt(p,10)-1; if(isNaN(ci)||ci<0||ci>=cids.length)return;
   var cid=cids[ci];
@@ -3631,7 +3641,7 @@ function paintProfile(mid){ var m=members[mid]; if(!m)return false; curProfile=m
   document.getElementById('pfEmail').textContent=m.email||'';
   var pe=document.getElementById('pfEdit'); if(pe) pe.style.display=(isAdmin && company.ceoMemberId!==mid)?'inline-flex':'none';
   var pv=document.getElementById('pfInvite'); if(pv) pv.style.display=(isAdmin && !m.uid && m.email)?'inline-flex':'none';
-  var pa=document.getElementById('pfAdmin'); if(pa){ if(ME.isSuper && activeCid && m.uid && m.uid!==ME.uid){ var _ca=(company.adminUids||[]).indexOf(m.uid)>=0; pa.style.display='inline-flex'; pa.textContent=_ca?'✓ Admin':'Make admin'; pa.style.background=_ca?'#0f8a6b':''; pa.style.color=_ca?'#fff':''; pa.style.borderColor=_ca?'#0f8a6b':''; } else { pa.style.display='none'; } }
+  var pa=document.getElementById('pfAdmin'); if(pa){ if(ME.isSuper && activeCid && m.uid && m.uid!==ME.uid){ var _ca=isPersonAdmin(m); pa.style.display='inline-flex'; pa.textContent=_ca?'✓ Admin':'Make admin'; pa.style.background=_ca?'#0f8a6b':''; pa.style.color=_ca?'#fff':''; pa.style.borderColor=_ca?'#0f8a6b':''; } else { pa.style.display='none'; } }
   renderProfileIssues(mid);
   renderProfilePriorities(mid);
   renderProfileRel(mid);

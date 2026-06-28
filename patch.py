@@ -1,85 +1,47 @@
 #!/usr/bin/env python3
-# PL_CSSCOLOR_V1 — neutralise stored-XSS via colour values inserted into style="...".
-# Strategy: one cssColor() allow-list sanitiser, applied where colour DATA enters
-# the app (functions loader, company-theme loader) plus the member-writable issue
-# colour (i.color). All downstream style="background:'+x+'" sites then render safe
-# values. No render-site edits, landing srcdoc untouched.
+# PL_ADMINEMAIL_V1 - let a super-admin designate a company admin BEFORE first sign-in.
+# Admin can be keyed by verified EMAIL (adminEmails) as well as uid (adminUids).
 import base64, sys
-
 PATH = sys.argv[1] if len(sys.argv) > 1 else 'index.html'
 s = open(PATH, encoding='utf-8').read()
-
-SENT = 'function cssColor('
-if SENT in s:
-    print('ok already-applied (cssColor present) — no-op'); sys.exit(0)
-
+if 'function amAdminOf(' in s:
+    print('ok already-applied (amAdminOf present) - no-op'); sys.exit(0)
 def b(x): return base64.b64decode(x).decode('utf-8')
 
-# ---- expected exact counts (measured on live source) --------------------------
 EXPECT = {
- 'fns[d.id]=Object.assign({id:d.id},d.data());': 1,
- 'companies[d.id]=Object.assign({id:d.id},d.data());': 2,
- "var fc=i.color||(fns[i.functionId]&&fns[i.functionId].color)||'var(--strip)';": 3,
- "(i.color||'var(--strip)')": 1,
  'function personColor(mid){': 1,
+ 'isAdmin=ME.isSuper || company.adminUids.indexOf(ME.uid)>=0;': 1,
+ 'if(!ME.isSuper && !(companies[cid]&&(companies[cid].adminUids||[]).indexOf(ME.uid)>=0)) return;': 1,
+ 'var canEdit=ME.isSuper||(c.adminUids||[]).indexOf(ME.uid)>=0;': 1,
+ 'filter(function(c){return ME.isSuper||(companies[c].adminUids||[]).indexOf(ME.uid)>=0;});': 1,
+ 'var _ca=(company.adminUids||[]).indexOf(m.uid)>=0;': 1,
 }
 for needle, n in EXPECT.items():
-    got = s.count(needle)
-    if got != n:
-        print('ABORT anchor count %d!=%d for: %r' % (got, n, needle[:60])); sys.exit(1)
+    if s.count(needle) != n:
+        print('ABORT count ' + str(s.count(needle)) + '!=' + str(n) + ': ' + repr(needle[:60])); sys.exit(1)
 
-# ---- 1) cssColor() helper, inserted before personColor() ----------------------
-HELPER = b(
- 'ZnVuY3Rpb24gY3NzQ29sb3IoYyl7IGlmKGM9PW51bGwpcmV0dXJuICd2YXIoLS1zdHJpcCkn'
- 'OyBjPVN0cmluZyhjKS50cmltKCk7IGlmKC9eI1swLTlhLWZBLUZdezMsOH0kLy50ZXN0KGMp'
- 'KXJldHVybiBjOyBpZigvXnZhclwoLS1bYS16QS1aMC05LV0rXCkkLy50ZXN0KGMpKXJldHVy'
- 'biBjOyBpZigvXihyZ2J8cmdiYXxoc2x8aHNsYSlcKFswLTkuLCVcL1xzXStcKSQvaS50ZXN0'
- 'KGMpKXJldHVybiBjOyBpZigvXlthLXpBLVpdKyQvLnRlc3QoYykpcmV0dXJuIGM7IHJldHVy'
- 'biAndmFyKC0tc3RyaXApJzsgfQo=')
-anchor1 = 'function personColor(mid){'
-s = s.replace(anchor1, HELPER + anchor1, 1)
+def one(old, new, label):
+    global s
+    if s.count(old) != 1:
+        print('ABORT (not unique) ' + label); sys.exit(1)
+    s = s.replace(old, new, 1); print('ok ' + label)
 
-# ---- 2) functions loader: sanitise .color ------------------------------------
-old2 = 'fns[d.id]=Object.assign({id:d.id},d.data());'
-new2 = ('var _fd=d.data(); if(_fd&&_fd.color!=null)_fd.color=cssColor(_fd.color); '
-        'fns[d.id]=Object.assign({id:d.id},_fd);')
-s = s.replace(old2, new2, 1)
+HELPERS = b("ZnVuY3Rpb24gYWRtaW5VaWRMaXN0KGMpeyByZXR1cm4gKGMmJmMuYWRtaW5VaWRzKT9jLmFkbWluVWlkczpbXTsgfQpmdW5jdGlvbiBhZG1pbkVtYWlsTGlzdChjKXsgcmV0dXJuIChjJiZjLmFkbWluRW1haWxzKT9jLmFkbWluRW1haWxzOltdOyB9CmZ1bmN0aW9uIGFtQWRtaW5PZihjKXsgcmV0dXJuICEhKE1FLmlzU3VwZXIgfHwgYWRtaW5VaWRMaXN0KGMpLmluZGV4T2YoTUUudWlkKT49MCB8fCAoTUUuZW1haWwgJiYgYWRtaW5FbWFpbExpc3QoYykuaW5kZXhPZihNRS5lbWFpbCk+PTApKTsgfQpmdW5jdGlvbiBpc1BlcnNvbkFkbWluKG0peyBpZighbSlyZXR1cm4gZmFsc2U7IHJldHVybiAhISgobS51aWQgJiYgYWRtaW5VaWRMaXN0KGNvbXBhbnkpLmluZGV4T2YobS51aWQpPj0wKSB8fCAobS5lbWFpbCAmJiBhZG1pbkVtYWlsTGlzdChjb21wYW55KS5pbmRleE9mKG0uZW1haWwpPj0wKSk7IH0KZnVuY3Rpb24gc2V0UGVyc29uQWRtaW4obSwgbWFrZUFkbWluKXsgaWYoIU1FLmlzU3VwZXIgfHwgIWFjdGl2ZUNpZCB8fCAhbSkgcmV0dXJuIG51bGw7IHZhciB1cD17fTsgaWYobWFrZUFkbWluKXsgaWYobS51aWQpIHVwLmFkbWluVWlkcz1GVi5hcnJheVVuaW9uKG0udWlkKTsgaWYobS5lbWFpbCkgdXAuYWRtaW5FbWFpbHM9RlYuYXJyYXlVbmlvbihtLmVtYWlsKTsgfSBlbHNlIHsgaWYobS51aWQpIHVwLmFkbWluVWlkcz1GVi5hcnJheVJlbW92ZShtLnVpZCk7IGlmKG0uZW1haWwpIHVwLmFkbWluRW1haWxzPUZWLmFycmF5UmVtb3ZlKG0uZW1haWwpOyB9IGlmKCFPYmplY3Qua2V5cyh1cCkubGVuZ3RoKSByZXR1cm4gbnVsbDsgcmV0dXJuIGNvbXBhbmllc0NvbC5kb2MoYWN0aXZlQ2lkKS51cGRhdGUodXApOyB9CndpbmRvdy5yZW1vdmVBZG1pbkVtYWlsPWZ1bmN0aW9uKGVtKXsgaWYoIU1FLmlzU3VwZXJ8fCFhY3RpdmVDaWQpcmV0dXJuOyBjb21wYW5pZXNDb2wuZG9jKGFjdGl2ZUNpZCkudXBkYXRlKHthZG1pbkVtYWlsczpGVi5hcnJheVJlbW92ZShlbSl9KS5jYXRjaChmdW5jdGlvbihlKXsgYWxlcnQoJ0NvdWxkIG5vdCByZW1vdmUgYWRtaW46ICcrZS5tZXNzYWdlKTsgfSk7IH07Cg==")
+one('function personColor(mid){', HELPERS + 'function personColor(mid){', 'helpers inserted')
+one('isAdmin=ME.isSuper || company.adminUids.indexOf(ME.uid)>=0;', 'isAdmin=amAdminOf(company);', 'global isAdmin -> amAdminOf')
+one(b("dmFyIGhhc1VpZD0hIWVtLnVpZDsKICAgICAgYWNiLmRpc2FibGVkPSFoYXNVaWQ7CiAgICAgIGFjYi5jaGVja2VkPWhhc1VpZCAmJiAoY29tcGFueS5hZG1pblVpZHN8fFtdKS5pbmRleE9mKGVtLnVpZCk+PTA7CiAgICAgIGlmKGFsYmwpYWxibC5jbGFzc0xpc3QudG9nZ2xlKCdkaXNhYmxlZCcsIWhhc1VpZCk7CiAgICAgIGlmKGFoaW50KWFoaW50LnRleHRDb250ZW50PWhhc1VpZD8nQWRtaW5zIGNhbiBtYW5hZ2UgcGVvcGxlLCBzdHJ1Y3R1cmUgYW5kIHNldHRpbmdzIGZvciB0aGlzIGNvbXBhbnkuJzonVGhleSBuZWVkIHRvIHNpZ24gaW4gb25jZSBiZWZvcmUgdGhleSBjYW4gYmUgbWFkZSBhbiBhZG1pbi4nOw=="), b("dmFyIGNhbkFkbWluPSEhKGVtLnVpZHx8ZW0uZW1haWwpOwogICAgICBhY2IuZGlzYWJsZWQ9IWNhbkFkbWluOwogICAgICBhY2IuY2hlY2tlZD1pc1BlcnNvbkFkbWluKGVtKTsKICAgICAgaWYoYWxibClhbGJsLmNsYXNzTGlzdC50b2dnbGUoJ2Rpc2FibGVkJywhY2FuQWRtaW4pOwogICAgICBpZihhaGludClhaGludC50ZXh0Q29udGVudD1jYW5BZG1pbj8oZW0udWlkPydBZG1pbnMgY2FuIG1hbmFnZSBwZW9wbGUsIHN0cnVjdHVyZSBhbmQgc2V0dGluZ3MgZm9yIHRoaXMgY29tcGFueS4nOidBZG1pbiByaWdodHMgdGFrZSBlZmZlY3QgdGhlIGZpcnN0IHRpbWUgdGhleSBzaWduIGluIHdpdGggdGhpcyBlbWFpbC4nKTonQWRkIGFuIGVtYWlsIGZvciB0aGlzIHBlcnNvbiBmaXJzdCwgdGhlbiB5b3UgY2FuIG1ha2UgdGhlbSBhbiBhZG1pbi4nOw=="), 'modal checkbox enabled pre-signin')
+one(b("aWYobTAgJiYgbTAudWlkICYmIGFjYiAmJiAhYWNiLmRpc2FibGVkKXsgdmFyIGlzQT0oY29tcGFueS5hZG1pblVpZHN8fFtdKS5pbmRleE9mKG0wLnVpZCk+PTA7CiAgICAgICAgICBpZihhY2IuY2hlY2tlZCAmJiAhaXNBKSB0YXNrcy5wdXNoKGNvbXBhbmllc0NvbC5kb2MoYWN0aXZlQ2lkKS51cGRhdGUoe2FkbWluVWlkczpGVi5hcnJheVVuaW9uKG0wLnVpZCl9KSk7CiAgICAgICAgICBlbHNlIGlmKCFhY2IuY2hlY2tlZCAmJiBpc0EpIHRhc2tzLnB1c2goY29tcGFuaWVzQ29sLmRvYyhhY3RpdmVDaWQpLnVwZGF0ZSh7YWRtaW5VaWRzOkZWLmFycmF5UmVtb3ZlKG0wLnVpZCl9KSk7"),  b("aWYobTAgJiYgYWNiICYmICFhY2IuZGlzYWJsZWQpeyB2YXIgaXNBPWlzUGVyc29uQWRtaW4obTApOwogICAgICAgICAgaWYoYWNiLmNoZWNrZWQhPT1pc0EpeyB2YXIgX3Q9c2V0UGVyc29uQWRtaW4obTAsIGFjYi5jaGVja2VkKTsgaWYoX3QpIHRhc2tzLnB1c2goX3QpOyB9"),  'savePerson apply -> setPersonAdmin')
+one(b("d2luZG93LnRvZ2dsZUNvbXBhbnlBZG1pbj1mdW5jdGlvbihtaWQpeyBpZighTUUuaXNTdXBlcnx8IWFjdGl2ZUNpZClyZXR1cm47IHZhciBtPW1lbWJlcnNbbWlkXTsgaWYoIW0pcmV0dXJuOwogIGlmKCFtLnVpZCl7IGFsZXJ0KG0ubmFtZSsnIG5lZWRzIHRvIHNpZ24gaW4gb25jZSBiZWZvcmUgdGhleSBjYW4gYmUgbWFkZSBhbiBhZG1pbiDigJQgYWRtaW4gcmlnaHRzIGFyZSBsaW5rZWQgdG8gdGhlaXIgbG9naW4uJyk7IHJldHVybjsgfQogIHZhciBhZG1pbnM9KGNvbXBhbnkuYWRtaW5VaWRzfHxbXSk7IHZhciBvbj1hZG1pbnMuaW5kZXhPZihtLnVpZCk+PTA7CiAgY29tcGFuaWVzQ29sLmRvYyhhY3RpdmVDaWQpLnVwZGF0ZSh7YWRtaW5VaWRzOiBvbj9GVi5hcnJheVJlbW92ZShtLnVpZCk6RlYuYXJyYXlVbmlvbihtLnVpZCl9KS5jYXRjaChmdW5jdGlvbihlKXsgYWxlcnQoJ0NvdWxkIG5vdCB1cGRhdGU6ICcrZS5tZXNzYWdlKTsgfSk7Cn07"),b("d2luZG93LnRvZ2dsZUNvbXBhbnlBZG1pbj1mdW5jdGlvbihtaWQpeyBpZighTUUuaXNTdXBlcnx8IWFjdGl2ZUNpZClyZXR1cm47IHZhciBtPW1lbWJlcnNbbWlkXTsgaWYoIW0pcmV0dXJuOwogIGlmKCFtLnVpZCAmJiAhbS5lbWFpbCl7IGFsZXJ0KG0ubmFtZSsnIG5lZWRzIGFuIGVtYWlsIGFkZHJlc3MgZmlyc3QgYmVmb3JlIHRoZXkgY2FuIGJlIG1hZGUgYW4gYWRtaW4uJyk7IHJldHVybjsgfQogIHZhciB0PXNldFBlcnNvbkFkbWluKG0sICFpc1BlcnNvbkFkbWluKG0pKTsKICBpZih0KSB0LmNhdGNoKGZ1bmN0aW9uKGUpeyBhbGVydCgnQ291bGQgbm90IHVwZGF0ZTogJytlLm1lc3NhZ2UpOyB9KTsKfQ=="),'toggleCompanyAdmin works pre-signin')
+one(b("ZnVuY3Rpb24gcmVuZGVyQWRtaW5zTGlzdCgpewogIHZhciBib3g9ZG9jdW1lbnQuZ2V0RWxlbWVudEJ5SWQoJ2FkbUFkbWluc1dyYXAnKTsgaWYoIWJveClyZXR1cm47CiAgdmFyIHVpZHM9KGNvbXBhbnkmJmNvbXBhbnkuYWRtaW5VaWRzKT9jb21wYW55LmFkbWluVWlkczpbXTsKICBpZighdWlkcy5sZW5ndGgpeyBib3guaW5uZXJIVE1MPSc8ZGl2IGNsYXNzPSJwc3ViIj5ObyBhZG1pbnMgeWV0IOKAlCBlZGl0IGEgcGVyc29uIChvciBvcGVuIHRoZWlyIHByb2ZpbGUpIHRvIGdyYW50IGFkbWluLjwvZGl2Pic7IHJldHVybjsgfQogIGJveC5pbm5lckhUTUw9dWlkcy5tYXAoZnVuY3Rpb24odSl7CiAgICB2YXIgbWlkPW51bGw7IE9iamVjdC5rZXlzKG1lbWJlcnMpLmZvckVhY2goZnVuY3Rpb24obSl7IGlmKG1lbWJlcnNbbV0udWlkPT09dSkgbWlkPW07IH0pOwogICAgdmFyIGF2YXRhcixuYW1lLHN1YjsKICAgIGlmKG1pZCl7IGF2YXRhcj0nPHNwYW4gY2xhc3M9Im9sYXYiIHN0eWxlPSInK2F2QmcobWlkKSsnIj4nK2F2Qm9keShtaWQpKyc8L3NwYW4+JzsgbmFtZT1lc2MocGVyc29uTmFtZShtaWQpKTsgc3ViPWVzYyhyb2xlTGFiZWxGb3IobWlkKXx8J1RlYW0gbWVtYmVyJyk7IH0KICAgIGVsc2UgeyBhdmF0YXI9JzxzcGFuIGNsYXNzPSJvbGF2IGVtcHR5Ij7imIU8L3NwYW4+JzsgbmFtZT0odT09PU1FLnVpZD8nWW91JzonRXh0ZXJuYWwgYWRtaW4nKTsgc3ViPSh1PT09TUUudWlkPydTdXBlciBhZG1pbic6J05vdCBhIG1lbWJlciBvZiB0aGlzIGNvbXBhbnknKTsgfQogICAgdmFyIHJtPU1FLmlzU3VwZXI/JzxidXR0b24gY2xhc3M9InRpbnlidG4iIG9uY2xpY2s9InJlbW92ZUFkbWluVWlkKFwnJyt1KydcJykiPlJlbW92ZTwvYnV0dG9uPic6Jyc7CiAgICByZXR1cm4gJzxkaXYgY2xhc3M9Im9sbXJvdyIgc3R5bGU9ImN1cnNvcjpkZWZhdWx0Ij4nK2F2YXRhcisnPHNwYW4gY2xhc3M9Im9sd2hvIj48c3BhbiBjbGFzcz0ib2xubSI+JytuYW1lKyc8L3NwYW4+PHNwYW4gY2xhc3M9Im9scmwiPicrc3ViKyc8L3NwYW4+PC9zcGFuPjxzcGFuIGNsYXNzPSJvbHNwIj48L3NwYW4+JytybSsnPC9kaXY+JzsKICB9KS5qb2luKCcnKTsKfQ=="),   b("ZnVuY3Rpb24gcmVuZGVyQWRtaW5zTGlzdCgpewogIHZhciBib3g9ZG9jdW1lbnQuZ2V0RWxlbWVudEJ5SWQoJ2FkbUFkbWluc1dyYXAnKTsgaWYoIWJveClyZXR1cm47CiAgdmFyIHVpZHM9KGNvbXBhbnkmJmNvbXBhbnkuYWRtaW5VaWRzKT9jb21wYW55LmFkbWluVWlkcy5zbGljZSgpOltdOwogIHZhciBlbWFpbHM9KGNvbXBhbnkmJmNvbXBhbnkuYWRtaW5FbWFpbHMpP2NvbXBhbnkuYWRtaW5FbWFpbHMuc2xpY2UoKTpbXTsKICB2YXIgcm93cz1bXSwgc2Vlbj17fTsKICB1aWRzLmZvckVhY2goZnVuY3Rpb24odSl7IHZhciBtaWQ9bnVsbDsgT2JqZWN0LmtleXMobWVtYmVycykuZm9yRWFjaChmdW5jdGlvbihtKXsgaWYobWVtYmVyc1ttXS51aWQ9PT11KSBtaWQ9bTsgfSk7IGlmKG1pZCkgc2VlblttaWRdPXRydWU7IHJvd3MucHVzaCh7a2luZDondWlkJyxrZXk6dSxtaWQ6bWlkfSk7IH0pOwogIGVtYWlscy5mb3JFYWNoKGZ1bmN0aW9uKGVtKXsgdmFyIG1pZD1udWxsOyBPYmplY3Qua2V5cyhtZW1iZXJzKS5mb3JFYWNoKGZ1bmN0aW9uKG0peyBpZigobWVtYmVyc1ttXS5lbWFpbHx8JycpPT09ZW0pIG1pZD1tOyB9KTsgaWYobWlkICYmIHNlZW5bbWlkXSkgcmV0dXJuOyBpZihtaWQpIHNlZW5bbWlkXT10cnVlOyByb3dzLnB1c2goe2tpbmQ6J2VtYWlsJyxrZXk6ZW0sbWlkOm1pZCxwZW5kaW5nOiEobWlkJiZtZW1iZXJzW21pZF0mJm1lbWJlcnNbbWlkXS51aWQpfSk7IH0pOwogIGlmKCFyb3dzLmxlbmd0aCl7IGJveC5pbm5lckhUTUw9JzxkaXYgY2xhc3M9InBzdWIiPk5vIGFkbWlucyB5ZXQg4oCUIGVkaXQgYSBwZXJzb24gKG9yIG9wZW4gdGhlaXIgcHJvZmlsZSkgdG8gZ3JhbnQgYWRtaW4uPC9kaXY+JzsgcmV0dXJuOyB9CiAgYm94LmlubmVySFRNTD1yb3dzLm1hcChmdW5jdGlvbihyKXsKICAgIHZhciBhdmF0YXIsbmFtZSxzdWIscm07CiAgICBpZihyLm1pZCl7IGF2YXRhcj0nPHNwYW4gY2xhc3M9Im9sYXYiIHN0eWxlPSInK2F2Qmcoci5taWQpKyciPicrYXZCb2R5KHIubWlkKSsnPC9zcGFuPic7IG5hbWU9ZXNjKHBlcnNvbk5hbWUoci5taWQpKTsgc3ViPWVzYyhyb2xlTGFiZWxGb3Ioci5taWQpfHwnVGVhbSBtZW1iZXInKTsgfQogICAgZWxzZSBpZihyLmtpbmQ9PT0ndWlkJyl7IGF2YXRhcj0nPHNwYW4gY2xhc3M9Im9sYXYgZW1wdHkiPuKYhTwvc3Bhbj4nOyBuYW1lPShyLmtleT09PU1FLnVpZD8nWW91JzonRXh0ZXJuYWwgYWRtaW4nKTsgc3ViPShyLmtleT09PU1FLnVpZD8nU3VwZXIgYWRtaW4nOidOb3QgYSBtZW1iZXIgb2YgdGhpcyBjb21wYW55Jyk7IH0KICAgIGVsc2UgeyBhdmF0YXI9JzxzcGFuIGNsYXNzPSJvbGF2IGVtcHR5Ij7inInvuI88L3NwYW4+JzsgbmFtZT1lc2Moci5rZXkpOyBzdWI9J0ludml0ZWQgYXMgYWRtaW4nOyB9CiAgICBpZihyLnBlbmRpbmcpIHN1Yj1zdWIrJyDCtyBwZW5kaW5nIGZpcnN0IHNpZ24taW4nOwogICAgcm09TUUuaXNTdXBlcj8oci5raW5kPT09J2VtYWlsJz8nPGJ1dHRvbiBjbGFzcz0idGlueWJ0biIgb25jbGljaz0icmVtb3ZlQWRtaW5FbWFpbChcJycrZXNjKHIua2V5KSsnXCcpIj5SZW1vdmU8L2J1dHRvbj4nOic8YnV0dG9uIGNsYXNzPSJ0aW55YnRuIiBvbmNsaWNrPSJyZW1vdmVBZG1pblVpZChcJycrci5rZXkrJ1wnKSI+UmVtb3ZlPC9idXR0b24+Jyk6Jyc7CiAgICByZXR1cm4gJzxkaXYgY2xhc3M9Im9sbXJvdyIgc3R5bGU9ImN1cnNvcjpkZWZhdWx0Ij4nK2F2YXRhcisnPHNwYW4gY2xhc3M9Im9sd2hvIj48c3BhbiBjbGFzcz0ib2xubSI+JytuYW1lKyc8L3NwYW4+PHNwYW4gY2xhc3M9Im9scmwiPicrc3ViKyc8L3NwYW4+PC9zcGFuPjxzcGFuIGNsYXNzPSJvbHNwIj48L3NwYW4+JytybSsnPC9kaXY+JzsKICB9KS5qb2luKCcnKTsKfQ=="),   'renderAdminsList shows pending email-admins')
+one('if(!ME.isSuper && !(companies[cid]&&(companies[cid].adminUids||[]).indexOf(ME.uid)>=0)) return;', 'if(!amAdminOf(companies[cid])) return;', 'inline org-chart cid -> amAdminOf')
+one('var canEdit=ME.isSuper||(c.adminUids||[]).indexOf(ME.uid)>=0;', 'var canEdit=amAdminOf(c);', 'inline company-card -> amAdminOf')
+one('filter(function(c){return ME.isSuper||(companies[c].adminUids||[]).indexOf(ME.uid)>=0;});', 'filter(function(c){return amAdminOf(companies[c]);});', 'inline companies-filter -> amAdminOf')
+one('var _ca=(company.adminUids||[]).indexOf(m.uid)>=0;', 'var _ca=isPersonAdmin(m);', 'inline person-admin badge -> isPersonAdmin')
 
-# ---- 3) companies loader (x2): sanitise theme strip/ink/soft/mid -------------
-old3 = 'companies[d.id]=Object.assign({id:d.id},d.data());'
-new3 = (b("dmFyIF9jZD1kLmRhdGEoKTsgaWYoX2NkJiZfY2QudGhlbWUmJnR5cGVvZiBfY2QudGhlbWU9"
-          "PT0nb2JqZWN0Jyl7WydzdHJpcCcsJ2luaycsJ3NvZnQnLCdtaWQnXS5mb3JFYWNoKGZ1bmN0"
-          "aW9uKF9rKXtpZihfY2QudGhlbWVbX2tdIT1udWxsKV9jZC50aGVtZVtfa109Y3NzQ29sb3Io"
-          "X2NkLnRoZW1lW19rXSk7fSk7fSA=")
-        + 'companies[d.id]=Object.assign({id:d.id},_cd);')
-cnt3 = s.count(old3)
-if cnt3 != 2:
-    print('ABORT companies count %d!=2' % cnt3); sys.exit(1)
-s = s.replace(old3, new3)
-
-# ---- 4) issue colour fc (x3): wrap in cssColor -------------------------------
-old4 = "var fc=i.color||(fns[i.functionId]&&fns[i.functionId].color)||'var(--strip)';"
-new4 = "var fc=cssColor(i.color||(fns[i.functionId]&&fns[i.functionId].color)||'var(--strip)');"
-cnt4 = s.count(old4)
-if cnt4 != 3:
-    print('ABORT fc count %d!=3' % cnt4); sys.exit(1)
-s = s.replace(old4, new4)
-
-# ---- 5) lone (i.color||'var(--strip)') (x1) ----------------------------------
-old5 = "(i.color||'var(--strip)')"
-new5 = "cssColor(i.color||'var(--strip)')"
-s = s.replace(old5, new5, 1)
-
-# ---- post-conditions ---------------------------------------------------------
-assert s.count('function cssColor(') == 1, 'helper not inserted'
-assert s.count(new2) == 1, 'fns loader not patched'
-assert s.count('companies[d.id]=Object.assign({id:d.id},_cd);') == 2, 'companies not patched'
-assert s.count(new4) == 3, 'fc not patched'
-assert s.count(old2) == 0 and s.count(old3) == 0 and s.count(old4) == 0, 'leftover originals'
-
+assert s.count('function amAdminOf(') == 1
+assert s.count('function setPersonAdmin(') == 1
+assert s.count('window.removeAdminEmail=function(') == 1
+assert s.count('isAdmin=amAdminOf(company);') == 1
+assert s.count('(company.adminUids||[]).indexOf(m.uid)>=0') == 0
 open(PATH, 'w', encoding='utf-8').write(s)
-print('ok cssColor helper inserted')
-print('ok functions loader sanitised (1)')
-print('ok companies theme loader sanitised (2)')
-print('ok issue fc wrapped (3) + lone i.color (1)')
 print('DONE')
