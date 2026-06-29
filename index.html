@@ -1746,6 +1746,28 @@ function openFocus(k){closeMenu();show('home');var f=document.getElementById('fo
         <div id="admAdminsWrap"></div>
       </div>
 
+      <!-- PT_USAGE_ADMIN_V1 -->
+      <div class="panel" id="admUsagePanel" style="display:none">
+        <style>
+          #admUsagePanel .u-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(116px,1fr));gap:10px}
+          #admUsagePanel .u-card{background:var(--bg);border:1px solid var(--b);border-radius:12px;padding:11px 13px}
+          #admUsagePanel .u-cl{font-size:12px;color:var(--t2)}
+          #admUsagePanel .u-cn{font-family:var(--display);font-size:22px;font-weight:700;color:var(--t);margin-top:2px}
+          #admUsagePanel .u-legend{display:flex;align-items:center;gap:14px;font-size:11.5px;color:var(--t3);margin:2px 2px 9px}
+          #admUsagePanel .u-legend i{display:inline-block;width:9px;height:9px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+          #admUsagePanel .u-bar{display:flex;border-radius:5px;overflow:hidden;background:var(--strip-soft)}
+          #admUsagePanel .u-bar i{display:block;height:100%}
+          #admUsagePanel .u-pill{font-size:11px;font-weight:700;padding:3px 9px;border-radius:999px;white-space:nowrap}
+          #admUsagePanel .u-pill.u-ok{background:#e6f6ef;color:#0e7a54}
+          #admUsagePanel .u-pill.u-mid{background:var(--strip-soft);color:var(--strip-ink)}
+          #admUsagePanel .u-pill.u-warn{background:#fdeccf;color:#9a6a00}
+          #admUsagePanel .u-pill.u-empty{background:#f1efec;color:var(--t3)}
+        </style>
+        <h3>Usage</h3>
+        <p class="psub">How your team is using Progress Tracker.</p>
+        <div id="admUsageWrap"></div>
+      </div>
+
       <div class="panel">
         <h3>Branding</h3>
         <p class="psub">Live preview — click a colour to theme the whole app.</p>
@@ -3235,6 +3257,7 @@ function fnOptions(sel){ return Object.keys(fns).map(function(fid){ return '<opt
 
 function renderAdmin(){
   renderAdminsList();
+  renderAdmUsage();
   // companies (super)
   var ce=document.getElementById('admCompanies');
   if(ce && ME.isSuper){ var cids=Object.keys(companies).sort(function(a,b){return (companies[a].name||'').localeCompare(companies[b].name||'');});
@@ -3253,6 +3276,36 @@ function renderAdmin(){
   }
   var dp=document.getElementById('dataPanel'); if(dp) dp.style.display=ME.isSuper?'':'none';
   renderAgreement();
+}
+/* PT_USAGE_ADMIN_V1 — single-company usage card for company admins (and super). */
+function admUsageAgo(ms){ if(!ms){return '—';} var s=(Date.now()-ms)/1000; if(s<3600){return Math.max(1,Math.round(s/60))+'m';} if(s<86400){return Math.round(s/3600)+'h';} var d=Math.round(s/86400); if(d<14){return d+'d';} if(d<60){return Math.round(d/7)+'w';} return Math.round(d/30)+'mo'; }
+function renderAdmUsage(){
+  var panel=document.getElementById('admUsagePanel'), wrap=document.getElementById('admUsageWrap');
+  if(!panel||!wrap){return;}
+  // Visible to super always; to a company admin only when the super has switched it on.
+  var canSee = !!activeCid && ( ME.isSuper || ( amAdminOf(company) && company && company.usageVisibleToAdmins===true ) );
+  if(!canSee){ panel.style.display='none'; return; }
+  panel.style.display='';
+  var now=Date.now(), DAY=86400000;
+  var total=0,claimed=0,pending=0,active7=0,lastMs=0,anyAct=false;
+  Object.keys(members).forEach(function(mid){ var m=members[mid]||{}; if(m.coach){return;} total++;
+    if(m.uid){claimed++;} else if(m.email){pending++;}
+    var la=m.lastActiveAt; var t=(la&&la.toMillis)?la.toMillis():((la&&la.seconds)?la.seconds*1000:0);
+    if(t){ anyAct=true; if(t>lastMs){lastMs=t;} if(now-t<=7*DAY){active7++;} }
+  });
+  var io=0,ip=0,idn=0;
+  (issues||[]).forEach(function(it){ var s=(it.status||''); if(s==='open'){io++;} else if(s==='prog'){ip++;} else if(s==='done'){idn++;} });
+  var hl='Awaiting activity',hc='u-empty';
+  if(!total){ hl='Empty';hc='u-empty'; }
+  else if(!claimed){ hl='Not started';hc='u-warn'; }
+  else if(anyAct){ var days=(now-lastMs)/DAY; if(days<=7){hl='Active';hc='u-ok';} else if(days<=21){hl='Slowing';hc='u-mid';} else {hl='Quiet';hc='u-warn';} }
+  var seen=lastMs?(admUsageAgo(lastMs)+' ago'):'never';
+  var pend=pending?(' <span style="color:var(--t3)">'+pending+' pending</span>'):'';
+  wrap.innerHTML='<div class="u-cards" style="margin-bottom:12px">'+
+    [['Seats claimed',claimed+' / '+total],['Active (7d)',active7],['Open issues',io],['Last activity',seen]].map(function(c){return '<div class="u-card"><div class="u-cl">'+c[0]+'</div><div class="u-cn">'+c[1]+'</div></div>';}).join('')+
+    '</div>'+
+    '<div class="u-legend"><span><i style="background:var(--open)"></i>Open</span><span><i style="background:var(--strip)"></i>In progress</span><span><i style="background:var(--green)"></i>Done</span><span style="margin-left:auto"><span class="u-pill '+hc+'">'+hl+'</span></span></div>'+
+    '<span class="u-bar" style="width:100%;height:10px"><i style="flex:'+io+';background:var(--open)"></i><i style="flex:'+ip+';background:var(--strip)"></i><i style="flex:'+idn+';background:var(--green)"></i></span>';
 }
 function renderAgreement(){
   var box=document.getElementById('agrBox'); if(!box)return;
