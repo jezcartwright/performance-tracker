@@ -2444,6 +2444,7 @@ function resolveMyMid(){
   ME.mid=null; var keys=Object.keys(members);
   for(var i=0;i<keys.length;i++){ if(members[keys[i]].uid===ME.uid){ ME.mid=keys[i]; ensureAccess(ME.mid); syncMeName(); return; } }
   for(var j=0;j<keys.length;j++){ var m=members[keys[j]]; if(!m.uid && m.email && m.email.toLowerCase()===(ME.email||'').toLowerCase()){ var k=keys[j]; ME.mid=k; membersRef().doc(k).update({uid:ME.uid}).then(function(){ ensureAccess(k); }).catch(function(e){console.warn('claim',e);}); syncMeName(); return; } }
+  /* PT_SUPERSEAT_V1 */ if(ME.isSuper && activeCid && !ME.mid){ window._superSeatTried=window._superSeatTried||{}; if(!window._superSeatTried[activeCid]){ window._superSeatTried[activeCid]=true; joinCompany(true).catch(function(e){ window._superSeatTried[activeCid]=false; console.warn('superSeat',e); }); } }
 }
 function syncMeName(){
   if(!ME.mid)return; var m=members[ME.mid]; if(!m||!m.name)return;
@@ -3860,7 +3861,7 @@ function renderPriorities(){
   ensurePriSub();
   var host=document.getElementById('priList'); var note=document.getElementById('priEmpty'); if(!host)return;
   if(!activeCid){ host.innerHTML=''; if(note)note.innerHTML='<div class="pri-note">No company selected.</div>'; return; }
-  if(!ME.mid){ host.innerHTML=''; if(note){ if(isAdmin){ note.innerHTML='<div class="pri-note">You don\'t have a person record in this company yet. Add yourself to keep your own priorities here — <b>private to you</b>, and your seat stays hidden from this client\'s team.<div style="margin-top:12px"><button id="priJoinBtn" onclick="joinAsCoach()" style="font:600 14px/1 var(--ui,Inter),sans-serif;color:#fff;background:#ff6600;border:0;border-radius:12px;padding:10px 16px;cursor:pointer">+ Add me to this company</button></div></div>'; } else { note.innerHTML='<div class="pri-note">You don\'t have a person record in this company yet, so there\'s no priority list to own. Open <b>Team</b> and tap anyone to see and agree <i>their</i> priorities.</div>'; } } return; }
+  if(!ME.mid){ host.innerHTML=''; if(note){ if(ME.isSuper){ note.innerHTML='<div class="pri-note">Setting up your private space in this company\u2026</div>'; } else if(isAdmin){ note.innerHTML='<div class="pri-note">You don\'t have a person record in this company yet. Add yourself to keep your own priorities here — <b>private to you</b>, and your seat stays hidden from this client\'s team.<div style="margin-top:12px"><button id="priJoinBtn" onclick="joinAsCoach()" style="font:600 14px/1 var(--ui,Inter),sans-serif;color:#fff;background:#ff6600;border:0;border-radius:12px;padding:10px 16px;cursor:pointer">+ Add me to this company</button></div></div>'; } else { note.innerHTML='<div class="pri-note">You don\'t have a person record in this company yet, so there\'s no priority list to own. Open <b>Team</b> and tap anyone to see and agree <i>their</i> priorities.</div>'; } } return; }
   if(note)note.innerHTML='';
   var list=myPriorities();
   if(!list.length){ host.innerHTML='<li class="pri-note">Nothing here yet \u2014 tap "Add priority" to start your list. Drag to reorder once you have a few.</li>'; return; }
