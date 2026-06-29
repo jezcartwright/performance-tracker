@@ -1674,7 +1674,7 @@ function openFocus(k){closeMenu();show('home');var f=document.getElementById('fo
 
   <!-- PT_USAGE_V1 -->
   <style>
-    #usage .u-cards{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:0 0 16px}
+    #usage .u-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(118px,1fr));gap:10px;margin:0 0 16px}
     #usage .u-card{background:var(--card);border:1px solid var(--b);border-radius:14px;padding:13px 15px}
     #usage .u-cl{font-size:12px;color:var(--t2)}
     #usage .u-cn{font-family:var(--display);font-size:24px;font-weight:700;color:var(--t);margin-top:2px}
@@ -1700,7 +1700,7 @@ function openFocus(k){closeMenu();show('home');var f=document.getElementById('fo
   <section class="screen" id="usage">
     <button class="enq-back" onclick="goCompaniesHome()">&larr; Companies</button>
     <div class="enq-head"><h1 class="enq-h1">Usage <span class="superflag">SUPER ADMIN</span></h1></div>
-    <p class="psub" style="margin:-4px 0 16px;max-width:620px">Adoption across every company. Engagement signals — active users and dormancy — fill in once activity tracking is enabled.</p>
+    <p class="psub" style="margin:-4px 0 16px;max-width:620px">Adoption and engagement across every company. Activity counts sign-ins since tracking was enabled, so newer companies fill in over the first week.</p>
     <div class="u-cards" id="usageCards"></div>
     <div id="usageBody"></div>
   </section>
@@ -2314,42 +2314,54 @@ function buildUsage(){
   if(usageLoading){return;}
   usageLoading=true;
   grid.innerHTML='<div class="psub">Gathering usage across every company…</div>';
+  var now=Date.now(), DAY=86400000;
   var cids=Object.keys(companies);
   var jobs=cids.map(function(cid){ var base=companiesCol.doc(cid);
     return Promise.all([ base.collection('members').get(), base.collection('issues').get().catch(function(){return {forEach:function(){}};}) ]).then(function(r){
-      var total=0,claimed=0,pending=0;
-      r[0].forEach(function(d){ var m=d.data(); if(m.coach){return;}/*PT_USAGECOACH_V1*/ total++; if(m.uid){claimed++;} else if(m.email){pending++;} });
+      var total=0,claimed=0,pending=0,active7=0,lastMs=0,anyAct=false;
+      r[0].forEach(function(d){ var m=d.data(); if(m.coach){return;}/*PT_USAGECOACH_V1*/ total++;
+        if(m.uid){claimed++;} else if(m.email){pending++;}
+        var la=m.lastActiveAt; var t=(la&&la.toMillis)?la.toMillis():((la&&la.seconds)?la.seconds*1000:0);
+        if(t){ anyAct=true; if(t>lastMs){lastMs=t;} if(now-t<=7*DAY){active7++;} }
+      });
       var io=0,ip=0,idn=0;
       r[1].forEach(function(d){ var s=(d.data().status||''); if(s==='open'){io++;} else if(s==='prog'){ip++;} else if(s==='done'){idn++;} });
       var co=companies[cid]||{};
-      return {cid:cid,name:co.name||cid,theme:(co.theme&&co.theme.strip)||'#ff6600',total:total,claimed:claimed,pending:pending,open:io,prog:ip,done:idn,visAdmins:!!co.usageVisibleToAdmins};
-    }).catch(function(){ var co=companies[cid]||{}; return {cid:cid,name:co.name||cid,theme:'#ff6600',total:0,claimed:0,pending:0,open:0,prog:0,done:0,visAdmins:!!co.usageVisibleToAdmins}; });
+      return {cid:cid,name:co.name||cid,theme:(co.theme&&co.theme.strip)||'#ff6600',total:total,claimed:claimed,pending:pending,open:io,prog:ip,done:idn,active7:active7,lastMs:lastMs,anyAct:anyAct,visAdmins:!!co.usageVisibleToAdmins};
+    }).catch(function(){ var co=companies[cid]||{}; return {cid:cid,name:co.name||cid,theme:'#ff6600',total:0,claimed:0,pending:0,open:0,prog:0,done:0,active7:0,lastMs:0,anyAct:false,visAdmins:!!co.usageVisibleToAdmins}; });
   });
   Promise.all(jobs).then(function(rows){ usageData=rows; usageLoading=false; renderUsage(); });
 }
+function usageAgo(ms){ if(!ms){return '—';} var s=(Date.now()-ms)/1000; if(s<3600){return Math.max(1,Math.round(s/60))+'m';} if(s<86400){return Math.round(s/3600)+'h';} var d=Math.round(s/86400); if(d<14){return d+'d';} if(d<60){return Math.round(d/7)+'w';} return Math.round(d/30)+'mo'; }
 function usageHealth(r){
   if(!r.total){ return {k:'empty',label:'Empty',cls:'u-empty'}; }
   if(!r.claimed){ return {k:'notstarted',label:'Not started',cls:'u-warn'}; }
-  if(r.pending>0){ return {k:'onboarding',label:'Onboarding',cls:'u-mid'}; }
-  return {k:'active',label:'Active',cls:'u-ok'};
+  if(!r.anyAct){ return {k:'await',label:'Awaiting activity',cls:'u-empty'}; }
+  var days=(Date.now()-r.lastMs)/86400000;
+  if(days<=7){ return {k:'active',label:'Active',cls:'u-ok'}; }
+  if(days<=21){ return {k:'slowing',label:'Slowing',cls:'u-mid'}; }
+  return {k:'quiet',label:'Quiet',cls:'u-warn'};
 }
 function renderUsage(){
   var cards=document.getElementById('usageCards'), grid=document.getElementById('usageBody');
   if(!usageData||!grid){return;}
   var rows=usageData.slice();
-  var tSeat=0,tClaim=0,tPend=0,tOpen=0;
-  rows.forEach(function(r){ tSeat+=r.total; tClaim+=r.claimed; tPend+=r.pending; tOpen+=r.open; });
-  if(cards){ cards.innerHTML=[['Companies',rows.length],['Seats claimed',tClaim+' / '+tSeat],['Pending invites',tPend],['Open issues',tOpen]].map(function(c){ return '<div class="u-card"><div class="u-cl">'+c[0]+'</div><div class="u-cn">'+c[1]+'</div></div>'; }).join(''); }
-  var ord={empty:0,notstarted:1,onboarding:2,active:3};
-  rows.sort(function(a,b){ var ha=usageHealth(a),hb=usageHealth(b); if(ord[ha.k]!==ord[hb.k]){return ord[ha.k]-ord[hb.k];} if(b.pending!==a.pending){return b.pending-a.pending;} return (a.name||'').localeCompare(b.name||''); });
+  var tSeat=0,tClaim=0,tPend=0,tOpen=0,tAct=0;
+  rows.forEach(function(r){ tSeat+=r.total; tClaim+=r.claimed; tPend+=r.pending; tOpen+=r.open; tAct+=r.active7; });
+  if(cards){ cards.innerHTML=[['Companies',rows.length],['Seats claimed',tClaim+' / '+tSeat],['Pending invites',tPend],['Active (7d)',tAct],['Open issues',tOpen]].map(function(c){ return '<div class="u-card"><div class="u-cl">'+c[0]+'</div><div class="u-cn">'+c[1]+'</div></div>'; }).join(''); }
+  var ord={quiet:0,notstarted:1,slowing:2,await:3,empty:4,active:5};
+  rows.sort(function(a,b){ var ha=usageHealth(a),hb=usageHealth(b); if(ord[ha.k]!==ord[hb.k]){return ord[ha.k]-ord[hb.k];} if((a.lastMs||0)!==(b.lastMs||0)){return (a.lastMs||0)-(b.lastMs||0);} if(b.pending!==a.pending){return b.pending-a.pending;} return (a.name||'').localeCompare(b.name||''); });
   grid.innerHTML='<div class="u-legend"><span><i style="background:var(--open)"></i>Open</span><span><i style="background:var(--strip)"></i>In progress</span><span><i style="background:var(--green)"></i>Done</span><span style="margin-left:auto">Needs attention first</span></div>'+
-  '<table class="u-tbl"><thead><tr><th>Company</th><th>Seats</th><th>Pending</th><th>Issues</th><th>Status</th><th></th></tr></thead><tbody>'+
+  '<table class="u-tbl"><thead><tr><th>Company</th><th>Seats</th><th>Pending</th><th>Active 7d</th><th>Last seen</th><th>Issues</th><th>Status</th><th></th></tr></thead><tbody>'+
   rows.map(function(r){ var h=usageHealth(r);
     var bar='<span class="u-bar"><i style="flex:'+r.open+';background:var(--open)"></i><i style="flex:'+r.prog+';background:var(--strip)"></i><i style="flex:'+r.done+';background:var(--green)"></i></span>';
     var tog='<button class="u-tog'+(r.visAdmins?' on':'')+'" onclick="event.stopPropagation();usageToggleAdmins(\''+r.cid+'\')">'+(r.visAdmins?'Admins: on':'Admins: off')+'</button>';
+    var seen=r.lastMs?(usageAgo(r.lastMs)+' ago'):'<span style="color:var(--t3)">never</span>';
     return '<tr><td><span class="u-dot" style="background:'+r.theme+'"></span>'+esc(r.name)+'</td>'+
       '<td>'+r.claimed+' / '+r.total+'</td>'+
       '<td>'+(r.pending||'·')+'</td>'+
+      '<td>'+(r.active7||'·')+'</td>'+
+      '<td>'+seen+'</td>'+
       '<td>'+bar+'</td>'+
       '<td><span class="u-pill '+h.cls+'">'+h.label+'</span></td>'+
       '<td class="u-act">'+tog+'<button class="u-open" onclick="openFullCompany(\''+r.cid+'\')">Open &rarr;</button></td></tr>';
@@ -2456,6 +2468,7 @@ var accessEnsured={};
 function ensureAccess(mid){
   if(ME.isSuper || !activeCid || !mid || accessEnsured[activeCid]) return;
   var m=members[mid]||{}; accessEnsured[activeCid]=true;
+  try{ membersRef().doc(mid).update({lastActiveAt:FV.serverTimestamp()}).catch(function(){}); }catch(e){}/* PT_LASTACTIVE_V1 */
   try{
     companiesCol.doc(activeCid).collection('access').doc(ME.uid)
       .set({mid:mid, role:(m.isLeader?'leader':'member'), functionId:m.functionId||null, email:ME.email||null},{merge:true})
