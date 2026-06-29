@@ -1684,6 +1684,7 @@ function openFocus(k){closeMenu();show('home');var f=document.getElementById('fo
     #usage .u-tbl th{text-align:left;font-weight:600;font-size:11px;color:var(--t3);padding:11px 14px;border-bottom:1px solid var(--b)}
     #usage .u-tbl td{padding:13px 14px;border-bottom:1px solid var(--b);color:var(--t);vertical-align:middle}
     #usage .u-tbl tr:last-child td{border-bottom:none}
+    #usage .u-rowclick:hover td{background:var(--strip-soft)}/*PT_USAGEUI_V1*/
     #usage .u-dot{display:inline-block;width:9px;height:9px;border-radius:3px;margin-right:8px;vertical-align:0}
     #usage .u-bar{display:flex;width:64px;height:8px;border-radius:4px;overflow:hidden;background:var(--strip-soft)}
     #usage .u-bar i{display:block;height:100%}
@@ -1699,7 +1700,7 @@ function openFocus(k){closeMenu();show('home');var f=document.getElementById('fo
   </style>
   <section class="screen" id="usage">
     <button class="enq-back" onclick="goCompaniesHome()">&larr; Companies</button>
-    <div class="enq-head"><h1 class="enq-h1">Usage <span class="superflag">SUPER ADMIN</span></h1></div>
+    <div class="enq-head"><h1 class="enq-h1">Usage</h1></div>
     <p class="psub" style="margin:-4px 0 16px;max-width:620px">Adoption and engagement across every company. Activity counts sign-ins since tracking was enabled, so newer companies fill in over the first week.</p>
     <div class="u-cards" id="usageCards"></div>
     <div id="usageBody"></div>
@@ -2351,24 +2352,20 @@ function renderUsage(){
   if(cards){ cards.innerHTML=[['Companies',rows.length],['Seats claimed',tClaim+' / '+tSeat],['Pending invites',tPend],['Active (7d)',tAct],['Open issues',tOpen]].map(function(c){ return '<div class="u-card"><div class="u-cl">'+c[0]+'</div><div class="u-cn">'+c[1]+'</div></div>'; }).join(''); }
   var ord={quiet:0,notstarted:1,slowing:2,await:3,empty:4,active:5};
   rows.sort(function(a,b){ var ha=usageHealth(a),hb=usageHealth(b); if(ord[ha.k]!==ord[hb.k]){return ord[ha.k]-ord[hb.k];} if((a.lastMs||0)!==(b.lastMs||0)){return (a.lastMs||0)-(b.lastMs||0);} if(b.pending!==a.pending){return b.pending-a.pending;} return (a.name||'').localeCompare(b.name||''); });
-  grid.innerHTML='<div class="u-legend"><span><i style="background:var(--open)"></i>Open</span><span><i style="background:var(--strip)"></i>In progress</span><span><i style="background:var(--green)"></i>Done</span><span style="margin-left:auto">Needs attention first</span></div>'+
-  '<table class="u-tbl"><thead><tr><th>Company</th><th>Seats</th><th>Pending</th><th>Active 7d</th><th>Last seen</th><th>Issues</th><th>Status</th><th></th></tr></thead><tbody>'+
+  grid.innerHTML='<div class="u-legend"><span style="margin-left:auto">Click a company for detail \u00b7 needs attention first</span></div>'+
+  '<table class="u-tbl"><thead><tr><th>Company</th><th>Seats</th><th>Pending</th><th>Active 7d</th><th>Last seen</th><th>Status</th></tr></thead><tbody>'+
   rows.map(function(r){ var h=usageHealth(r);
-    var bar='<span class="u-bar"><i style="flex:'+r.open+';background:var(--open)"></i><i style="flex:'+r.prog+';background:var(--strip)"></i><i style="flex:'+r.done+';background:var(--green)"></i></span>';
-    var tog='<button class="u-tog'+(r.visAdmins?' on':'')+'" onclick="event.stopPropagation();usageToggleAdmins(\''+r.cid+'\')">'+(r.visAdmins?'Admins: on':'Admins: off')+'</button>';
     var seen=r.lastMs?(usageAgo(r.lastMs)+' ago'):'<span style="color:var(--t3)">never</span>';
-    return '<tr><td><span class="u-dot" style="background:'+r.theme+'"></span>'+esc(r.name)+'</td>'+
+    return '<tr class="u-rowclick" onclick="usageOpenDetail(\''+r.cid+'\')" style="cursor:pointer"><td><span class="u-dot" style="background:'+r.theme+'"></span>'+esc(r.name)+'</td>'+
       '<td>'+r.claimed+' / '+r.total+'</td>'+
-      '<td>'+(r.pending||'·')+'</td>'+
-      '<td>'+(r.active7||'·')+'</td>'+
+      '<td>'+(r.pending||'\u00b7')+'</td>'+
+      '<td>'+(r.active7||'\u00b7')+'</td>'+
       '<td>'+seen+'</td>'+
-      '<td>'+bar+'</td>'+
-      '<td><span class="u-pill '+h.cls+'">'+h.label+'</span></td>'+
-      '<td class="u-act">'+tog+'<button class="u-open" onclick="usageOpenDetail(\''+r.cid+'\')">Detail</button><button class="u-open" onclick="openFullCompany(\''+r.cid+'\')">Open &rarr;</button></td></tr>';
+      '<td><span class="u-pill '+h.cls+'">'+h.label+'</span></td></tr>';
   }).join('')+'</tbody></table>';
 }
-window.usageToggleAdmins=function(cid){ if(!ME.isSuper)return; var r=null; (usageData||[]).forEach(function(x){ if(x.cid===cid){r=x;} }); if(!r)return; var nv=!r.visAdmins;
-  companiesCol.doc(cid).update({usageVisibleToAdmins:nv}).then(function(){ r.visAdmins=nv; if(companies[cid]){companies[cid].usageVisibleToAdmins=nv;} renderUsage(); }).catch(function(e){ alert('Could not update admin access: '+e.message); }); };
+window.usageToggleAdmins=function(cid){ if(!ME.isSuper)return; var nv=!((companies[cid]||{}).usageVisibleToAdmins===true);
+  companiesCol.doc(cid).update({usageVisibleToAdmins:nv}).then(function(){ if(companies[cid]){companies[cid].usageVisibleToAdmins=nv;} (usageData||[]).forEach(function(x){ if(x.cid===cid){x.visAdmins=nv;} }); if(typeof usageView!=='undefined'&&usageView==='detail'){renderUsageDetail();}else{renderUsage();} }).catch(function(e){ alert('Could not update admin access: '+e.message); }); };
 /* PT_USAGE_DETAIL_V1 — super-admin company drill-down: member detail + nudge */
 var usageView='overview', usageDetailCid=null, usageDetailRows=null;
 function usageStampMs(la){ return (la&&la.toMillis)?la.toMillis():((la&&la.seconds)?la.seconds*1000:0); }
@@ -2390,7 +2387,8 @@ function buildUsageDetail(cid){ var base=companiesCol.doc(cid);
 }
 function renderUsageDetail(){ var grid=document.getElementById('usageBody'); if(!grid){return;}
   var co=companies[usageDetailCid]||{}; var nm=co.name||usageDetailCid||''; var theme=(co.theme&&co.theme.strip)||'#ff6600';
-  var head='<div style="display:flex;align-items:center;gap:10px;margin-bottom:16px"><button class="u-tog" onclick="usageBackToOverview()">&larr; All companies</button><span class="u-dot" style="background:'+theme+';width:11px;height:11px"></span><span style="font-family:var(--display);font-size:22px;font-weight:700;color:var(--t)">'+esc(nm)+'</span><button class="u-open" style="margin-left:auto" onclick="openFullCompany(\''+usageDetailCid+'\')">Open company &rarr;</button></div>';
+  var vis=(companies[usageDetailCid]||{}).usageVisibleToAdmins===true;
+  var head='<div style="display:flex;align-items:center;gap:10px;margin-bottom:16px"><button class="u-tog" onclick="usageBackToOverview()">&larr; All companies</button><span class="u-dot" style="background:'+theme+';width:11px;height:11px"></span><span style="font-family:var(--display);font-size:22px;font-weight:700;color:var(--t)">'+esc(nm)+'</span><button class="u-tog'+(vis?' on':'')+'" style="margin-left:auto" onclick="usageToggleAdmins(\''+usageDetailCid+'\')">'+(vis?'Admins: on':'Admins: off')+'</button><button class="u-open" onclick="openFullCompany(\''+usageDetailCid+'\')">Open company &rarr;</button></div>';
   if(!usageDetailRows){ grid.innerHTML=head+'<div class="psub">Loading\u2026</div>'; return; }
   if(usageDetailRows.error){ grid.innerHTML=head+'<div class="psub">Could not load: '+esc(usageDetailRows.error)+'</div>'; return; }
   var now=Date.now(), DAY=86400000;
