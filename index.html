@@ -2364,11 +2364,52 @@ function renderUsage(){
       '<td>'+seen+'</td>'+
       '<td>'+bar+'</td>'+
       '<td><span class="u-pill '+h.cls+'">'+h.label+'</span></td>'+
-      '<td class="u-act">'+tog+'<button class="u-open" onclick="openFullCompany(\''+r.cid+'\')">Open &rarr;</button></td></tr>';
+      '<td class="u-act">'+tog+'<button class="u-open" onclick="usageOpenDetail(\''+r.cid+'\')">Detail</button><button class="u-open" onclick="openFullCompany(\''+r.cid+'\')">Open &rarr;</button></td></tr>';
   }).join('')+'</tbody></table>';
 }
 window.usageToggleAdmins=function(cid){ if(!ME.isSuper)return; var r=null; (usageData||[]).forEach(function(x){ if(x.cid===cid){r=x;} }); if(!r)return; var nv=!r.visAdmins;
   companiesCol.doc(cid).update({usageVisibleToAdmins:nv}).then(function(){ r.visAdmins=nv; if(companies[cid]){companies[cid].usageVisibleToAdmins=nv;} renderUsage(); }).catch(function(e){ alert('Could not update admin access: '+e.message); }); };
+/* PT_USAGE_DETAIL_V1 — super-admin company drill-down: member detail + nudge */
+var usageView='overview', usageDetailCid=null, usageDetailRows=null;
+function usageStampMs(la){ return (la&&la.toMillis)?la.toMillis():((la&&la.seconds)?la.seconds*1000:0); }
+function usageMailto(m,co,kind){
+  var to=(m.email||''); var cn=(co&&co.name)||'Progress Tracker'; var fn=((m.name||'').split(' ')[0])||'there'; var subj,body;
+  if(kind==='invite'){ subj='Your '+cn+' access'; body='Hi '+fn+',\n\nThere\'s a seat waiting for you in '+cn+' on Progress Tracker. Sign in here to get started:\nhttps://progress-tracker.live\n\nThanks'; }
+  else { subj='A quick nudge \u2014 '+cn; body='Hi '+fn+',\n\nJust checking in \u2014 it\'s been a little while since you were active in '+cn+' on Progress Tracker. Whenever you get a moment:\nhttps://progress-tracker.live\n\nThanks'; }
+  return 'mailto:'+to+'?subject='+encodeURIComponent(subj)+'&body='+encodeURIComponent(body);
+}
+window.usageOpenDetail=function(cid){ usageView='detail'; usageDetailCid=cid; usageDetailRows=null; var c=document.getElementById('usageCards'); if(c){c.style.display='none';} renderUsageDetail(); buildUsageDetail(cid); };
+window.usageBackToOverview=function(){ usageView='overview'; usageDetailCid=null; var c=document.getElementById('usageCards'); if(c){c.style.display='';} renderUsage(); };
+function buildUsageDetail(cid){ var base=companiesCol.doc(cid);
+  Promise.all([ base.collection('members').get(), base.collection('issues').get().catch(function(){return {forEach:function(){}};}), base.collection('priorities').get().catch(function(){return {size:0};}) ]).then(function(r){
+    var mem=[]; r[0].forEach(function(d){ var m=d.data(); m.mid=d.id; mem.push(m); });
+    var io=0,ip=0,idn=0; r[1].forEach(function(d){ var s=(d.data().status||''); if(s==='open'){io++;}else if(s==='prog'){ip++;}else if(s==='done'){idn++;} });
+    usageDetailRows={members:mem,open:io,prog:ip,done:idn,pris:(r[2].size||0)};
+    if(usageView==='detail'&&usageDetailCid===cid){ renderUsageDetail(); }
+  }).catch(function(e){ usageDetailRows={error:(e&&e.message)||'load failed',members:[]}; if(usageView==='detail'){ renderUsageDetail(); } });
+}
+function renderUsageDetail(){ var grid=document.getElementById('usageBody'); if(!grid){return;}
+  var co=companies[usageDetailCid]||{}; var nm=co.name||usageDetailCid||''; var theme=(co.theme&&co.theme.strip)||'#ff6600';
+  var head='<div style="display:flex;align-items:center;gap:10px;margin-bottom:16px"><button class="u-tog" onclick="usageBackToOverview()">&larr; All companies</button><span class="u-dot" style="background:'+theme+';width:11px;height:11px"></span><span style="font-family:var(--display);font-size:22px;font-weight:700;color:var(--t)">'+esc(nm)+'</span><button class="u-open" style="margin-left:auto" onclick="openFullCompany(\''+usageDetailCid+'\')">Open company &rarr;</button></div>';
+  if(!usageDetailRows){ grid.innerHTML=head+'<div class="psub">Loading\u2026</div>'; return; }
+  if(usageDetailRows.error){ grid.innerHTML=head+'<div class="psub">Could not load: '+esc(usageDetailRows.error)+'</div>'; return; }
+  var now=Date.now(), DAY=86400000;
+  var mem=usageDetailRows.members.filter(function(m){ return !m.coach; });
+  var total=mem.length, claimed=0, active7=0;
+  mem.forEach(function(m){ if(m.uid){claimed++;} var t=usageStampMs(m.lastActiveAt); if(t&&now-t<=7*DAY){active7++;} });
+  var cards='<div class="u-cards" style="margin-bottom:16px">'+[['Seats claimed',claimed+' / '+total],['Active (7d)',active7],['Open issues',usageDetailRows.open],['Priorities',usageDetailRows.pris]].map(function(c){return '<div class="u-card"><div class="u-cl">'+c[0]+'</div><div class="u-cn">'+c[1]+'</div></div>';}).join('')+'</div>';
+  function tier(m){ if(!m.uid){ return m.email?0:5; } var t=usageStampMs(m.lastActiveAt); if(!t){return 3;} var d=(now-t)/DAY; if(d>21){return 1;} if(d>7){return 2;} return 4; }
+  mem.sort(function(a,b){ var ta=tier(a),tb=tier(b); if(ta!==tb){return ta-tb;} return (usageStampMs(a.lastActiveAt)||0)-(usageStampMs(b.lastActiveAt)||0); });
+  var list=mem.map(function(m){ var t=usageStampMs(m.lastActiveAt); var dotc,st,act='';
+    if(!m.uid){ if(m.email){ dotc='var(--open)'; st='Invited \u00b7 never signed in'; act='<a class="u-open" style="text-decoration:none" href="'+usageMailto(m,co,'invite')+'">Resend invite</a>'; } else { dotc='var(--t3)'; st='No email \u00b7 org-chart only'; } }
+    else if(!t){ dotc='#ef9f27'; st='Awaiting activity'; }
+    else { var d=(now-t)/DAY; if(d>21){ dotc='#ef9f27'; st=usageAgo(t)+' ago'; act='<a class="u-open" style="text-decoration:none" href="'+usageMailto(m,co,'nudge')+'">Nudge</a>'; } else if(d>7){ dotc='var(--strip)'; st=usageAgo(t)+' ago'; act='<a class="u-tog" style="text-decoration:none" href="'+usageMailto(m,co,'nudge')+'">Nudge</a>'; } else { dotc='var(--green)'; st=usageAgo(t)+' ago'; } }
+    var role=m.isLeader?'Leader':'Member'; var ini=esc(m.initials||initials(m.name||'?'));
+    return '<div style="display:flex;align-items:center;gap:11px;padding:11px 0;border-bottom:1px solid var(--b)"><span style="width:32px;height:32px;border-radius:50%;background:var(--strip-soft);color:var(--strip-ink);display:flex;align-items:center;justify-content:center;font:700 11px var(--ui);flex-shrink:0">'+ini+'</span><div style="flex:1;min-width:0"><div style="font-size:13px;color:var(--t)">'+esc(m.name||'\u2014')+'</div><div style="font-size:11px;color:var(--t3)">'+role+' \u00b7 '+st+'</div></div>'+act+'<span style="width:9px;height:9px;border-radius:50%;background:'+dotc+';flex-shrink:0"></span></div>';
+  }).join('');
+  grid.innerHTML=head+cards+'<div style="font-size:12px;color:var(--t3);margin:0 2px 6px">Members \u00b7 who needs a nudge first</div>'+(list||'<div class="psub">No members yet.</div>');
+}
+
 
 window.openFullChart=function(cid){ ORGVIEW='chart'; switchCompany(cid); window.goTeam(); };
 window.openFullList=function(cid,lens){ ORGVIEW='list'; ORGLIST=lens||'line'; switchCompany(cid); window.goTeam(); };
