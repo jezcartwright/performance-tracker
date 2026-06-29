@@ -2296,7 +2296,7 @@ function buildUsage(){
   var jobs=cids.map(function(cid){ var base=companiesCol.doc(cid);
     return Promise.all([ base.collection('members').get(), base.collection('issues').get().catch(function(){return {forEach:function(){}};}) ]).then(function(r){
       var total=0,claimed=0,pending=0;
-      r[0].forEach(function(d){ var m=d.data(); total++; if(m.uid){claimed++;} else if(m.email){pending++;} });
+      r[0].forEach(function(d){ var m=d.data(); if(m.coach){return;}/*PT_USAGECOACH_V1*/ total++; if(m.uid){claimed++;} else if(m.email){pending++;} });
       var io=0,ip=0,idn=0;
       r[1].forEach(function(d){ var s=(d.data().status||''); if(s==='open'){io++;} else if(s==='prog'){ip++;} else if(s==='done'){idn++;} });
       var co=companies[cid]||{};
