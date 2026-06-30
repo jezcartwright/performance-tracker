@@ -2236,8 +2236,8 @@ function renderClientLogo(){
     el.style.background='#ff6600';
     el.innerHTML='<img src="'+PI_P+'" alt="Performance Intelligence" style="height:25px;width:auto;display:block">';
   } else if(company && company.logo){
-    el.style.background='transparent';
-    el.innerHTML='<img src="'+company.logo+'" alt="'+esc(company.name||'')+'" style="width:100%;height:100%;object-fit:cover;display:block">';
+    el.style.background='#fff';
+    el.innerHTML='<img src="'+company.logo+'" alt="'+esc(company.name||'')+'" style="width:100%;height:100%;object-fit:contain;padding:3px;box-sizing:border-box;display:block">';
   } else {
     el.style.background='#fff';
     var t=clientMonogram();
@@ -2246,7 +2246,7 @@ function renderClientLogo(){
   renderLogoPrev();
 }
 function renderLogoPrev(){ var p=document.getElementById('logoPrev'); var rm=document.getElementById('logoRm'); if(!p)return;
-  if(activeCid && company && company.logo){ p.style.background='transparent'; p.innerHTML='<img src="'+company.logo+'" style="width:100%;height:100%;object-fit:cover;display:block">'; if(rm)rm.style.display=''; }
+  if(activeCid && company && company.logo){ p.style.background='#fff'; p.innerHTML='<img src="'+company.logo+'" style="width:100%;height:100%;object-fit:contain;padding:3px;box-sizing:border-box;display:block">'; if(rm)rm.style.display=''; }
   else { var t=clientMonogram(); p.style.background='var(--strip)'; p.innerHTML='<span style="font-family:var(--display);font-weight:700;color:#fff;font-size:'+(t.length>=3?'15px':'20px')+'">'+esc(t)+'</span>'; if(rm)rm.style.display='none'; }
   var bw=document.getElementById('brandWebIn'); if(bw && document.activeElement!==bw) bw.value=(activeCid&&company&&company.web)||'';
 }
@@ -2715,11 +2715,35 @@ function themeFromRGB(r,g,b){
   function mix(a,bb,t){ return a+(bb-a)*t; }
   return { strip:'#'+hx(r)+hx(g)+hx(b), ink:'#'+hx(r*0.8)+hx(g*0.8)+hx(b*0.8), soft:'#'+hx(mix(r,255,.9))+hx(mix(g,255,.9))+hx(mix(b,255,.9)), mid:'#'+hx(mix(r,255,.72))+hx(mix(g,255,.72))+hx(mix(b,255,.72)) };
 }
+/* PT_BRANDCOLOR_V1 — dominant brand-colour extractor.
+   Instead of averaging every saturated pixel (which blends multi-colour or
+   anti-aliased logos into a muddy tone), bucket pixels into a coarse colour
+   histogram weighted by saturation, then return the average of the single
+   most dominant vivid bucket — so the theme matches the logo's real accent. */
 function sampleColor(url, cb){
   try{ var im=new Image(); im.crossOrigin='anonymous';
-    im.onload=function(){ try{ var w=Math.min(64,im.naturalWidth||64), h=Math.min(64,im.naturalHeight||64); var cv=document.createElement('canvas'); cv.width=w; cv.height=h; var ctx=cv.getContext('2d'); ctx.drawImage(im,0,0,w,h); var d=ctx.getImageData(0,0,w,h).data; var r=0,g=0,b=0,cnt=0;
-      for(var i=0;i<d.length;i+=4){ if(d[i+3]<128)continue; var rr=d[i],gg=d[i+1],bb=d[i+2]; var mx=Math.max(rr,gg,bb),mn=Math.min(rr,gg,bb); if(mx>238&&mn>238)continue; if(mx<18)continue; if(mx-mn<18)continue; r+=rr;g+=gg;b+=bb;cnt++; }
-      if(!cnt){ cb(null); return; } cb(themeFromRGB(r/cnt,g/cnt,b/cnt)); }catch(e){ cb(null); } };
+    im.onload=function(){ try{
+      var w=Math.min(72,im.naturalWidth||72), h=Math.min(72,im.naturalHeight||72);
+      var cv=document.createElement('canvas'); cv.width=w; cv.height=h;
+      var ctx=cv.getContext('2d'); ctx.drawImage(im,0,0,w,h);
+      var d=ctx.getImageData(0,0,w,h).data;
+      var bins={}, best=null, bestScore=0;
+      for(var i=0;i<d.length;i+=4){
+        if(d[i+3]<128) continue;                 // transparent
+        var rr=d[i], gg=d[i+1], bb=d[i+2];
+        var mx=Math.max(rr,gg,bb), mn=Math.min(rr,gg,bb);
+        if(mn>240) continue;                      // near-white (logo background)
+        if(mx<24) continue;                       // near-black (outlines/text)
+        var sat=mx ? (mx-mn)/mx : 0;              // 0..1
+        if(sat<0.12) continue;                    // greys / near-neutral
+        var key=(rr>>5)+'-'+(gg>>5)+'-'+(bb>>5);  // coarse 8x8x8 buckets group anti-aliased edges
+        var bn=bins[key]||(bins[key]={r:0,g:0,b:0,w:0});
+        bn.r+=rr*sat; bn.g+=gg*sat; bn.b+=bb*sat; bn.w+=sat;  // vivid pixels weigh more
+        if(bn.w>bestScore){ bestScore=bn.w; best=bn; }
+      }
+      if(!best||best.w<=0){ cb(null); return; }
+      cb(themeFromRGB(best.r/best.w, best.g/best.w, best.b/best.w));
+    }catch(e){ cb(null); } };
     im.onerror=function(){ cb(null); }; im.src=url;
   }catch(e){ cb(null); }
 }
