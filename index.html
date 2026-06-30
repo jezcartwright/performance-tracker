@@ -3957,9 +3957,9 @@ function paintProfile(mid){ var m=members[mid]; if(!m)return false; curProfile=m
     : leads ? (m.title?m.title:('Leader · '+(leadFnName(mid)||dn||'')))
     : (m.title ? (m.title+(dn?(' · '+dn):'')) : (dn||'Team member'));
   document.getElementById('pfEmail').textContent=m.email||'';
-  var pe=document.getElementById('pfEdit'); if(pe) pe.style.display=(isAdmin && company.ceoMemberId!==mid)?'inline-flex':'none';
+  var pe=document.getElementById('pfEdit'); if(pe) pe.style.display=isAdmin?'inline-flex':'none'; /* PT_CEOEDIT_V1 */
   var pv=document.getElementById('pfInvite'); if(pv) pv.style.display=(isAdmin && !m.uid && m.email)?'inline-flex':'none';
-  var pa=document.getElementById('pfAdmin'); if(pa){ if(ME.isSuper && activeCid && m.uid && m.uid!==ME.uid){ var _ca=isPersonAdmin(m); pa.style.display='inline-flex'; pa.textContent=_ca?'✓ Admin':'Make admin'; pa.style.background=_ca?'#0f8a6b':''; pa.style.color=_ca?'#fff':''; pa.style.borderColor=_ca?'#0f8a6b':''; } else { pa.style.display='none'; } }
+  var pa=document.getElementById('pfAdmin'); if(pa){ if(ME.isSuper && activeCid && (m.uid||m.email) && m.uid!==ME.uid){ var _ca=isPersonAdmin(m); pa.style.display='inline-flex'; pa.textContent=_ca?'✓ Admin':'Make admin'; pa.style.background=_ca?'#0f8a6b':''; pa.style.color=_ca?'#fff':''; pa.style.borderColor=_ca?'#0f8a6b':''; } else { pa.style.display='none'; } }
   renderProfileIssues(mid);
   renderProfilePriorities(mid);
   renderProfileRel(mid);
