@@ -1807,7 +1807,8 @@ function openFocus(k){closeMenu();show('home');var f=document.getElementById('fo
             <button class="tinybtn" id="logoRm" onclick="removeLogo()" style="display:none;margin-left:6px">Remove</button><button class="tinybtn" onclick="brandMatchLogo()" style="margin-left:6px">Match colour to logo</button>
           </div>
         </div>
-        <p class="psub" style="margin:9px 0 14px">Pull it from the client's website above, or upload one. Shown top-left for this client; falls back to the company code when none is set.</p>
+        <div style="display:flex;align-items:center;gap:8px;margin:10px 0 0"><span class="sw-lbl" style="margin:0">Logo fit</span><button class="tinybtn" id="logoFitFit" onclick="setLogoFit('fit')">Fit on white</button><button class="tinybtn" id="logoFitFill" onclick="setLogoFit('fill')">Fill tile</button></div>
+        <p class="psub" style="margin:9px 0 14px">Pull it from the client's website above, or upload one. <b>Fit</b> centres the whole logo on white; <b>Fill</b> makes it fill the rounded tile edge-to-edge (best for solid square logos). Shown top-left for this client; falls back to the company code when none is set.</p>
         <div class="sw-lbl">Accent (strip) colour</div>
         <div class="sws" id="sws">
           <div class="sw" style="background:#ff6600" data-c="#ff6600" data-i="#d95800" data-s="#fff4ee" data-m="#ffe0cc"></div>
@@ -2237,16 +2238,16 @@ function renderClientLogo(){
     el.innerHTML='<img src="'+PI_P+'" alt="Performance Intelligence" style="height:25px;width:auto;display:block">';
   } else if(company && company.logo){
     el.style.background='#fff';
-    el.innerHTML='<img src="'+company.logo+'" alt="'+esc(company.name||'')+'" style="width:100%;height:100%;object-fit:contain;padding:3px;box-sizing:border-box;display:block">';
+    var _lf=(company.logoFit==='fill')?'object-fit:cover':'object-fit:contain;padding:3px;box-sizing:border-box'; el.innerHTML='<img src="'+company.logo+'" alt="'+esc(company.name||'')+'" style="width:100%;height:100%;'+_lf+';display:block">';
   } else {
     el.style.background='#fff';
     var t=clientMonogram();
     el.innerHTML='<span style="font-family:var(--display);font-weight:700;color:var(--strip);line-height:1;font-size:'+(t.length>=3?'15px':'20px')+';letter-spacing:.5px">'+esc(t)+'</span>';
   }
-  renderLogoPrev();
+  renderLogoPrev(); if(typeof syncLogoFitUI==='function')syncLogoFitUI();
 }
 function renderLogoPrev(){ var p=document.getElementById('logoPrev'); var rm=document.getElementById('logoRm'); if(!p)return;
-  if(activeCid && company && company.logo){ p.style.background='#fff'; p.innerHTML='<img src="'+company.logo+'" style="width:100%;height:100%;object-fit:contain;padding:3px;box-sizing:border-box;display:block">'; if(rm)rm.style.display=''; }
+  if(activeCid && company && company.logo){ p.style.background='#fff'; var _lf=(company.logoFit==='fill')?'object-fit:cover':'object-fit:contain;padding:3px;box-sizing:border-box'; p.innerHTML='<img src="'+company.logo+'" style="width:100%;height:100%;'+_lf+';display:block">'; if(rm)rm.style.display=''; }
   else { var t=clientMonogram(); p.style.background='var(--strip)'; p.innerHTML='<span style="font-family:var(--display);font-weight:700;color:#fff;font-size:'+(t.length>=3?'15px':'20px')+'">'+esc(t)+'</span>'; if(rm)rm.style.display='none'; }
   var bw=document.getElementById('brandWebIn'); if(bw && document.activeElement!==bw) bw.value=(activeCid&&company&&company.web)||'';
 }
@@ -2470,6 +2471,8 @@ function fetchLogoUrl(domain,cb){ var cands=['https://logo.clearbit.com/'+domain
 window.ovPullLogo=function(){ var domain=domainFrom((document.getElementById('ovWebIn')||{}).value); if(!domain){ alert('Enter a website first.'); return; } fetchLogoUrl(domain,function(url){ if(!url){ alert('Couldn\u2019t find a logo for that site — you can upload one in Branding instead.'); return; } ovSaveLogo(domain,url); }); };
 window.brandPullLogo=function(){ if(!isAdmin||!activeCid){ return; } var domain=domainFrom((document.getElementById('brandWebIn')||{}).value); if(!domain){ alert('Enter a website first.'); return; } fetchLogoUrl(domain,function(url){ if(!url){ alert('Couldn\u2019t find a logo for that site — try uploading one instead.'); return; } cRef().update({web:domain,logo:url}).then(function(){ sampleColor(url,function(theme){ if(theme){ cRef().update({theme:theme}).then(function(){ applyTheme(theme); }).catch(function(){}); } }); }).catch(function(e){ alert('Save failed: '+e.message); }); }); };
 window.brandMatchLogo=function(){ if(!isAdmin||!activeCid){ return; } var lg=(company&&company.logo)||''; if(!lg){ alert('Upload or pull a logo first, then match.'); return; } sampleColor(lg,function(theme){ if(!theme){ alert('Could not read a colour from that logo. If it was pulled from a website, upload the image file instead and it will match exactly.'); return; } cRef().update({theme:theme}).then(function(){ applyTheme(theme); }).catch(function(e){ alert('Could not save colour: '+((e&&e.message)||e)); }); }); }; /* PT_LOGOMATCH_V1 */
+function syncLogoFitUI(){ var fill=!!(activeCid&&company&&company.logoFit==='fill'); var a=document.getElementById('logoFitFit'), b=document.getElementById('logoFitFill'); var on='background:var(--strip);color:#fff;border-color:var(--strip)'; if(a)a.style.cssText=fill?'':on; if(b)b.style.cssText=fill?on:''; } /* PT_LOGOFITMODE_V1 */
+window.setLogoFit=function(mode){ if(!isAdmin||!activeCid)return; var v=(mode==='fill')?'fill':'fit'; cRef().update({logoFit:v}).then(function(){ if(company)company.logoFit=v; renderClientLogo(); try{renderCoHome();}catch(e){} syncLogoFitUI(); }).catch(function(e){ alert('Could not save: '+((e&&e.message)||e)); }); };
 function ovSaveLogo(domain,url){ companiesCol.doc(ovCid).update({web:domain,logo:url}).then(function(){ ovCompany.web=domain; ovCompany.logo=url; if(ovCid===activeCid){ company.web=domain; company.logo=url; renderClientLogo(); } renderOverview(); }).catch(function(e){ alert('Save failed: '+e.message); }); }
 function renderCoSwitch(){
   var wrap=document.getElementById('coWrap'); if(!wrap)return;
@@ -2611,7 +2614,7 @@ function renderCoHome(){
   box.innerHTML = cids.length ? cids.map(function(id){ var c=companies[id]; var th=(c.theme&&c.theme.strip)||'#ff6600';
     var mono=String((c.code||initials(c.name||'')||'•')).toUpperCase().slice(0,3);
     var hasLogo=!!c.logo;
-    var logoInner=hasLogo?('<img src="'+c.logo+'" alt="" style="width:100%;height:100%;object-fit:cover;display:block">'):('<span style="font-family:var(--display);font-weight:700;color:#fff;font-size:'+(mono.length>=3?'18px':'24px')+'">'+esc(mono)+'</span>');
+    var logoInner=hasLogo?('<img src="'+c.logo+'" alt="" style="width:100%;height:100%;'+((c.logoFit==='fill')?'object-fit:cover':'object-fit:contain;padding:4px;box-sizing:border-box')+';display:block">'):('<span style="font-family:var(--display);font-weight:700;color:#fff;font-size:'+(mono.length>=3?'18px':'24px')+'">'+esc(mono)+'</span>');
     var logoTile='<span class="cohome-logo"'+(hasLogo?'':(' style="background:'+th+'"'))+'>'+logoInner+'</span>';
     var ppl=peopleIndex?peopleIndex.filter(function(p){return p.cid===id;}).length:null;
     var ldr=peopleIndex?peopleIndex.filter(function(p){return p.cid===id&&p.isLeader;}).length:null;
