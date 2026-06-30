@@ -2238,7 +2238,7 @@ function renderClientLogo(){
     el.innerHTML='<img src="'+PI_P+'" alt="Performance Intelligence" style="height:25px;width:auto;display:block">';
   } else if(company && company.logo){
     el.style.background='#fff';
-    var _lf=(company.logoFit==='fill')?'object-fit:cover':'object-fit:contain;padding:3px;box-sizing:border-box'; el.innerHTML='<img src="'+company.logo+'" alt="'+esc(company.name||'')+'" style="width:100%;height:100%;'+_lf+';display:block">';
+    var _lf=(company.logoFit==='fill')?'object-fit:cover':'object-fit:cover'; el.innerHTML='<img src="'+company.logo+'" alt="'+esc(company.name||'')+'" style="width:100%;height:100%;'+_lf+';display:block">';
   } else {
     el.style.background='#fff';
     var t=clientMonogram();
@@ -2247,7 +2247,7 @@ function renderClientLogo(){
   renderLogoPrev(); if(typeof syncLogoFitUI==='function')syncLogoFitUI();
 }
 function renderLogoPrev(){ var p=document.getElementById('logoPrev'); var rm=document.getElementById('logoRm'); if(!p)return;
-  if(activeCid && company && company.logo){ p.style.background='#fff'; var _lf=(company.logoFit==='fill')?'object-fit:cover':'object-fit:contain;padding:3px;box-sizing:border-box'; p.innerHTML='<img src="'+company.logo+'" style="width:100%;height:100%;'+_lf+';display:block">'; if(rm)rm.style.display=''; }
+  if(activeCid && company && company.logo){ p.style.background='#fff'; var _lf=(company.logoFit==='fill')?'object-fit:cover':'object-fit:cover'; p.innerHTML='<img src="'+company.logo+'" style="width:100%;height:100%;'+_lf+';display:block">'; if(rm)rm.style.display=''; }
   else { var t=clientMonogram(); p.style.background='var(--strip)'; p.innerHTML='<span style="font-family:var(--display);font-weight:700;color:#fff;font-size:'+(t.length>=3?'15px':'20px')+'">'+esc(t)+'</span>'; if(rm)rm.style.display='none'; }
   var bw=document.getElementById('brandWebIn'); if(bw && document.activeElement!==bw) bw.value=(activeCid&&company&&company.web)||'';
 }
