@@ -3561,10 +3561,10 @@ function cardMenu(mid,kind){
   var m=members[mid]; var fid=m?m.functionId:null; var items='';
   if(kind==='member' && fid) items+='<div onclick="event.stopPropagation();appointLeader(\''+mid+'\')">★ Make '+esc(fns[fid]?fns[fid].name:'')+' leader</div>';
   if(kind!=='ceo') items+='<div onclick="event.stopPropagation();appointCEO(\''+mid+'\')">♛ Appoint as CEO</div>';
-  if(kind!=='ceo') items+='<div onclick="event.stopPropagation();openPerson({edit:\''+mid+'\'})">✎ Edit details</div>';
-  if(kind!=='ceo') items+='<div onclick="event.stopPropagation();addReport(\''+mid+'\')">+ Add report</div>';
+  items+='<div onclick="event.stopPropagation();openPerson({edit:\''+mid+'\'})">✎ Edit details</div>';
+  items+='<div onclick="event.stopPropagation();addReport(\''+mid+'\')">+ Add report</div>';
   if(kind!=='ceo') items+='<div class="dz" onclick="event.stopPropagation();removeFromOrg(\''+mid+'\')">Remove from org</div>';
-  return '<div class="ocmenu" id="ocm_'+mid+'">'+items+'</div>';
+  return '<div class="ocmenu" id="ocm_'+mid+'">'+items+'</div>'; /* PT_CEOMENU_V1 */
 }
 function emptyCeoSlot(){ var n=Object.keys(members).length; return '<div class="pcard empty ceoc"'+(isAdmin?' style="cursor:pointer"':'')+' onclick="appointCEOPick()"><div class="av" style="background:var(--t3)">♛</div><div class="pn">No CEO yet</div><div class="pr">'+(isAdmin?'tap to appoint':'not set')+'</div>'+(n?'<div class="chips"><div class="pcount">'+n+(n===1?' person':' people')+'</div></div>':'')+'</div>'; }
 function emptyLeaderSlot(fid){ var f=fns[fid]; var n=Object.keys(members).filter(function(x){return members[x].functionId===fid;}).length; return '<div class="pcard empty"'+(isAdmin?' style="cursor:pointer"':'')+' onclick="appointLeaderPick(\''+fid+'\')"><div class="av" style="background:'+(f?f.color:'var(--t3)')+';opacity:.45">?</div><div class="pn">'+esc(f?f.name:'')+'</div><div class="pr">'+(isAdmin?'tap to set leader':'no leader')+'</div>'+(n?'<div class="chips"><div class="pcount">'+n+(n===1?' person':' people')+'</div></div>':'')+'</div>'; }
