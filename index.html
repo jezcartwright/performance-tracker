@@ -1160,6 +1160,18 @@ function openFocus(k){closeMenu();show('home');var f=document.getElementById('fo
   </div>
 </div>
 
+<div id="verify-screen" style="display:none;min-height:100vh;align-items:center;justify-content:center;padding:24px;background:var(--bg);font-family:var(--ui)"><!-- PT_EMAILVERIFY_V1 -->
+  <div style="max-width:430px;width:100%;background:var(--card);border:1px solid var(--b);border-radius:18px;padding:34px 30px;text-align:center;box-shadow:0 10px 40px rgba(0,0,0,.06)">
+    <div style="width:54px;height:54px;border-radius:14px;background:var(--strip-soft);color:var(--strip-ink);display:flex;align-items:center;justify-content:center;margin:0 auto 18px;font-size:26px">&#9993;</div>
+    <div style="font-family:var(--display);font-size:27px;color:var(--t);line-height:1.1;margin-bottom:12px">Verify your email</div>
+    <p style="font-size:14.5px;color:var(--t2);line-height:1.55;margin:0 0 8px">We&rsquo;ve sent a verification link to <b id="vrf-email" style="color:var(--t)"></b>.</p>
+    <p style="font-size:14.5px;color:var(--t2);line-height:1.55;margin:0 0 24px">Open it, then tap below. Can&rsquo;t see it? Check your spam folder, or resend.</p>
+    <button onclick="ptVerifyContinue()" style="width:100%;font:700 15px/1 var(--ui);color:#fff;background:var(--strip);border:0;border-radius:12px;padding:14px;cursor:pointer;margin-bottom:10px">I&rsquo;ve verified &mdash; continue</button>
+    <button onclick="ptVerifyResend()" style="width:100%;font:600 14px/1 var(--ui);color:var(--t2);background:var(--card);border:1px solid var(--b);border-radius:12px;padding:13px;cursor:pointer">Resend email</button>
+    <div id="vrf-msg" style="font-size:13px;color:var(--t2);margin-top:14px;min-height:18px"></div>
+    <button onclick="signOut()" style="font:600 13px/1 var(--ui);color:var(--t3);background:none;border:0;cursor:pointer;margin-top:6px;text-decoration:underline">Use a different account</button>
+  </div>
+</div>
 <div id="app" style="display:none">
 <header class="mast"><div class="mast-inner">
     <div class="logo" id="clientLogo" onclick="homeClick()"></div>
@@ -2118,11 +2130,27 @@ var sm={open:['st-open','Open'],prog:['st-prog','In Progress'],done:['st-done','
 var stOrder=['open','prog','done'];
 
 /* ---------- AUTH STATE ---------- */
+/* PT_EMAILVERIFY_V1 — email verification gate. Non-super users must verify their
+   email before entering the app; the seat-claim + lastActiveAt writes the rules
+   require all depend on a verified email, so without this they silently never land. */
+function ptShowVerify(user){
+  ['app','pub-home','login-screen','req-form'].forEach(function(id){ var el=document.getElementById(id); if(el)el.style.display='none'; });
+  var v=document.getElementById('verify-screen'); if(v)v.style.display='flex';
+  var em=document.getElementById('vrf-email'); if(em)em.textContent=(user&&user.email)||'your email';
+  if(user&&!window._vrfSent){ window._vrfSent=true; try{ user.sendEmailVerification().catch(function(){}); }catch(e){} }
+}
+window.ptVerifyResend=function(){ var u=auth.currentUser; var m=document.getElementById('vrf-msg'); if(!u){ if(m)m.textContent='Please sign in again.'; return; } if(m)m.textContent='Sending\u2026'; u.sendEmailVerification().then(function(){ if(m)m.textContent='Sent \u2014 check your inbox, and your spam folder.'; }).catch(function(e){ if(m)m.textContent='Could not send: '+((e&&e.message)||e); }); };
+window.ptVerifyContinue=function(){ var u=auth.currentUser; var m=document.getElementById('vrf-msg'); if(!u){ if(m)m.textContent='Please sign in again.'; return; } if(m)m.textContent='Checking\u2026'; u.reload().then(function(){ if(auth.currentUser&&auth.currentUser.emailVerified){ location.reload(); } else { if(m)m.textContent='Not verified yet \u2014 open the link in your email first, then tap this again.'; } }).catch(function(e){ if(m)m.textContent='Could not check: '+((e&&e.message)||e); }); };
+
 auth.onAuthStateChanged(function(user){
-  if(!user){ document.getElementById('app').style.display='none'; var _aa=auth.isSignInWithEmailLink(window.location.href)||(new URLSearchParams(window.location.search).get('invite')==='1'); var _h=document.getElementById('pub-home'), _l=document.getElementById('login-screen'), _r=document.getElementById('req-form'); if(_r)_r.style.display='none'; if(_aa){ if(_h)_h.style.display='none'; if(_l)_l.style.display='flex'; } else { if(_l)_l.style.display='none'; if(_h)_h.style.display='flex'; } return; }
+  if(!user){ document.getElementById('app').style.display='none'; var _v0=document.getElementById('verify-screen'); if(_v0)_v0.style.display='none'; var _aa=auth.isSignInWithEmailLink(window.location.href)||(new URLSearchParams(window.location.search).get('invite')==='1'); var _h=document.getElementById('pub-home'), _l=document.getElementById('login-screen'), _r=document.getElementById('req-form'); if(_r)_r.style.display='none'; if(_aa){ if(_h)_h.style.display='none'; if(_l)_l.style.display='flex'; } else { if(_l)_l.style.display='none'; if(_h)_h.style.display='flex'; } return; }
   ME.uid=user.uid; ME.email=(user.email||'');
-  loadProfile(user).then(ensureSuperBootstrap).then(loadCompanies).then(startApp).then(landHome).catch(function(e){ console.error('init',e); startApp(); landHome(); });
+  loadProfile(user).then(ensureSuperBootstrap).then(function(){
+    if(!user.emailVerified && !ME.isSuper){ ptShowVerify(user); throw '__PT_UNVERIFIED__'; } /* PT_EMAILVERIFY_V1 */
+    return loadCompanies();
+  }).then(startApp).then(landHome).catch(function(e){ if(e==='__PT_UNVERIFIED__')return; console.error('init',e); startApp(); landHome(); });
 });
+
 
 function loadProfile(user){
   var saved=localStorage.getItem('nameForSignIn'); var nm=null; try{nm=saved?JSON.parse(saved):null;}catch(e){}
