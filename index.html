@@ -1538,6 +1538,24 @@ function openFocus(k){closeMenu();show('home');var f=document.getElementById('fo
     <div id="ovBody"></div>
   </section>
 
+  <!-- MASTER AGREEMENT (client admin one-click accept) -->
+  <div class="amodal" id="maModal">
+    <div class="amodal-card" style="max-width:480px">
+      <div class="amodal-h"><h2>Master agreement</h2><button class="amodal-x" onclick="closeMasterAgreement()">✕</button></div>
+      <p class="amodal-sub">As an administrator of <b id="maCo">this company</b>, please review and accept the master agreement covering the Terms of Service, Privacy Policy and Data Processing terms on behalf of your organisation.</p>
+      <div style="display:flex;gap:9px;flex-wrap:wrap;margin:2px 0 14px">
+        <a href="terms.html" target="_blank" rel="noopener" style="font-size:13px;font-weight:600;color:var(--strip-ink);text-decoration:none;border:1px solid var(--b,#e9e3d8);border-radius:9px;padding:8px 12px">Terms of Service ↗</a>
+        <a href="privacy.html" target="_blank" rel="noopener" style="font-size:13px;font-weight:600;color:var(--strip-ink);text-decoration:none;border:1px solid var(--b,#e9e3d8);border-radius:9px;padding:8px 12px">Privacy Policy ↗</a>
+      </div>
+      <label class="login-consent" style="margin:0 2px 12px"><input type="checkbox" id="maChk" onchange="maChk()"><span id="maChkLbl">I confirm I’m authorised to accept these terms on behalf of this company, and I agree to them.</span></label>
+      <div id="maSign" style="font-size:12.5px;color:var(--t3);background:var(--bg,#faf8f5);border:1px solid var(--b,#e9e3d8);border-radius:10px;padding:11px 13px;margin:0 0 14px"></div>
+      <div style="display:flex;gap:9px;margin-top:2px">
+        <button class="ghost" style="flex:1;justify-content:center" onclick="closeMasterAgreement()">Not now</button>
+        <button class="tg" id="maGo" style="flex:1;justify-content:center;opacity:.45" disabled onclick="acceptMasterAgreement()">Agree</button>
+      </div>
+    </div>
+  </div>
+
   <!-- AGREEMENT RECORD -->
   <div class="amodal" id="agrModal">
     <div class="amodal-card" style="max-width:440px">
@@ -1842,7 +1860,7 @@ function openFocus(k){closeMenu();show('home');var f=document.getElementById('fo
 
       <div class="panel" id="agrPanel">
         <h3>Agreement &amp; consent</h3>
-        <p class="psub">The Terms, Privacy Policy and Data Processing acceptance on file for this company. You control this record as super admin.</p>
+        <p class="psub">The Terms, Privacy Policy and Data Processing acceptance on file for this company.</p>
         <div id="agrBox"></div>
       </div>
     </div>
@@ -2534,7 +2552,7 @@ function startApp(){
     var af=document.getElementById('adminFlag'); var afShow=(isAdmin&&!ME.isSuper); if(af)af.style.display=afShow?'inline-block':'none'; var at=document.getElementById('admTop'); if(at)at.style.display=afShow?'flex':'none';
     renderAdmin();
     if(curProfile){ var _pe=document.getElementById('profile'); if(_pe&&_pe.classList.contains("active"))paintProfile(curProfile); }
-    themeSeen=true; maybeReveal();
+    themeSeen=true; maybeReveal(); if(window.maMaybePrompt)maMaybePrompt();
   },function(e){console.error('company',e);});
   subF=fnsRef().onSnapshot(function(qs){ fns={}; qs.forEach(function(d){var _fd=d.data(); if(_fd&&_fd.color!=null)_fd.color=cssColor(_fd.color); fns[d.id]=Object.assign({id:d.id},_fd);}); renderFnSelect(); renderAdmin(); render(); refreshAux(); if(curProfile){ var _pe=document.getElementById('profile'); if(_pe&&_pe.classList.contains("active"))paintProfile(curProfile); } tryPendingAppoint(); },function(e){console.error('fns',e);});
   subM=membersRef().onSnapshot(function(qs){ members={}; qs.forEach(function(d){ var m=d.data(); m.mid=d.id; m.name=m.name||((m.first||'')+' '+(m.last||'')).trim(); m.initials=m.initials||initials(m.name); if(m.coach && m.uid!==ME.uid){ return; } members[d.id]=m; }); resolveMyMid(); ensurePriSub(); membersSeen=true; maybeReveal(); renderAdmin(); render(); refreshAux(); if(curIssue)fillDetail(curIssue); if(window.pendingProfileMid && members[window.pendingProfileMid]){ var _pm=window.pendingProfileMid; window.pendingProfileMid=null; openProfile(_pm); } tryPendingAppoint(); },function(e){console.error('members',e);});
@@ -3433,7 +3451,19 @@ function renderAdmUsage(){
 function renderAgreement(){
   var box=document.getElementById('agrBox'); if(!box)return;
   if(!activeCid){ box.innerHTML='<div class="psub">No company selected.</div>'; return; }
-  if(!ME.isSuper){ box.innerHTML='<div class="psub">Managed by the super admin.</div>'; return; }
+  if(!ME.isSuper){
+    if(isAdmin){ var aa=company.agreement;
+      if(aa&&aa.accepted){ var w=aa.acceptedAt?(new Date(aa.acceptedAt+(aa.acceptedAt.length<=10?'T00:00:00':''))).toLocaleDateString():'\u2014';
+        box.innerHTML='<div class="agr-ok"><div class="agr-tick">\u2713</div><div>'
+          +'<div class="agr-line"><b>Master agreement accepted</b></div>'
+          +'<div class="agr-sub">By '+esc(aa.signatoryName||'\u2014')+(aa.signatoryTitle?(', '+esc(aa.signatoryTitle)):'')+' \u00b7 '+esc(w)+'</div>'
+          +'<div class="agr-sub">Versions \u2014 Terms/Privacy '+esc(aa.termsVersion||POLICY_VERSION)+', DPA '+esc(aa.dpaVersion||DPA_VERSION)+'</div>'
+          +'</div></div>';
+      } else { box.innerHTML='<div class="agr-no">You haven\u2019t accepted the master agreement for this company yet.</div><button class="tg" style="margin-top:9px;justify-content:center" onclick="openMasterAgreement()">Accept master agreement</button>'; }
+      return;
+    }
+    box.innerHTML='<div class="psub">Managed by the super admin.</div>'; return;
+  }
   var a=company.agreement;
   if(a&&a.accepted){
     var when=a.acceptedAt?(new Date(a.acceptedAt+(a.acceptedAt.length<=10?'T00:00:00':''))).toLocaleDateString():'—';
@@ -3464,6 +3494,30 @@ window.saveAgreement=function(){ if(!ME.isSuper||!activeCid)return;
   var rec={ accepted:true, signatoryName:name, signatoryTitle:(document.getElementById('agrTitle').value||'').trim()||null, signatoryEmail:(document.getElementById('agrEmail').value||'').trim()||null, method:document.getElementById('agrMethod').value, acceptedAt:(document.getElementById('agrDate').value||new Date().toISOString().slice(0,10)), termsVersion:POLICY_VERSION, dpaVersion:DPA_VERSION, recordedByUid:ME.uid, recordedByName:ME.name, recordedAt:new Date().toISOString() };
   cRef().update({agreement:rec}).then(function(){ closeAgreement(); }).catch(function(e){ alert('Could not save: '+e.message); });
 };
+/* PT_MASTERAGREE_V1 — client-admin one-click master-agreement acceptance + one-time login prompt */
+window.maChk=function(){ var g=document.getElementById('maGo'),c=document.getElementById('maChk'); if(!g||!c)return; g.disabled=!c.checked; g.style.opacity=c.checked?'1':'.45'; };
+window.openMasterAgreement=function(){ if(!activeCid)return; var co=(company&&company.name)?company.name:'this company';
+  var n=document.getElementById('maCo'); if(n)n.textContent=co;
+  var lbl=document.getElementById('maChkLbl'); if(lbl)lbl.textContent='I confirm I\u2019m authorised to accept these terms on behalf of '+co+', and I agree to them.';
+  var s=document.getElementById('maSign'); if(s)s.innerHTML='Signing as <b style="color:var(--t2)">'+esc(ME.name||'')+'</b> \u00b7 '+esc(ME.email||'')+' \u00b7 recorded with today\u2019s date and the current policy versions.';
+  var c=document.getElementById('maChk'); if(c)c.checked=false; window.maChk();
+  var m=document.getElementById('maModal'); if(m)m.classList.add('on');
+};
+window.closeMasterAgreement=function(){ var m=document.getElementById('maModal'); if(m)m.classList.remove('on'); };
+window.acceptMasterAgreement=function(){ if(!activeCid||!isAdmin)return; var c=document.getElementById('maChk'); if(!c||!c.checked)return;
+  var myTitle=(members[ME.mid]&&members[ME.mid].title)?members[ME.mid].title:null;
+  var rec={ accepted:true, signatoryName:ME.name||null, signatoryTitle:myTitle, signatoryEmail:ME.email||null, signatoryUid:ME.uid||null, method:'clicked', acceptedAt:new Date().toISOString().slice(0,10), termsVersion:POLICY_VERSION, dpaVersion:DPA_VERSION, recordedByUid:ME.uid, recordedByName:ME.name, recordedAt:new Date().toISOString(), source:'admin' };
+  var g=document.getElementById('maGo'); if(g){g.disabled=true;g.textContent='Saving\u2026';}
+  cRef().update({agreement:rec}).then(function(){ closeMasterAgreement(); if(g)g.textContent='Agree'; renderAgreement(); }).catch(function(e){ if(g){g.disabled=false;g.style.opacity='1';g.textContent='Agree';} alert('Could not save: '+e.message); });
+};
+window._maPrompted={};
+window.maMaybePrompt=function(){ try{
+  if(!activeCid||!isAdmin||ME.isSuper) return;
+  var a=company&&company.agreement; if(a&&a.accepted) return;
+  if(window._maPrompted[activeCid]) return;
+  window._maPrompted[activeCid]=true;
+  setTimeout(window.openMasterAgreement,600);
+}catch(e){} };
 document.querySelectorAll('#sws .sw').forEach(function(s){ s.addEventListener('click',function(){ if(!isAdmin||!activeCid)return; cRef().update({theme:{strip:s.dataset.c,ink:s.dataset.i,soft:s.dataset.s,mid:s.dataset.m}}); }); });
 
 /* ---------- TEAM / ORG CHART ---------- */
