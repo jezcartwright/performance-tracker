@@ -3598,7 +3598,7 @@ function controlsBar(){
   var imp=isAdmin?'<button class="orgbtn" onclick="openImport()">⬆ Import</button>':'';
   var setceo=(!(company.ceoMemberId&&members[company.ceoMemberId]))?'<button class="orgbtn" onclick="appointCEOPick()">♛ Set a CEO</button>':'';
   var arch='<button class="orgbtn" onclick="openArchive()">🗄 Archive <span id="archCount">'+archiveCount+'</span></button>';
-  var reb=ME.isSuper?'<button class="orgbtn" onclick="rebrandCurrent()" title="Pull logo &amp; accent colour from the company website">🎨 Brand</button>':'';
+  var reb='';/*PT_NOBRANDBTN_V1 — consolidated into Branding panel*/
   var banner=(ORGVIEW==='chart'&&MANAGING)?'<div class="mgbanner">✎ Manage Org on — <strong>drag a card onto another</strong> to change who they report to (their team moves too); <strong>drop on a card’s left/right edge</strong> to reorder. Tap a leader slot to set them, or use a card’s ⋯ menu. Tap anyone to view them.</div>':'';
   return '<div class="orgbar"><div class="orgcrumb">'+esc(company.name||'Organisation')+'</div><div class="orgctrls">'+search+toggle+oz+teamSel+mg+addp+addt+imp+setceo+arch+reb+'</div></div>'+banner;
 }
