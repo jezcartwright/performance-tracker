@@ -2632,7 +2632,7 @@ function renderCoHome(){
   box.innerHTML = cids.length ? cids.map(function(id){ var c=companies[id]; var th=(c.theme&&c.theme.strip)||'#ff6600';
     var mono=String((c.code||initials(c.name||'')||'•')).toUpperCase().slice(0,3);
     var hasLogo=!!c.logo;
-    var logoInner=hasLogo?('<img src="'+c.logo+'" alt="" style="width:100%;height:100%;'+((c.logoFit==='fill')?'object-fit:cover':'object-fit:contain;padding:4px;box-sizing:border-box')+';display:block">'):('<span style="font-family:var(--display);font-weight:700;color:#fff;font-size:'+(mono.length>=3?'18px':'24px')+'">'+esc(mono)+'</span>');
+    var logoInner=hasLogo?('<img src="'+c.logo+'" alt="" style="width:100%;height:100%;'+'object-fit:cover'/*PT_COHOMEFILL_V1*/+';display:block">'):('<span style="font-family:var(--display);font-weight:700;color:#fff;font-size:'+(mono.length>=3?'18px':'24px')+'">'+esc(mono)+'</span>');
     var logoTile='<span class="cohome-logo"'+(hasLogo?'':(' style="background:'+th+'"'))+'>'+logoInner+'</span>';
     var ppl=peopleIndex?peopleIndex.filter(function(p){return p.cid===id;}).length:null;
     var ldr=peopleIndex?peopleIndex.filter(function(p){return p.cid===id&&p.isLeader;}).length:null;
