@@ -1474,6 +1474,7 @@ function openFocus(k){closeMenu();show('home');var f=document.getElementById('fo
 
   <!-- TEAM / ORG CHART -->
   <section class="screen" id="team">
+    <div id="coachCard"></div>
     <div id="orgWrap"></div>
   </section>
 
@@ -1537,6 +1538,19 @@ function openFocus(k){closeMenu();show('home');var f=document.getElementById('fo
     </button>
     <div id="ovBody"></div>
   </section>
+
+  <!-- COACH CONTACT (PT_COACHCARD_V1) -->
+  <div class="amodal" id="coachModal">
+    <div class="amodal-card" style="max-width:440px">
+      <div class="amodal-h"><h2>Message your coach</h2><button class="amodal-x" onclick="closeCoachContact()">✕</button></div>
+      <div id="coachForm">
+        <p class="amodal-sub">Send a note to your Performance Intelligence coach — they’ll get it here and by email.</p>
+        <textarea id="coachMsg" rows="4" placeholder="How can your coach help?" style="width:100%;border:1.5px solid var(--b);border-radius:9px;padding:11px 13px;font-family:var(--ui);font-size:14px;box-sizing:border-box;resize:vertical"></textarea>
+        <div style="display:flex;gap:9px;margin-top:12px"><button class="ghost" style="flex:1;justify-content:center" onclick="closeCoachContact()">Cancel</button><button class="tg" id="coachSend" style="flex:1;justify-content:center" onclick="sendCoachContact()">Send message</button></div>
+      </div>
+      <div id="coachSent" style="display:none;text-align:center;padding:14px 4px"><div style="font-size:15px;font-weight:700;color:var(--green)">✓ Message sent</div><div class="amodal-sub" style="margin-top:6px">Your coach will be in touch.</div><button class="tg" style="justify-content:center;margin-top:12px" onclick="closeCoachContact()">Close</button></div>
+    </div>
+  </div>
 
   <!-- MASTER AGREEMENT (client admin one-click accept) -->
   <div class="amodal" id="maModal">
@@ -2555,7 +2569,7 @@ function startApp(){
     themeSeen=true; maybeReveal(); if(window.maMaybePrompt)maMaybePrompt();
   },function(e){console.error('company',e);});
   subF=fnsRef().onSnapshot(function(qs){ fns={}; qs.forEach(function(d){var _fd=d.data(); if(_fd&&_fd.color!=null)_fd.color=cssColor(_fd.color); fns[d.id]=Object.assign({id:d.id},_fd);}); renderFnSelect(); renderAdmin(); render(); refreshAux(); if(curProfile){ var _pe=document.getElementById('profile'); if(_pe&&_pe.classList.contains("active"))paintProfile(curProfile); } tryPendingAppoint(); },function(e){console.error('fns',e);});
-  subM=membersRef().onSnapshot(function(qs){ members={}; qs.forEach(function(d){ var m=d.data(); m.mid=d.id; m.name=m.name||((m.first||'')+' '+(m.last||'')).trim(); m.initials=m.initials||initials(m.name); if(m.coach && m.uid!==ME.uid){ return; } members[d.id]=m; }); resolveMyMid(); ensurePriSub(); membersSeen=true; maybeReveal(); renderAdmin(); render(); refreshAux(); if(curIssue)fillDetail(curIssue); if(window.pendingProfileMid && members[window.pendingProfileMid]){ var _pm=window.pendingProfileMid; window.pendingProfileMid=null; openProfile(_pm); } tryPendingAppoint(); },function(e){console.error('members',e);});
+  subM=membersRef().onSnapshot(function(qs){ members={}; qs.forEach(function(d){ var m=d.data(); m.mid=d.id; m.name=m.name||((m.first||'')+' '+(m.last||'')).trim(); m.initials=m.initials||initials(m.name); if(m.coach){ try{window.PT_COACH={name:m.name,email:m.email||'',initials:m.initials||initials(m.name)};}catch(e){} if(m.uid!==ME.uid){ return; } } members[d.id]=m; }); resolveMyMid(); ensurePriSub(); membersSeen=true; maybeReveal(); renderAdmin(); render(); refreshAux(); if(curIssue)fillDetail(curIssue); if(window.pendingProfileMid && members[window.pendingProfileMid]){ var _pm=window.pendingProfileMid; window.pendingProfileMid=null; openProfile(_pm); } tryPendingAppoint(); },function(e){console.error('members',e);});
   subI=issuesRef().orderBy('createdAt','desc').onSnapshot(function(qs){
     issues=[]; qs.forEach(function(d){var i=d.data(); i.id=d.id; issues.push(i);});
     render(); updateBadge();
@@ -2917,7 +2931,7 @@ function buildPeopleIndex(){
     return Promise.all([ base.collection('functions').get(), base.collection('members').get(), base.collection('issues').where('status','==','open').get().catch(function(){return {size:null};}) ]).then(function(r){
       var fnMap={}; r[0].forEach(function(d){ fnMap[d.id]=d.data(); });
       var co=companies[cid]||{}; var th=(co.theme&&co.theme.strip)||'#ff6600'; var rows=[];
-      r[1].forEach(function(d){ var m=d.data(); var nm=m.name||((m.first||'')+' '+(m.last||'')).trim();
+      r[1].forEach(function(d){ var m=d.data(); if(m.coach){ return; }/* PT_COACHCOUNT_V1 */ var nm=m.name||((m.first||'')+' '+(m.last||'')).trim();
         rows.push({cid:cid,mid:d.id,name:nm,initials:m.initials||initials(nm),email:m.email||'',
           coName:co.name||cid,coTheme:th,fnName:(m.functionId&&fnMap[m.functionId])?fnMap[m.functionId].name:'',
           isLeader:!!m.isLeader,isCEO:(co.ceoMemberId===d.id)});
@@ -3518,6 +3532,20 @@ window.maMaybePrompt=function(){ try{
   window._maPrompted[activeCid]=true;
   setTimeout(window.openMasterAgreement,600);
 }catch(e){} };
+window.PT_COACH=window.PT_COACH||null;
+function renderCoachCard(){ var el=document.getElementById('coachCard'); if(!el)return; var c=window.PT_COACH; if(!c||!activeCid){ el.innerHTML=''; return; }
+  el.innerHTML='<div style="background:var(--strip-soft);border:1px solid #ffdcc4;border-radius:12px;padding:14px 16px;display:flex;align-items:center;gap:14px;margin:0 0 16px"><div style="width:44px;height:44px;border-radius:50%;background:var(--strip);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:16px;flex:none">'+esc(c.initials||'?')+'</div><div style="flex:1;min-width:0"><div style="font-size:11px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--strip-ink)">Your coach</div><div style="font-size:15px;font-weight:600;color:var(--t)">'+esc(c.name||'Coach')+'</div><div style="font-size:12.5px;color:var(--t2)">Performance Intelligence \u00b7 here if you need a hand</div></div><button onclick="openCoachContact()" style="font-size:13px;font-weight:700;color:#fff;background:var(--strip);border:0;border-radius:9px;padding:9px 15px;cursor:pointer;flex:none">Contact</button></div>';
+}
+window.openCoachContact=function(){ var t=document.getElementById('coachMsg'); if(t)t.value=''; var s=document.getElementById('coachSent'); if(s)s.style.display='none'; var f=document.getElementById('coachForm'); if(f)f.style.display=''; var g=document.getElementById('coachSend'); if(g){g.disabled=false;g.textContent='Send message';} var m=document.getElementById('coachModal'); if(m)m.classList.add('on'); };
+window.closeCoachContact=function(){ var m=document.getElementById('coachModal'); if(m)m.classList.remove('on'); };
+window.sendCoachContact=function(){ if(!activeCid)return; var t=document.getElementById('coachMsg'); var msg=(t&&t.value||'').trim(); if(!msg){ if(t)t.focus(); return; } var co=(company&&company.name)||''; var g=document.getElementById('coachSend'); if(g){g.disabled=true;g.textContent='Sending\u2026';}
+  var lead={name:(ME.name||'A team member'), company:co, email:(ME.email||''), message:msg, phone:'', status:'new', hp:'', source:'coach-message', createdAt:FV.serverTimestamp()};
+  db.collection('leads').add(lead).then(function(){
+    try{ fetch('https://formsubmit.co/ajax/jc@jezcartwright.com',{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify({_subject:'Coach message \u2014 '+(co||'a company'),name:(ME.name||''),email:(ME.email||''),company:co,message:msg})}).catch(function(){}); }catch(e){}
+    var f=document.getElementById('coachForm'); if(f)f.style.display='none'; var s=document.getElementById('coachSent'); if(s)s.style.display=''; if(g){g.disabled=false;g.textContent='Send message';}
+  }).catch(function(e){ if(g){g.disabled=false;g.textContent='Send message';} alert('Could not send: '+((e&&e.message)||e)); });
+};
+/* PT_COACHCARD_V1 */
 document.querySelectorAll('#sws .sw').forEach(function(s){ s.addEventListener('click',function(){ if(!isAdmin||!activeCid)return; cRef().update({theme:{strip:s.dataset.c,ink:s.dataset.i,soft:s.dataset.s,mid:s.dataset.m}}); }); });
 
 /* ---------- TEAM / ORG CHART ---------- */
@@ -3608,6 +3636,7 @@ window.orgZoom=function(d){ ORGZOOM=Math.max(0.4,Math.min(1.5,Math.round((ORGZOO
 window.orgZoomReset=function(){ ORGZOOM=1; applyOrgZoom(); };
 function orgWheelZoom(e){ if(e.ctrlKey||e.metaKey){ e.preventDefault(); orgZoom(e.deltaY<0?0.08:-0.08); } }
 function renderTeam(){
+  try{renderCoachCard();}catch(e){}
   var onAdmin=(function(){var a=document.getElementById('admin');return !!(a&&a.classList.contains('active'));})();
   var other=document.getElementById(onAdmin?'orgWrap':'admOrgWrap'); if(other)other.innerHTML='';
   var wrap=document.getElementById(onAdmin?'admOrgWrap':'orgWrap'); if(!wrap)return;
