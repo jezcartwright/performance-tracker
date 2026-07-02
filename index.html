@@ -2931,7 +2931,7 @@ function buildPeopleIndex(){
     return Promise.all([ base.collection('functions').get(), base.collection('members').get(), base.collection('issues').where('status','==','open').get().catch(function(){return {size:null};}) ]).then(function(r){
       var fnMap={}; r[0].forEach(function(d){ fnMap[d.id]=d.data(); });
       var co=companies[cid]||{}; var th=(co.theme&&co.theme.strip)||'#ff6600'; var rows=[];
-      r[1].forEach(function(d){ var m=d.data(); if(m.coach){ return; }/* PT_COACHCOUNT_V1 */ var nm=m.name||((m.first||'')+' '+(m.last||'')).trim();
+      r[1].forEach(function(d){ var m=d.data(); if(m.coach || m.uid===ME.uid || (m.email && SUPER_ADMIN_EMAILS.indexOf((m.email||'').toLowerCase())>=0)){ return; }/* PT_COACHCOUNT_V2 */ var nm=m.name||((m.first||'')+' '+(m.last||'')).trim();
         rows.push({cid:cid,mid:d.id,name:nm,initials:m.initials||initials(nm),email:m.email||'',
           coName:co.name||cid,coTheme:th,fnName:(m.functionId&&fnMap[m.functionId])?fnMap[m.functionId].name:'',
           isLeader:!!m.isLeader,isCEO:(co.ceoMemberId===d.id)});
