@@ -1232,6 +1232,7 @@ function openFocus(k){closeMenu();show('home');var f=document.getElementById('fo
       <button class="schip" data-k="mine">My order</button>
       <label class="showdone" id="showDoneWrap"><input type="checkbox" id="showDone" onchange="toggleShowDone()"> Show completed</label>
     </div>
+    <div style="margin:0 0 10px"><button class="tinybtn" onclick="openListImport('iss')">⬆ Import a list</button></div>
     <ul class="iss-list" id="rows"></ul>
   </section>
 
@@ -3599,7 +3600,17 @@ function liPreview(){ var rows=LI_ROWS||[]; var unmatched=rows.filter(function(r
   var go=document.getElementById('li-go'); go.disabled=(rows.length===0); go.textContent='Import '+rows.length+(LI_TARGET==='pri'?' priorities':' issues');
 }
 window.liAddMissing=function(){ if(!LI_ROWS)return; var names={}; LI_ROWS.forEach(function(r){ if(r.ownerRaw && !r.matched)names[r.ownerRaw]=1; }); var list=Object.keys(names); if(!list.length)return; var go=document.getElementById('li-go'); if(go)go.disabled=true; Promise.all(list.map(function(nm){ var parts=nm.split(' ').filter(Boolean); var first=parts.shift()||nm; var last=parts.join(' '); return membersRef().add({ first:first, last:last, name:nm, initials:initials(nm), email:null, functionId:null, title:null, isLeader:false, managerMid:null, uid:null, pid:newPid(), order:999 }); })).then(function(){ setTimeout(function(){ liBuild(true); }, 500); }).catch(function(e){ if(go)go.disabled=false; alert('Could not add people: '+((e&&e.message)||e)); }); };
-window.liCreate=function(){ if(!activeCid||!LI_ROWS||!LI_ROWS.length)return; if(LI_TARGET!=='pri'){ alert('Issues import is coming in the next update.'); return; } var go=document.getElementById('li-go'); go.disabled=true; go.textContent='Importing\u2026'; var base=Date.now(); var rows=LI_ROWS.slice(); Promise.all(rows.map(function(r,i){ var onm=(members[r.ownerMid]&&members[r.ownerMid].name)||ME.name||''; return prioritiesRef().add({ ownerMid:r.ownerMid, ownerName:onm, title:r.title, involves:[], status:r.status||'Scoping', agreed:false, agreedBy:null, order:base+i, createdAt:FV.serverTimestamp(), updatedAt:FV.serverTimestamp() }); })).then(function(){ liClose(); try{renderPriorities();}catch(e){} alert('Imported '+rows.length+' '+(rows.length===1?'priority':'priorities')+'.'); }).catch(function(e){ go.disabled=false; go.textContent='Import'; alert('Import failed: '+((e&&e.message)||e)); }); };
+window.liCreate=function(){ if(!activeCid||!LI_ROWS||!LI_ROWS.length)return; var go=document.getElementById('li-go'); go.disabled=true; go.textContent='Importing\u2026'; var rows=LI_ROWS.slice(); var base=Date.now();
+  if(LI_TARGET==='iss'){
+    var rMid=ME.mid||null, rUid, rName, rInit;
+    if(rMid&&members[rMid]){ rUid=members[rMid].uid||null; rName=personName(rMid); rInit=members[rMid].initials||initials(rName); } else { rMid=null; rUid=ME.uid; rName=ME.name; rInit=ME.initials; }
+    Promise.all(rows.map(function(r){ var lm=r.ownerMid||null; var lmem=lm?(members[lm]||{}):{}; var fid=lmem.functionId||null; var f=fid?fns[fid]:null; var parts=[]; if(rMid)parts.push(rMid); if(lm&&parts.indexOf(lm)<0)parts.push(lm);
+      return issuesRef().add({ title:r.title, description:r.desc||'', functionId:fid, functionName:f?f.name:'', color:f?f.color:null, leaderMid:lm, leaderName:lm?personName(lm):'', leaderUid:lmem.uid||null, raiserMid:rMid, raiserUid:rUid, raiserName:rName, raiserInitials:rInit, conversationHad:false, visibility:'team', targetType:(lm?'person':'function'), kind:'action', ballMid:lm, ballFromMid:rMid, status:'open', participants:parts, createdAt:FV.serverTimestamp(), updatedAt:FV.serverTimestamp() });
+    })).then(function(){ liClose(); try{ if(typeof render==='function')render(); }catch(e){} alert('Imported '+rows.length+' '+(rows.length===1?'issue':'issues')+'.'); }).catch(function(e){ go.disabled=false; go.textContent='Import'; alert('Import failed: '+((e&&e.message)||e)); });
+    return;
+  }
+  Promise.all(rows.map(function(r,i){ var onm=(members[r.ownerMid]&&members[r.ownerMid].name)||ME.name||''; return prioritiesRef().add({ ownerMid:r.ownerMid, ownerName:onm, title:r.title, involves:[], status:r.status||'Scoping', agreed:false, agreedBy:null, order:base+i, createdAt:FV.serverTimestamp(), updatedAt:FV.serverTimestamp() }); })).then(function(){ liClose(); try{renderPriorities();}catch(e){} alert('Imported '+rows.length+' '+(rows.length===1?'priority':'priorities')+'.'); }).catch(function(e){ go.disabled=false; go.textContent='Import'; alert('Import failed: '+((e&&e.message)||e)); });
+};
 window.liTemplate=function(){ var hdr, rows;
   if(LI_TARGET==='iss'){ hdr=['Title','Description','Owner']; rows=[['Late supplier deliveries','Deliveries slipping past our SLA','Raj Patel'],['New brand guidelines','','Nadia Haqq'],['Checkout downtime','Intermittent errors at payment','']]; }
   else { hdr=['Title','Status','Owner']; rows=[['Finalise the Q3 budget','Active','Raj Patel'],['Ship the new onboarding flow','Scoping',''],['Renew the AWS contract','Blocked','Nadia Haqq']]; }
