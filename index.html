@@ -1705,7 +1705,7 @@ function openFocus(k){closeMenu();show('home');var f=document.getElementById('fo
         <label class="tinybtn upbtn">Choose file<input type="file" accept=".xlsx,.xls,.csv" id="li-file" onchange="liFile(this.files[0])" style="display:none"></label>
         <label style="font-size:12.5px;color:var(--t2);display:inline-flex;align-items:center;gap:6px"><input type="checkbox" id="li-hdr" checked onchange="liBuild()"> First row is headers</label>
       </div>
-      <div style="font-size:12px;color:var(--t3);margin:0 0 9px">New to this? <a href="#" onclick="liTemplate();return false" style="color:var(--strip-ink);font-weight:600">Download a template</a> to fill in, then upload it back. Priority statuses: Scoping, Active, Blocked, Review, Completed.</div>
+      <div style="font-size:12px;color:var(--t3);margin:0 0 9px">New to this? <a href="#" onclick="liTemplate();return false" style="color:var(--strip-ink);font-weight:600">Download an Excel template</a> to fill in, then upload it back. Priority statuses: Scoping, Active, Blocked, Review, Completed.</div>
       <textarea id="li-paste" placeholder="Paste rows here &mdash; one per line" oninput="liReparse()" style="width:100%;min-height:82px;font-family:var(--ui);font-size:13px;padding:9px;border:1px solid var(--b);border-radius:8px;background:var(--card);box-sizing:border-box"></textarea>
       <div id="li-map" style="margin:12px 0 0"></div>
       <div id="li-prev" style="margin:12px 0 0"></div>
@@ -3611,12 +3611,15 @@ window.liCreate=function(){ if(!activeCid||!LI_ROWS||!LI_ROWS.length)return; var
   }
   Promise.all(rows.map(function(r,i){ var onm=(members[r.ownerMid]&&members[r.ownerMid].name)||ME.name||''; return prioritiesRef().add({ ownerMid:r.ownerMid, ownerName:onm, title:r.title, involves:[], status:r.status||'Scoping', agreed:false, agreedBy:null, order:base+i, createdAt:FV.serverTimestamp(), updatedAt:FV.serverTimestamp() }); })).then(function(){ liClose(); try{renderPriorities();}catch(e){} alert('Imported '+rows.length+' '+(rows.length===1?'priority':'priorities')+'.'); }).catch(function(e){ go.disabled=false; go.textContent='Import'; alert('Import failed: '+((e&&e.message)||e)); });
 };
-window.liTemplate=function(){ var hdr, rows;
-  if(LI_TARGET==='iss'){ hdr=['Title','Description','Owner']; rows=[['Late supplier deliveries','Deliveries slipping past our SLA','Raj Patel'],['New brand guidelines','','Nadia Haqq'],['Checkout downtime','Intermittent errors at payment','']]; }
-  else { hdr=['Title','Status','Owner']; rows=[['Finalise the Q3 budget','Active','Raj Patel'],['Ship the new onboarding flow','Scoping',''],['Renew the AWS contract','Blocked','Nadia Haqq']]; }
-  function q(v){ v=(v==null?'':String(v)); return /[",\n\r]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v; }
-  var csv=[hdr].concat(rows).map(function(r){ return r.map(q).join(','); }).join('\r\n');
-  try{ var blob=new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8'}); var url=URL.createObjectURL(blob); var a=document.createElement('a'); a.href=url; a.download='progress-tracker-'+(LI_TARGET==='iss'?'issues':'priorities')+'-template.csv'; document.body.appendChild(a); a.click(); setTimeout(function(){ try{document.body.removeChild(a);}catch(e){} URL.revokeObjectURL(url); },300); }catch(e){ alert('Could not generate the template: '+((e&&e.message)||e)); }
+window.liTemplate=function(){ var hdr, rows, cols;
+  if(LI_TARGET==='iss'){ hdr=['Title','Description','Owner']; rows=[['Late supplier deliveries','Deliveries slipping past our SLA','Raj Patel'],['New brand guidelines','','Nadia Haqq'],['Checkout downtime','Intermittent errors at payment','']]; cols=[{wch:34},{wch:44},{wch:20}]; }
+  else { hdr=['Title','Status','Owner']; rows=[['Finalise the Q3 budget','Active','Raj Patel'],['Ship the new onboarding flow','Scoping',''],['Renew the AWS contract','Blocked','Nadia Haqq']]; cols=[{wch:34},{wch:16},{wch:20}]; }
+  impLoadXLSX(function(){ try{
+    var aoa=[hdr].concat(rows);
+    var ws=XLSX.utils.aoa_to_sheet(aoa); ws['!cols']=cols;
+    var wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, (LI_TARGET==='iss'?'Issues':'Priorities'));
+    XLSX.writeFile(wb, 'progress-tracker-'+(LI_TARGET==='iss'?'issues':'priorities')+'-template.xlsx');
+  }catch(e){ alert('Could not generate the template: '+((e&&e.message)||e)); } });
 };
 /* PT_LISTIMPORT_PRI_V1 */
 document.querySelectorAll('#sws .sw').forEach(function(s){ s.addEventListener('click',function(){ if(!isAdmin||!activeCid)return; cRef().update({theme:{strip:s.dataset.c,ink:s.dataset.i,soft:s.dataset.s,mid:s.dataset.m}}); }); });
