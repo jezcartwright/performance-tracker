@@ -1255,6 +1255,7 @@ function openFocus(k){closeMenu();show('home');var f=document.getElementById('fo
     <div class="pri-head">
       <div><h1 class="pri-h1">My Priorities</h1><p class="pri-sub">What you're working on, in order. Drag to reorder as things shift, tap a status to update where you are, and your line manager ticks the ones they've agreed.</p></div>
     </div>
+    <div style="margin:2px 0 14px"><button class="tinybtn" onclick="openListImport('pri')">⬆ Import a list</button></div>
     <div id="priEmpty"></div>
     <ul class="pri-list" id="priList"></ul>
   </section>
@@ -1691,6 +1692,23 @@ function openFocus(k){closeMenu();show('home');var f=document.getElementById('fo
       <div class="amodal-h"><h2>Archive</h2><button class="amodal-x" onclick="closeArchive()">✕</button></div>
       <p class="amodal-sub">People removed from an org, kept on record. Each carries a permanent reference number (e.g. PT-…) so they stay identifiable even though their old work email belonged to the company they left. Reassign them to any company you manage and that number travels with them.</p>
       <div id="archBody"></div>
+    </div>
+  </div>
+
+  <!-- LIST IMPORT (priorities / issues) PT_LISTIMPORT_PRI_V1 -->
+  <div class="amodal" id="listImp">
+    <div class="amodal-card" style="max-width:600px">
+      <div class="amodal-h"><h2 id="liTitle">Import priorities</h2><button class="amodal-x" onclick="liClose()">&#10005;</button></div>
+      <p class="amodal-sub">Paste from Excel, Word or anywhere &mdash; or drop a .csv / .xlsx. One item per line; a header row helps me map the columns.</p>
+      <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:9px">
+        <label class="tinybtn upbtn">Choose file<input type="file" accept=".xlsx,.xls,.csv" id="li-file" onchange="liFile(this.files[0])" style="display:none"></label>
+        <label style="font-size:12.5px;color:var(--t2);display:inline-flex;align-items:center;gap:6px"><input type="checkbox" id="li-hdr" checked onchange="liBuild()"> First row is headers</label>
+      </div>
+      <textarea id="li-paste" placeholder="Paste rows here &mdash; one per line" oninput="liReparse()" style="width:100%;min-height:82px;font-family:var(--ui);font-size:13px;padding:9px;border:1px solid var(--b);border-radius:8px;background:var(--card);box-sizing:border-box"></textarea>
+      <div id="li-map" style="margin:12px 0 0"></div>
+      <div id="li-prev" style="margin:12px 0 0"></div>
+      <div id="li-warn" style="margin:10px 0 0"></div>
+      <div style="display:flex;gap:9px;margin-top:14px"><button class="ghost" style="flex:1;justify-content:center" onclick="liClose()">Cancel</button><button class="tg" id="li-go" style="flex:1;justify-content:center" disabled onclick="liCreate()">Import</button></div>
     </div>
   </div>
 
@@ -3546,6 +3564,42 @@ window.sendCoachContact=function(){ if(!activeCid)return; var t=document.getElem
   }).catch(function(e){ if(g){g.disabled=false;g.textContent='Send message';} alert('Could not send: '+((e&&e.message)||e)); });
 };
 /* PT_COACHCARD_V1 */
+var LI_TARGET='pri', LI_AOA=null, LI_MAP=null, LI_ROWS=null;
+window.openListImport=function(target){ if(!activeCid)return; LI_TARGET=(target==='iss')?'iss':'pri'; LI_AOA=null; LI_ROWS=null; LI_MAP=null;
+  var f=document.getElementById('li-file'); if(f)f.value=''; var pa=document.getElementById('li-paste'); if(pa)pa.value=''; var hd=document.getElementById('li-hdr'); if(hd)hd.checked=true;
+  document.getElementById('li-map').innerHTML=''; document.getElementById('li-prev').innerHTML=''; document.getElementById('li-warn').innerHTML='';
+  var go=document.getElementById('li-go'); if(go){go.disabled=true;go.textContent='Import';}
+  document.getElementById('liTitle').textContent='Import '+(LI_TARGET==='pri'?'priorities':'issues');
+  document.getElementById('listImp').classList.add('on');
+};
+window.liClose=function(){ var m=document.getElementById('listImp'); if(m)m.classList.remove('on'); };
+window.liFile=function(file){ if(!file)return; impLoadXLSX(function(){ var rd=new FileReader(); rd.onload=function(){ try{ var wb=XLSX.read(rd.result,{type:'binary'}); var ws=wb.Sheets[wb.SheetNames[0]]; LI_MAP=null; LI_AOA=XLSX.utils.sheet_to_json(ws,{header:1,blankrows:false,defval:''}); liBuild(); }catch(e){ alert('Could not read that file: '+e.message); } }; rd.readAsBinaryString(file); }); };
+window.liReparse=function(){ var txt=(document.getElementById('li-paste').value||'').replace(/^\s+|\s+$/g,''); if(!txt){ LI_AOA=null; LI_MAP=null; document.getElementById('li-map').innerHTML=''; document.getElementById('li-prev').innerHTML=''; document.getElementById('li-warn').innerHTML=''; document.getElementById('li-go').disabled=true; return; } LI_MAP=null; LI_AOA=txt.split(/\r?\n/).map(function(l){ return l.indexOf('\t')>=0?l.split('\t'):impSplitCSV(l); }); liBuild(); };
+function liFields(){ return LI_TARGET==='pri' ? [['title','Title'],['status','Status'],['owner','Owner'],['','\u2014 ignore \u2014']] : [['title','Title'],['desc','Description'],['owner','Owner / leader'],['','\u2014 ignore \u2014']]; }
+function liAutoMap(hdr){ var map=[]; hdr.forEach(function(h,i){ h=(h||'').toString().trim().toLowerCase(); var f=''; if(/title|task|priority|item|^name$|what|issue|subject|objective/.test(h))f='title'; else if(/status|stage|state|progress/.test(h))f='status'&&LI_TARGET==='pri'?'status':''; else if(/owner|assignee|who|person|responsible|leader|^lead$/.test(h))f='owner'; else if(/desc|detail|note|summary/.test(h))f=(LI_TARGET==='iss')?'desc':''; map[i]=f; }); if(map.indexOf('title')<0 && map.length)map[0]='title'; return map; }
+window.liMapChange=function(i,v){ if(!LI_MAP)return; LI_MAP[i]=v; liBuild(true); };
+function liBuild(keepMap){ var aoa=(LI_AOA||[]).filter(function(r){ return r && r.join('').replace(/\s/g,'')!==''; }); if(!aoa.length){ return; } var hasHdr=document.getElementById('li-hdr').checked; var hdr=hasHdr?aoa[0].map(function(x){return (x==null?'':x).toString();}):aoa[0].map(function(_,i){return 'Column '+(i+1);});
+  if(!keepMap || !LI_MAP || LI_MAP.length!==hdr.length){ LI_MAP = hasHdr ? liAutoMap(hdr) : hdr.map(function(_,i){ return i===0?'title':(i===1?(LI_TARGET==='pri'?'status':'desc'):(i===2?'owner':'')); }); }
+  var flds=liFields();
+  var mh='<div style="font-size:11px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:var(--t3);margin-bottom:6px">Map columns</div><div style="display:flex;gap:8px;flex-wrap:wrap">';
+  hdr.forEach(function(h,i){ mh+='<div style="flex:1;min-width:118px"><div style="font-size:11px;color:var(--t3);margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc((h||'').toString()||('Column '+(i+1)))+'</div><select onchange="liMapChange('+i+',this.value)" style="width:100%;border:1px solid var(--b);border-radius:7px;padding:5px 6px;font:12px var(--ui);background:#fff">'+flds.map(function(f){return '<option value="'+f[0]+'"'+(LI_MAP[i]===f[0]?' selected':'')+'>'+f[1]+'</option>';}).join('')+'</select></div>'; });
+  mh+='</div>'; document.getElementById('li-map').innerHTML=mh;
+  var start=hasHdr?1:0; var ti=LI_MAP.indexOf('title'), si=LI_MAP.indexOf('status'), oi=LI_MAP.indexOf('owner'), di=LI_MAP.indexOf('desc');
+  var byName={}, byEmail={}; Object.keys(members).forEach(function(m){ var mm=members[m]; if(mm.name)byName[mm.name.toLowerCase().trim()]=m; if(mm.email)byEmail[(mm.email||'').toLowerCase().trim()]=m; });
+  LI_ROWS=[]; for(var r=start;r<aoa.length;r++){ var row=aoa[r]; var cell=function(i){ return i>=0?((row[i]==null?'':row[i]).toString().trim()):''; }; var title=cell(ti); if(!title)continue; var ownerRaw=cell(oi); var mid=null; if(ownerRaw){ var key=ownerRaw.toLowerCase().trim(); mid=byName[key]||byEmail[key]||null; } var matched=(!!mid)||(!ownerRaw); if(!mid)mid=ME.mid; LI_ROWS.push({ title:title, status:(LI_TARGET==='pri'?liNormStatus(cell(si)):''), desc:cell(di), ownerRaw:ownerRaw, ownerMid:mid, matched:matched }); }
+  liPreview();
+}
+function liNormStatus(s){ s=(s||'').toLowerCase().trim(); if(!s)return 'Scoping'; if(/active|in ?progress|doing|wip|started|ongoing|underway/.test(s))return 'Active'; if(/block|on ?hold|hold|stuck|wait/.test(s))return 'Blocked'; if(/review|qa|check|approv/.test(s))return 'Review'; if(/done|complete|finish|closed|resolved/.test(s))return 'Completed'; return 'Scoping'; }
+function liPreview(){ var rows=LI_ROWS||[]; var unmatched=rows.filter(function(r){ return r.ownerRaw && !r.matched; });
+  var html='<div style="font-size:11px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:var(--t3);margin-bottom:6px">Preview \u2014 '+rows.length+' to create</div><div style="border:1px solid var(--b);border-radius:9px;max-height:180px;overflow-y:auto">';
+  rows.forEach(function(r,i){ var own=r.ownerRaw ? (r.matched ? esc((members[r.ownerMid]&&members[r.ownerMid].name)||r.ownerRaw) : '<span style="color:#b4232d">'+esc(r.ownerRaw)+' \u00b7 not found &rarr; you</span>') : 'you'; html+='<div style="display:flex;justify-content:space-between;gap:10px;align-items:center;padding:8px 11px;'+(i?'border-top:1px solid var(--b);':'')+'"><span style="font-size:13px;color:var(--t)">'+esc(r.title)+(LI_TARGET==='pri'?' <span style="color:var(--t3);font-size:11px">'+r.status+'</span>':'')+'</span><span style="font-size:11.5px;color:var(--t2);white-space:nowrap">'+own+'</span></div>'; });
+  html+='</div>'; document.getElementById('li-prev').innerHTML=html;
+  var warn=document.getElementById('li-warn'); if(unmatched.length){ var names={}; unmatched.forEach(function(r){ names[r.ownerRaw]=1; }); var list=Object.keys(names); warn.innerHTML='<div style="background:#fdecea;border:1px solid #f5c6c0;border-radius:9px;padding:10px 12px;font-size:12.5px;color:#b4232d">'+list.length+' owner'+(list.length>1?'s':'')+' not found ('+esc(list.slice(0,4).join(', '))+(list.length>4?'\u2026':'')+'). They\u2019ll be assigned to you \u2014 or <a href="#" onclick="liAddMissing();return false" style="color:#b4232d;font-weight:700">add them as people</a> first.</div>'; } else { warn.innerHTML=''; }
+  var go=document.getElementById('li-go'); go.disabled=(rows.length===0); go.textContent='Import '+rows.length+(LI_TARGET==='pri'?' priorities':' issues');
+}
+window.liAddMissing=function(){ if(!LI_ROWS)return; var names={}; LI_ROWS.forEach(function(r){ if(r.ownerRaw && !r.matched)names[r.ownerRaw]=1; }); var list=Object.keys(names); if(!list.length)return; var go=document.getElementById('li-go'); if(go)go.disabled=true; Promise.all(list.map(function(nm){ var parts=nm.split(' ').filter(Boolean); var first=parts.shift()||nm; var last=parts.join(' '); return membersRef().add({ first:first, last:last, name:nm, initials:initials(nm), email:null, functionId:null, title:null, isLeader:false, managerMid:null, uid:null, pid:newPid(), order:999 }); })).then(function(){ setTimeout(function(){ liBuild(true); }, 500); }).catch(function(e){ if(go)go.disabled=false; alert('Could not add people: '+((e&&e.message)||e)); }); };
+window.liCreate=function(){ if(!activeCid||!LI_ROWS||!LI_ROWS.length)return; if(LI_TARGET!=='pri'){ alert('Issues import is coming in the next update.'); return; } var go=document.getElementById('li-go'); go.disabled=true; go.textContent='Importing\u2026'; var base=Date.now(); var rows=LI_ROWS.slice(); Promise.all(rows.map(function(r,i){ var onm=(members[r.ownerMid]&&members[r.ownerMid].name)||ME.name||''; return prioritiesRef().add({ ownerMid:r.ownerMid, ownerName:onm, title:r.title, involves:[], status:r.status||'Scoping', agreed:false, agreedBy:null, order:base+i, createdAt:FV.serverTimestamp(), updatedAt:FV.serverTimestamp() }); })).then(function(){ liClose(); try{renderPriorities();}catch(e){} alert('Imported '+rows.length+' '+(rows.length===1?'priority':'priorities')+'.'); }).catch(function(e){ go.disabled=false; go.textContent='Import'; alert('Import failed: '+((e&&e.message)||e)); }); };
+/* PT_LISTIMPORT_PRI_V1 */
 document.querySelectorAll('#sws .sw').forEach(function(s){ s.addEventListener('click',function(){ if(!isAdmin||!activeCid)return; cRef().update({theme:{strip:s.dataset.c,ink:s.dataset.i,soft:s.dataset.s,mid:s.dataset.m}}); }); });
 
 /* ---------- TEAM / ORG CHART ---------- */
@@ -3623,7 +3677,7 @@ function controlsBar(){
   var mg=(ORGVIEW==='chart')?'<button class="orgbtn'+(MANAGING?' on':'')+'" onclick="toggleManageOrg()">✎ Manage Org</button>':'';
   var addp='<button class="orgbtn primary-org" onclick="openPerson()">+ Add person</button>';
   var addt='<button class="orgbtn" onclick="addTeam()">+ Add team</button>';
-  var imp=isAdmin?'<button class="orgbtn" onclick="openImport()">⬆ Import</button>':'';
+  var imp=isAdmin?'<button class="orgbtn" onclick="openImport()">⬆ Import</button><button class="orgbtn" onclick="openListImport(&#39;pri&#39;)">⬆ Import priorities</button>':'';
   var setceo=(!(company.ceoMemberId&&members[company.ceoMemberId]))?'<button class="orgbtn" onclick="appointCEOPick()">♛ Set a CEO</button>':'';
   var arch='<button class="orgbtn" onclick="openArchive()">🗄 Archive <span id="archCount">'+archiveCount+'</span></button>';
   var reb='';/*PT_NOBRANDBTN_V1 — consolidated into Branding panel*/
