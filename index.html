@@ -1498,6 +1498,9 @@ function openFocus(k){closeMenu();show('home');var f=document.getElementById('fo
         <button class="tinybtn" id="pfInvite" style="display:none" onclick="inviteCopy(curProfile)">✉ Invite</button>
         <button class="tinybtn" id="pfAdmin" style="display:none" onclick="toggleCompanyAdmin(curProfile)">Make admin</button>
         <button class="tinybtn" id="pfEdit" style="display:none" onclick="openPerson({edit:curProfile})">✎ Edit</button>
+        <button class="tinybtn" id="pfDemote" style="display:none" onclick="demoteLeader(curProfile)">↓ Step down as leader</button>
+        <button class="tinybtn" id="pfClearTitle" style="display:none" onclick="clearTitle(curProfile)">Clear title</button>
+        <button class="tinybtn" id="pfRemove" style="display:none;color:#b4232d" onclick="removeFromOrg(curProfile)">✕ Remove</button>
       </div>
     </div>
     <div id="pfRel"></div>
@@ -1607,6 +1610,7 @@ function openFocus(k){closeMenu();show('home');var f=document.getElementById('fo
       <input class="adm-input" id="tmName" style="margin:0" placeholder="Team / department name" oninput="tmChk()" autocomplete="off">
       <div style="font-size:11px;font-weight:700;letter-spacing:.3px;text-transform:uppercase;color:var(--t3);margin:13px 0 7px">Colour</div>
       <div id="tmColors" class="sws"></div>
+      <div id="tmExisting" style="margin:16px 0 0"></div>
       <div style="display:flex;gap:9px;margin-top:14px">
         <button class="ghost" style="flex:1;justify-content:center" onclick="closeTeam()">Cancel</button>
         <button class="primary" id="tmGo" style="flex:1;justify-content:center" onclick="saveTeam()" disabled>Add team</button>
@@ -2810,6 +2814,7 @@ window.openTeam=function(){ if(!isAdmin||!activeCid)return;
   tmColor=TEAM_COLORS[Object.keys(fns).length%TEAM_COLORS.length];
   document.getElementById('tmColors').innerHTML=TEAM_COLORS.map(function(c){return '<span class="cpick'+(c===tmColor?' sel':'')+'" style="background:'+c+'" data-c="'+c+'" onclick="tmPick(this)"></span>';}).join('');
   document.getElementById('tmGo').disabled=true;
+  try{renderTeamList();}catch(e){}
   document.getElementById('teamSheet').classList.add('on');
   setTimeout(function(){var e=document.getElementById('tmName');if(e)e.focus();},40);
 };
@@ -3622,6 +3627,32 @@ window.liTemplate=function(){ var hdr, rows, cols;
   }catch(e){ alert('Could not generate the template: '+((e&&e.message)||e)); } });
 };
 /* PT_LISTIMPORT_PRI_V1 */
+window.demoteLeader=function(mid){ if(!isAdmin)return; var m=members[mid]; if(!m||!m.isLeader)return; var fid=m.functionId;
+  if(!confirm('Remove '+m.name+' as leader'+((fid&&fns[fid])?(' of '+fns[fid].name):'')+'? They\u2019ll stay in the team as a normal member.'))return;
+  var batch=db.batch(); batch.update(membersRef().doc(mid),{isLeader:false});
+  if(fid && fnsLeader(fid)===mid) batch.update(fnsRef().doc(fid),{leaderMid:null,leaderName:''});
+  batch.commit().then(function(){ try{refreshAux();}catch(e){} }).catch(function(e){ alert('Could not update: '+e.message); });
+};
+window.clearTitle=function(mid){ if(!isAdmin)return; var m=members[mid]; if(!m||!m.title)return;
+  if(!confirm('Clear '+m.name+'\u2019s title (\u201c'+m.title+'\u201d)?'))return;
+  membersRef().doc(mid).update({title:null}).then(function(){ try{refreshAux();}catch(e){} }).catch(function(e){ alert('Could not update: '+e.message); });
+};
+/* PT_POSITION_V1 */
+window.renderTeamList=function(){ var el=document.getElementById('tmExisting'); if(!el)return; var ids=Object.keys(fns); if(!ids.length){ el.innerHTML=''; return; }
+  var rows=ids.map(function(fid){ var f=fns[fid]; var cnt=Object.keys(members).filter(function(m){return members[m].functionId===fid;}).length;
+    return '<div style="display:flex;align-items:center;gap:10px;padding:8px 2px;border-top:1px solid var(--b)"><span style="width:12px;height:12px;border-radius:3px;background:'+(f.color||'#ccc')+';flex:none"></span><span style="flex:1;font-size:13px;color:var(--t)">'+esc(f.name)+' <span style="color:var(--t3);font-size:11.5px">'+cnt+'</span></span><button onclick="deleteFunction(\''+fid+'\')" title="Delete team" style="border:0;background:none;color:#b4232d;font-size:15px;cursor:pointer;padding:2px 6px;line-height:1">\u2715</button></div>';
+  }).join('');
+  el.innerHTML='<div style="font-size:11px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:var(--t3);margin-bottom:2px">Existing teams</div>'+rows+'<div style="font-size:11.5px;color:var(--t3);margin-top:8px">Deleting a team keeps its people \u2014 they just won\u2019t belong to a team until you reassign them.</div>';
+};
+window.deleteFunction=function(fid){ if(!isAdmin||!fid)return; var f=fns[fid]; if(!f)return;
+  var inTeam=Object.keys(members).filter(function(m){return members[m].functionId===fid;});
+  if(!confirm('Delete the \u201c'+f.name+'\u201d team?'+(inTeam.length?(' Its '+inTeam.length+' '+(inTeam.length===1?'person':'people')+' will stay in the org but won\u2019t belong to a team until you reassign them.'):'')))return;
+  var batch=db.batch();
+  inTeam.forEach(function(m){ var upd={functionId:null}; if(members[m].isLeader)upd.isLeader=false; batch.update(membersRef().doc(m),upd); });
+  batch.delete(fnsRef().doc(fid));
+  batch.commit().then(function(){ try{renderTeamList();}catch(e){} try{refreshAux();}catch(e){} }).catch(function(e){ alert('Delete failed: '+e.message); });
+};
+/* PT_DELROLE_V1 */
 document.querySelectorAll('#sws .sw').forEach(function(s){ s.addEventListener('click',function(){ if(!isAdmin||!activeCid)return; cRef().update({theme:{strip:s.dataset.c,ink:s.dataset.i,soft:s.dataset.s,mid:s.dataset.m}}); }); });
 
 /* ---------- TEAM / ORG CHART ---------- */
@@ -3664,6 +3695,7 @@ function orgCard(mid,kind){
 function cardMenu(mid,kind){
   var m=members[mid]; var fid=m?m.functionId:null; var items='';
   if(kind==='member' && fid) items+='<div onclick="event.stopPropagation();appointLeader(\''+mid+'\')">★ Make '+esc(fns[fid]?fns[fid].name:'')+' leader</div>';
+  if(m && m.isLeader) items+='<div onclick="event.stopPropagation();demoteLeader(\''+mid+'\')">↓ Step down as leader</div>';
   if(kind!=='ceo') items+='<div onclick="event.stopPropagation();appointCEO(\''+mid+'\')">♛ Appoint as CEO</div>';
   items+='<div onclick="event.stopPropagation();openPerson({edit:\''+mid+'\'})">✎ Edit details</div>';
   items+='<div onclick="event.stopPropagation();addReport(\''+mid+'\')">+ Add report</div>';
@@ -3671,7 +3703,7 @@ function cardMenu(mid,kind){
   return '<div class="ocmenu" id="ocm_'+mid+'">'+items+'</div>'; /* PT_CEOMENU_V1 */
 }
 function emptyCeoSlot(){ var n=Object.keys(members).length; return '<div class="pcard empty ceoc"'+(isAdmin?' style="cursor:pointer"':'')+' onclick="appointCEOPick()"><div class="av" style="background:var(--t3)">♛</div><div class="pn">No CEO yet</div><div class="pr">'+(isAdmin?'tap to appoint':'not set')+'</div>'+(n?'<div class="chips"><div class="pcount">'+n+(n===1?' person':' people')+'</div></div>':'')+'</div>'; }
-function emptyLeaderSlot(fid){ var f=fns[fid]; var n=Object.keys(members).filter(function(x){return members[x].functionId===fid;}).length; return '<div class="pcard empty"'+(isAdmin?' style="cursor:pointer"':'')+' onclick="appointLeaderPick(\''+fid+'\')"><div class="av" style="background:'+(f?f.color:'var(--t3)')+';opacity:.45">?</div><div class="pn">'+esc(f?f.name:'')+'</div><div class="pr">'+(isAdmin?'tap to set leader':'no leader')+'</div>'+(n?'<div class="chips"><div class="pcount">'+n+(n===1?' person':' people')+'</div></div>':'')+'</div>'; }
+function emptyLeaderSlot(fid){ var f=fns[fid]; var n=Object.keys(members).filter(function(x){return members[x].functionId===fid;}).length; return '<div class="pcard empty"'+(isAdmin?' style="cursor:pointer"':'')+' onclick="appointLeaderPick(\''+fid+'\')">'+(isAdmin?'<button onclick="event.stopPropagation();deleteFunction(\''+fid+'\')" title="Delete this team" style="position:absolute;top:6px;right:8px;border:0;background:none;color:#b4232d;font-size:14px;line-height:1;cursor:pointer;padding:2px;z-index:3">✕</button>':'')+'<div class="av" style="background:'+(f?f.color:'var(--t3)')+';opacity:.45">?</div><div class="pn">'+esc(f?f.name:'')+'</div><div class="pr">'+(isAdmin?'tap to set leader':'no leader')+'</div>'+(n?'<div class="chips"><div class="pcount">'+n+(n===1?' person':' people')+'</div></div>':'')+'</div>'; }
 function leaderNode(fid,seen){
   var lid=fnsLeader(fid);
   if(lid && members[lid]){
@@ -4027,7 +4059,7 @@ window.removeFromOrg=function(mid){ if(!isAdmin)return; var m=members[mid]; if(!
   batch.set(aref,{pid:m.pid||newPid(),first:m.first||'',last:m.last||'',name:m.name,initials:m.initials||initials(m.name),email:m.email||'',role:(isLead?('Leader · '+(fns[fid]?fns[fid].name:'')):'Team member'),fromCid:activeCid,fromCompany:company.name||activeCid,fromFunction:(fns[fid]?fns[fid].name:''),removedAt:FV.serverTimestamp(),removedBy:ME.uid});
   batch.delete(membersRef().doc(mid));
   if(m.uid){ batch.delete(companiesCol.doc(activeCid).collection('access').doc(m.uid)); }
-  batch.commit().then(refreshAux).catch(function(e){alert('Remove failed: '+e.message);});
+  batch.commit().then(function(){ refreshAux(); if(curProfile===mid){ try{goTeam();}catch(e){} } }).catch(function(e){alert('Remove failed: '+e.message);});
 };
 
 /* ---------- archive / reassign ---------- */
@@ -4063,6 +4095,8 @@ function paintProfile(mid){ var m=members[mid]; if(!m)return false; curProfile=m
     : (m.title ? (m.title+(dn?(' · '+dn):'')) : (dn||'Team member'));
   document.getElementById('pfEmail').textContent=m.email||'';
   var pe=document.getElementById('pfEdit'); if(pe) pe.style.display=isAdmin?'inline-flex':'none'; /* PT_CEOEDIT_V1 */
+  var _pm=members[mid]; var pd=document.getElementById('pfDemote'); if(pd) pd.style.display=(isAdmin && _pm && _pm.isLeader)?'inline-flex':'none'; var pct=document.getElementById('pfClearTitle'); if(pct) pct.style.display=(isAdmin && _pm && _pm.title)?'inline-flex':'none';
+  var prm=document.getElementById('pfRemove'); if(prm) prm.style.display=(isAdmin && company.ceoMemberId!==mid)?'inline-flex':'none';
   var pv=document.getElementById('pfInvite'); if(pv) pv.style.display=(isAdmin && !m.uid && m.email)?'inline-flex':'none';
   var pa=document.getElementById('pfAdmin'); if(pa){ if(ME.isSuper && activeCid && (m.uid||m.email) && m.uid!==ME.uid){ var _ca=isPersonAdmin(m); pa.style.display='inline-flex'; pa.textContent=_ca?'✓ Admin':'Make admin'; pa.style.background=_ca?'#0f8a6b':''; pa.style.color=_ca?'#fff':''; pa.style.borderColor=_ca?'#0f8a6b':''; } else { pa.style.display='none'; } }
   renderProfileIssues(mid);
