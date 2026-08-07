@@ -3760,21 +3760,8 @@ function renderTeam(){
     return;
   }
   if(ORGVIEW==='list'){ wrap.innerHTML=controlsBar()+orgListHtml(); return; }
-  var seen={};
   var ceo=company.ceoMemberId;
-  var tree;
-  if(FOCUSFID==='__lead' && ceo && members[ceo]){
-    var leadReps=deptList().map(function(f){return fnsLeader(f);}).filter(function(x){return x&&members[x]&&x!==ceo;});
-    var leadLis=leadReps.map(function(r){return '<li>'+orgCard(r,'leader')+'</li>';}).join('');
-    tree='<div class="tree"><ul><li>'+orgCard(ceo,'ceo')+'<ul>'+leadLis+'</ul></li></ul></div>';
-  } else if(FOCUSFID && fns[FOCUSFID]){
-    tree='<div class="tree"><ul>'+leaderNode(FOCUSFID,seen)+'</ul></div>';
-  } else {
-    var leaderLis=deptList().filter(function(fid){return fnsLeader(fid)!==company.ceoMemberId;}).map(function(fid){return leaderNode(fid,seen);}).join('');
-    tree=(ceo&&members[ceo])
-      ? '<div class="tree"><ul><li>'+orgCard(ceo,'ceo')+'<ul>'+leaderLis+'</ul></li></ul></div>'
-      : '<div class="tree"><ul>'+leaderLis+'</ul></div>';
-  }
+  var tree=freeTreeHTML(ceo);
   wrap.innerHTML=controlsBar()+'<div class="dept orgchart'+(MANAGING?' managing':'')+'">'+tree+'</div>';
   var sc=wrap.querySelector('.orgchart'); if(sc){ sc.scrollLeft=Math.max(0,(sc.scrollWidth-sc.clientWidth)/2); sc.addEventListener('wheel',orgWheelZoom,{passive:false}); } applyOrgZoom();
 }
@@ -3899,34 +3886,64 @@ function reorderDepartments(dragFid, targetFid, zone){
   var batch=db.batch(); order.forEach(function(fid,i){ batch.update(fnsRef().doc(fid),{order:i}); });
   batch.commit().then(refreshAux).catch(function(e){ alert('Could not reorder: '+e.message); });
 }
+/* ---------- FREE-FORM ORG: reports-to tree; teams are colour tags (PT_FREEORG_V1) ---------- */
+function freeParent(mid){
+  if(!members[mid] || mid===company.ceoMemberId) return null;
+  var m=members[mid], mg=m.managerMid;
+  if(mg && mg!==mid && members[mg]) return mg;
+  var fid=m.functionId, lead=fid?fnsLeader(fid):null;
+  if(lead && lead!==mid) return lead;
+  return (company.ceoMemberId && members[company.ceoMemberId]) ? company.ceoMemberId : null;
+}
+function freeChildren(mid){
+  return Object.keys(members).filter(function(x){ return x!==mid && freeParent(x)===mid; })
+    .sort(function(a,b){ var oa=ordOf(a),ob=ordOf(b); if(oa!==ob)return oa-ob; return (personName(a)||'').localeCompare(personName(b)||''); });
+}
+function freeSubtreeSet(mid){ var s={}; (function walk(x){ if(s[x])return; s[x]=1; freeChildren(x).forEach(walk); })(mid); return s; }
+function freeNode(mid,seen){
+  seen=seen||{}; if(seen[mid])return ''; seen[mid]=1;
+  var kids=freeChildren(mid).filter(function(k){return !seen[k];});
+  var html='<li>'+orgCard(mid, mid===company.ceoMemberId?'ceo':(kids.length?'leader':'member'));
+  if(kids.length) html+='<ul>'+kids.map(function(k){return freeNode(k,seen);}).join('')+'</ul>';
+  return html+'</li>';
+}
+function freeTreeHTML(ceo){
+  var seen={};
+  if(FOCUSFID && FOCUSFID!=='__lead' && fns[FOCUSFID]){
+    var inSet={}; Object.keys(members).forEach(function(x){ if(members[x].functionId===FOCUSFID) inSet[x]=1; });
+    var fseen={};
+    function fnode(mid){ if(fseen[mid])return ''; fseen[mid]=1; var kids=Object.keys(inSet).filter(function(x){return !fseen[x] && x!==mid && freeParent(x)===mid;}).sort(function(a,b){return ordOf(a)-ordOf(b);}); var h='<li>'+orgCard(mid,'member'); if(kids.length)h+='<ul>'+kids.map(fnode).join('')+'</ul>'; return h+'</li>'; }
+    var roots=Object.keys(inSet).filter(function(x){ var p=freeParent(x); return !p || !inSet[p]; }).sort(function(a,b){return ordOf(a)-ordOf(b);});
+    var body=roots.map(fnode).join('')+Object.keys(inSet).filter(function(x){return !fseen[x];}).map(fnode).join('');
+    return '<div class="tree"><ul>'+body+'</ul></div>';
+  }
+  if(ceo && members[ceo]){
+    var top=freeNode(ceo,seen);
+    var extra=Object.keys(members).filter(function(x){return !seen[x];}).sort(function(a,b){return ordOf(a)-ordOf(b);}).map(function(x){return freeNode(x,seen);}).join('');
+    return '<div class="tree"><ul>'+top+extra+'</ul></div>';
+  }
+  var roots2=Object.keys(members).filter(function(x){return !freeParent(x);}).sort(function(a,b){return ordOf(a)-ordOf(b);});
+  var b2=roots2.map(function(x){return freeNode(x,seen);}).join('')+Object.keys(members).filter(function(x){return !seen[x];}).map(function(x){return freeNode(x,seen);}).join('');
+  return '<div class="tree"><ul>'+b2+'</ul></div>';
+}
 function applyDrop(dragMid, targetMid, zone){
-  if(!isAdmin||dragMid===targetMid) return;
-  var sub=orgSubtree(dragMid); if(sub[targetMid]){ alert('You can’t move someone under their own team.'); return; }
-  var ceo=company.ceoMemberId, dragLeader=isDeptLeader(dragMid), hasTeam=orgDescendants(dragMid).length>0;
+  if(!isAdmin || dragMid===targetMid) return;
+  var desc=freeSubtreeSet(dragMid);
+  if(desc[targetMid]){ alert('You can\u2019t move someone under their own report.'); return; }
+  var hasTeam=freeChildren(dragMid).length>0;
   if(zone==='child'){
-    if(targetMid===ceo){ alert('To make someone a department head, use the card ⋯ menu.'); return; }
-    if(dragLeader){ alert('A department can’t be nested under a person by dragging. Drop on a leader’s left/right edge to reorder departments, or use the ⋯ menu.'); return; }
-    var tFid=members[targetMid].functionId;
-    var newMgr=isDeptLeader(targetMid)?null:targetMid;
-    var sibs=siblingsUnder(targetMid).filter(function(x){return x!==dragMid;}); sibs.push(dragMid);
-    if(!confirm('Move '+personName(dragMid)+(hasTeam?' and their team':'')+' to report to '+personName(targetMid)+'?')) return;
-    commitMove(dragMid, sub, tFid, newMgr, sibs);
+    if(!confirm('Make '+personName(dragMid)+(hasTeam?' and their team':'')+' report to '+personName(targetMid)+'?')) return;
+    membersRef().doc(dragMid).update({managerMid:targetMid, isLeader:false}).then(refreshAux).catch(function(e){ alert('Could not move: '+e.message); });
     return;
   }
-  if(targetMid===ceo) return;
-  if(isDeptLeader(targetMid)){
-    if(!dragLeader){ alert('Only department heads sit at the top level. Drop onto a card to make this person report to it.'); return; }
-    reorderDepartments(members[dragMid].functionId, members[targetMid].functionId, zone);
-    return;
-  }
-  if(dragLeader){ alert('A department can’t be nested under a person by dragging.'); return; }
-  var tFid2=members[targetMid].functionId, parent=orgParent(targetMid);
-  var newMgr2=(parent&&!isDeptLeader(parent)&&parent!==ceo)?parent:null;
-  var sibs2=siblingsUnder(parent).filter(function(x){return x!==dragMid;});
-  var idx=sibs2.indexOf(targetMid); if(idx<0)idx=sibs2.length; if(zone==='after')idx+=1;
-  sibs2.splice(idx,0,dragMid);
-  if(orgParent(dragMid)!==parent){ if(!confirm('Move '+personName(dragMid)+(hasTeam?' and their team':'')+' alongside '+personName(targetMid)+'?')) return; }
-  commitMove(dragMid, sub, tFid2, newMgr2, sibs2);
+  var parent=freeParent(targetMid);
+  var sibs=freeChildren(parent).filter(function(x){return x!==dragMid;});
+  var idx=sibs.indexOf(targetMid); if(idx<0)idx=sibs.length; if(zone==='after')idx+=1;
+  sibs.splice(idx,0,dragMid);
+  var batch=db.batch();
+  batch.update(membersRef().doc(dragMid), {managerMid:(parent||null), isLeader:false});
+  sibs.forEach(function(mid,i){ batch.update(membersRef().doc(mid), {order:i}); });
+  batch.commit().then(refreshAux).catch(function(e){ alert('Could not move: '+e.message); });
 }
 (function(){
   var startX=0,startY=0,activeCard=null,drag=false,suppress=false,ghost=null,curTarget=null,curZone=null;
