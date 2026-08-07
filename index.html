@@ -3887,6 +3887,7 @@ function reorderDepartments(dragFid, targetFid, zone){
   batch.commit().then(refreshAux).catch(function(e){ alert('Could not reorder: '+e.message); });
 }
 /* ---------- FREE-FORM ORG: reports-to tree; teams are colour tags (PT_FREEORG_V1) ---------- */
+function orgHidden(mid){ var m=members[mid]; if(!m)return false; if(m.coach)return true; if(m.email && typeof SUPER_ADMIN_EMAILS!=='undefined' && SUPER_ADMIN_EMAILS.indexOf((m.email||'').toLowerCase())>=0)return true; return false; }
 function freeParent(mid){
   if(!members[mid] || mid===company.ceoMemberId) return null;
   var m=members[mid], mg=m.managerMid;
@@ -3896,7 +3897,7 @@ function freeParent(mid){
   return (company.ceoMemberId && members[company.ceoMemberId]) ? company.ceoMemberId : null;
 }
 function freeChildren(mid){
-  return Object.keys(members).filter(function(x){ return x!==mid && freeParent(x)===mid; })
+  return Object.keys(members).filter(function(x){ return x!==mid && !orgHidden(x) && freeParent(x)===mid; })
     .sort(function(a,b){ var oa=ordOf(a),ob=ordOf(b); if(oa!==ob)return oa-ob; return (personName(a)||'').localeCompare(personName(b)||''); });
 }
 function freeSubtreeSet(mid){ var s={}; (function walk(x){ if(s[x])return; s[x]=1; freeChildren(x).forEach(walk); })(mid); return s; }
@@ -3910,7 +3911,7 @@ function freeNode(mid,seen){
 function freeTreeHTML(ceo){
   var seen={};
   if(FOCUSFID && FOCUSFID!=='__lead' && fns[FOCUSFID]){
-    var inSet={}; Object.keys(members).forEach(function(x){ if(members[x].functionId===FOCUSFID) inSet[x]=1; });
+    var inSet={}; Object.keys(members).forEach(function(x){ if(members[x].functionId===FOCUSFID && !orgHidden(x)) inSet[x]=1; });
     var fseen={};
     function fnode(mid){ if(fseen[mid])return ''; fseen[mid]=1; var kids=Object.keys(inSet).filter(function(x){return !fseen[x] && x!==mid && freeParent(x)===mid;}).sort(function(a,b){return ordOf(a)-ordOf(b);}); var h='<li>'+orgCard(mid,'member'); if(kids.length)h+='<ul>'+kids.map(fnode).join('')+'</ul>'; return h+'</li>'; }
     var roots=Object.keys(inSet).filter(function(x){ var p=freeParent(x); return !p || !inSet[p]; }).sort(function(a,b){return ordOf(a)-ordOf(b);});
@@ -3919,11 +3920,11 @@ function freeTreeHTML(ceo){
   }
   if(ceo && members[ceo]){
     var top=freeNode(ceo,seen);
-    var extra=Object.keys(members).filter(function(x){return !seen[x];}).sort(function(a,b){return ordOf(a)-ordOf(b);}).map(function(x){return freeNode(x,seen);}).join('');
+    var extra=Object.keys(members).filter(function(x){return !seen[x] && !orgHidden(x);}).sort(function(a,b){return ordOf(a)-ordOf(b);}).map(function(x){return freeNode(x,seen);}).join('');
     return '<div class="tree"><ul>'+top+extra+'</ul></div>';
   }
-  var roots2=Object.keys(members).filter(function(x){return !freeParent(x);}).sort(function(a,b){return ordOf(a)-ordOf(b);});
-  var b2=roots2.map(function(x){return freeNode(x,seen);}).join('')+Object.keys(members).filter(function(x){return !seen[x];}).map(function(x){return freeNode(x,seen);}).join('');
+  var roots2=Object.keys(members).filter(function(x){return !orgHidden(x) && !freeParent(x);}).sort(function(a,b){return ordOf(a)-ordOf(b);});
+  var b2=roots2.map(function(x){return freeNode(x,seen);}).join('')+Object.keys(members).filter(function(x){return !seen[x] && !orgHidden(x);}).map(function(x){return freeNode(x,seen);}).join('');
   return '<div class="tree"><ul>'+b2+'</ul></div>';
 }
 function applyDrop(dragMid, targetMid, zone){
