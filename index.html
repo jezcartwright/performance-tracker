@@ -2660,6 +2660,7 @@ window.goCompaniesHome=function(){
   var gi=document.getElementById('gpsInput'); if(gi)gi.value=''; var gr=document.getElementById('gpsResults'); if(gr){ gr.innerHTML=''; gr.style.display='none'; }
   peopleIndex=null; if(ME.isSuper) buildPeopleIndex();
 };
+var peopleIndex=(typeof peopleIndex!=='undefined')?peopleIndex:null;/*PT_PEOPLEIDX_V1*/
 function renderCoHome(){
   var box=document.getElementById('cohomeGrid'); if(!box)return;
   var cids=Object.keys(companies).sort(function(a,b){return (companies[a].name||'').localeCompare(companies[b].name||'');});
