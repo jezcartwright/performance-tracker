@@ -3775,7 +3775,7 @@ function orgListHtml(){
   return '<div class="ollwrap">'+lens+'<div class="ollpanel">'+body+'</div></div>';
 }
 function olNode(mid,depth,seen){ seen=seen||{}; if(seen[mid])return ''; seen[mid]=1;
-  var kids=siblingsUnder(mid);
+  var kids=freeChildren(mid);
   var leaf=!kids.length;
   var open=(depth===0);
   var isCeo=(mid===company.ceoMemberId);
@@ -3795,11 +3795,11 @@ function olNode(mid,depth,seen){ seen=seen||{}; if(seen[mid])return ''; seen[mid
   '</div>';
 }
 function orgListLine(){
-  var ceo=company.ceoMemberId;
-  if(ceo&&members[ceo]) return olNode(ceo,0);
-  var roots=deptList().map(fnsLeader).filter(function(x){return x&&members[x];});
-  if(!roots.length) return '<div class="ol-empty">No people yet.</div>';
-  return roots.map(function(l){return olNode(l,0);}).join('');
+  var ceo=company.ceoMemberId; var seen={}; var html='';
+  if(ceo&&members[ceo]){ html=olNode(ceo,0,seen); }
+  else { var roots=Object.keys(members).filter(function(x){return !orgHidden(x)&&!freeParent(x);}).sort(function(a,b){return ordOf(a)-ordOf(b);}); html=roots.map(function(l){return olNode(l,0,seen);}).join(''); }
+  html+=Object.keys(members).filter(function(x){return !seen[x]&&!orgHidden(x);}).sort(function(a,b){return ordOf(a)-ordOf(b);}).map(function(x){return olNode(x,0,seen);}).join('');
+  return html||'<div class="ol-empty">No people yet.</div>';
 }
 function olMemberRow(mid,tagLabel,subText){
   var tag=tagLabel?(' <span class="oltag">'+esc(tagLabel)+'</span>'):'';
@@ -3892,7 +3892,7 @@ function orgHidden(mid){ var m=members[mid]; if(!m)return false; if(m.coach)retu
 function freeParent(mid){
   if(!members[mid] || mid===company.ceoMemberId) return null;
   var m=members[mid], mg=m.managerMid;
-  if(mg && mg!==mid && members[mg]) return mg;
+  if(mg && mg!==mid && members[mg] && !orgHidden(mg)) return mg;
   var fid=m.functionId, lead=fid?fnsLeader(fid):null;
   if(lead && lead!==mid) return lead;
   return (company.ceoMemberId && members[company.ceoMemberId]) ? company.ceoMemberId : null;
