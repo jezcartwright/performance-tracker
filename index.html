@@ -1628,21 +1628,17 @@ function openFocus(k){closeMenu();show('home');var f=document.getElementById('fo
             <div class="ps-fld"><label>First name</label><input id="ps-first" oninput="psChk()" placeholder="e.g. Priya" autocomplete="off"></div>
             <div class="ps-fld"><label>Last name</label><input id="ps-last" placeholder="e.g. Shah" autocomplete="off"></div>
           </div>
-          <div class="ps-fld" style="margin-bottom:0"><label>Email (optional)</label><input id="ps-email" placeholder="name@company.com" autocomplete="off"><p class="ps-hint">With an email they can log in later — without one they're just a box on the chart.</p></div>
-        </div>
-        <div class="ps-grp"><div class="ps-l">Where they sit</div>
-          <div class="ps-fld"><label>Department / team</label><select id="ps-dept" onchange="psDept()"></select>
-            <div class="ps-reveal" id="ps-newDeptWrap"><label style="font-size:12px;font-weight:600;color:var(--t2);margin-bottom:5px;display:block">Name the new department</label><input id="ps-newDept" placeholder="e.g. Operations, Executive Committee" oninput="psUpd()" autocomplete="off"></div>
-          </div>
           <div class="ps-fld"><label>Job title (optional)</label><input id="ps-title" placeholder="e.g. Financial Controller" autocomplete="off"></div>
-          <div class="ps-fld" style="margin-bottom:0"><label>Leads this department?</label>
-            <div class="yn" id="ps-yn"><button onclick="psLead(this,true)">Yes</button><button class="sel" onclick="psLead(this,false)">No</button></div>
-          </div>
+          <div class="ps-fld" style="margin-bottom:0"><label>Email (optional)</label><input id="ps-email" placeholder="name@company.com" autocomplete="off"><p class="ps-hint">With an email they can log in and claim their own account.</p></div>
         </div>
-        <div class="ps-grp"><div class="ps-l">Reporting</div>
-          <div class="ps-rep"><span class="ps-ar">↳</span><div><div class="ps-who" id="ps-repWho">—</div><div class="ps-ro" id="ps-repRole"></div></div><button class="ps-chg" onclick="psToggleChg()">Change</button></div>
-          <div class="ps-repsel" id="ps-repSel"><label style="font-size:12px;font-weight:600;color:var(--t2);margin-bottom:5px;display:block" id="ps-repLbl"></label><select id="ps-repList" onchange="psPickMgr()"></select></div>
-          <div class="ps-fld" id="ps-drBlock" style="margin-top:12px;margin-bottom:0;display:none"><label>Who already works under them? (optional)</label><div class="dr" id="ps-drList"></div><p class="ps-hint">Tick people already in this department to move them under this leader.</p></div>
+        <div class="ps-grp"><div class="ps-l">Reports to</div>
+          <div class="ps-fld" style="margin-bottom:0"><select id="ps-rep"></select><p class="ps-hint">Who this person reports to &mdash; independent of any team.</p></div>
+        </div>
+        <div class="ps-grp"><div class="ps-l">Team <span style="font-weight:400;color:var(--t3);text-transform:none;letter-spacing:0">&middot; optional</span></div>
+          <div class="ps-fld"><select id="ps-team" onchange="psTeam()"></select>
+            <div class="ps-reveal" id="ps-newTeamWrap"><label style="font-size:12px;font-weight:600;color:var(--t2);margin:6px 0 5px;display:block">Name the new team</label><input id="ps-newTeam" placeholder="e.g. Operations" autocomplete="off"></div>
+          </div>
+          <label class="ps-adminrow" id="ps-leadRow" style="display:none"><input type="checkbox" id="ps-lead"> <span>Make them the lead of this team</span></label>
         </div>
         <div class="ps-grp" id="ps-adminGrp" style="display:none"><div class="ps-l">Access</div>
           <label class="ps-adminrow" id="ps-adminLabel"><input type="checkbox" id="ps-admin"> <span>Make this person a company admin</span></label>
@@ -2832,153 +2828,86 @@ function deptLeaderMid(fid){ var f=fns[fid]; return (f&&f.leaderMid&&members[f.l
 function roleLabelFor(mid){ var m=members[mid]; if(!mid||!m)return ''; if(company.ceoMemberId===mid)return 'CEO'; var f=fns[m.functionId]; if(f&&f.leaderMid===mid)return (f.name||'')+' leader'; if(m.title)return m.title; return f?f.name:''; }
 window.openPerson=function(opts){ if(!isAdmin)return; opts=opts||{};
   psEditMid = opts.edit || null;
-  ['ps-first','ps-last','ps-email','ps-title','ps-newDept'].forEach(function(id){var e=document.getElementById(id);if(e)e.value='';});
-  psLeads=false; psMgrOverride=null;
-  document.getElementById('ps-yn').querySelectorAll('button').forEach(function(b,i){b.classList.toggle('sel', i===1);});
+  ['ps-first','ps-last','ps-email','ps-title','ps-newTeam'].forEach(function(id){var e=document.getElementById(id);if(e)e.value='';});
   var em = psEditMid && members[psEditMid] ? members[psEditMid] : null;
   if(em){
     document.getElementById('ps-first').value=em.first||'';
     document.getElementById('ps-last').value=em.last||'';
     document.getElementById('ps-email').value=em.email||'';
     document.getElementById('ps-title').value=em.title||'';
-    var leadsNow=!!(em.functionId && fns[em.functionId] && fns[em.functionId].leaderMid===psEditMid);
-    psLeads=leadsNow;
-    document.getElementById('ps-yn').querySelectorAll('button').forEach(function(b,i){b.classList.toggle('sel', i===(leadsNow?0:1));});
-    renderPsDept(em.functionId||'');
-    psMgrOverride = em.managerMid ? em.managerMid : 'TOP';
-  } else {
-    renderPsDept(opts.fid||'');
-    if(opts.leads){ psLeads=true; document.getElementById('ps-yn').querySelectorAll('button').forEach(function(b,i){b.classList.toggle('sel', i===0);}); }
-    if(opts.managerMid){ psMgrOverride=opts.managerMid; }
   }
+  psFillRep(em ? (em.managerMid||'') : (opts.managerMid || (company.ceoMemberId||'')));
+  psFillTeam(em ? (em.functionId||'__none') : (opts.fid||'__none'));
+  var leadNow = (!!(em && em.functionId && fns[em.functionId] && fns[em.functionId].leaderMid===psEditMid)) || (!em && !!opts.leads);
+  var lc=document.getElementById('ps-lead'); if(lc)lc.checked=leadNow;
+  psTeam();
   var h=document.getElementById('psHeading'); if(h) h.textContent=em?'Edit person':'Add a person';
   var ag=document.getElementById('ps-adminGrp'), acb=document.getElementById('ps-admin'), ahint=document.getElementById('ps-adminHint'), albl=document.getElementById('ps-adminLabel');
   if(ag&&acb){
     if(ME.isSuper && em){ ag.style.display='';
-      var canAdmin=!!(em.uid||em.email);
-      acb.disabled=!canAdmin;
-      acb.checked=isPersonAdmin(em);
+      var canAdmin=!!(em.uid||em.email); acb.disabled=!canAdmin; acb.checked=isPersonAdmin(em);
       if(albl)albl.classList.toggle('disabled',!canAdmin);
-      if(ahint)ahint.textContent=canAdmin?(em.uid?'Admins can manage people, structure and settings for this company.':'Admin rights take effect the first time they sign in with this email.'):'Add an email for this person first, then you can make them an admin.';
+      if(ahint)ahint.textContent=canAdmin?(em.uid?'Admins can manage people, structure and settings for this company.':'Admin rights take effect the first time they sign in with this email.'):'Add an email first to grant admin.';
     } else { ag.style.display='none'; acb.checked=false; acb.disabled=true; }
   }
   var go=document.getElementById('ps-go'); go.textContent=em?'Save changes':'Add person'; go.disabled=em?false:true;
-  document.getElementById('ps-repSel').classList.remove('on');
-  psUpd();
   document.getElementById('personSheet').classList.add('on');
   setTimeout(function(){var e=document.getElementById('ps-first');if(e)e.focus();},40);
 };
 window.closePerson=function(){ psEditMid=null; document.getElementById('personSheet').classList.remove('on'); };
 window.psChk=function(){ document.getElementById('ps-go').disabled=!document.getElementById('ps-first').value.trim(); };
-function renderPsDept(sel){ var s=document.getElementById('ps-dept'); var opts='';
-  opts+='<option value="__none"'+((!fns[sel] && sel!=='__new')?' selected':'')+'>No department</option>';
-  Object.keys(fns).forEach(function(fid){ var f=fns[fid]; var ld=deptLeaderMid(fid)?(' (led by '+esc(personName(f.leaderMid))+')'):' (no leader yet)'; opts+='<option value="'+fid+'"'+(fid===sel?' selected':'')+'>'+esc(f.name)+ld+'</option>'; });
-  opts+='<option value="__new">➕ New department…</option>';
+function psFillRep(selMid){ var s=document.getElementById('ps-rep'); if(!s)return;
+  var ceo=company.ceoMemberId;
+  var subtree = psEditMid ? (typeof freeSubtreeSet==='function'?freeSubtreeSet(psEditMid):{}) : {};
+  var list=Object.keys(members).filter(function(m){ return m!==psEditMid && !orgHidden(m) && !subtree[m]; })
+    .sort(function(a,b){ if(a===ceo)return -1; if(b===ceo)return 1; return (personName(a)||'').localeCompare(personName(b)||''); });
+  var opts='<option value=""'+(selMid?'':' selected')+'>No one \u2014 top level</option>';
+  list.forEach(function(m){ var rl=roleLabelFor(m); opts+='<option value="'+m+'"'+(m===selMid?' selected':'')+'>'+esc(personName(m))+(rl?(' \u2014 '+esc(rl)):'')+'</option>'; });
   s.innerHTML=opts;
 }
-window.psDept=function(){ psMgrOverride=null; psUpd(); };
-window.psLead=function(b,val){ b.parentElement.querySelectorAll('button').forEach(function(x){x.classList.remove('sel');}); b.classList.add('sel'); psLeads=val; psMgrOverride=null; psUpd(); };
-window.psToggleChg=function(){ document.getElementById('ps-repSel').classList.toggle('on'); };
-window.psPickMgr=function(){ var v=document.getElementById('ps-repList').value; psMgrOverride=(v===''?'TOP':v); psRenderRep(); };
-function psUpd(){ var dv=document.getElementById('ps-dept').value; var isNew=(dv==='__new');
-  document.getElementById('ps-newDeptWrap').classList.toggle('on', isNew);
-  psRenderRep();
-  var drB=document.getElementById('ps-drBlock');
-  if(psLeads && !isNew && !psEditMid && fns[dv]){ var mem=Object.keys(members).filter(function(m){return members[m].functionId===dv;});
-    if(mem.length){ drB.style.display='block'; document.getElementById('ps-drList').innerHTML=mem.map(function(m){return '<label><input type="checkbox" value="'+m+'"> '+esc(personName(m))+' · '+esc(fns[dv].name)+'</label>';}).join(''); }
-    else drB.style.display='none';
-  } else drB.style.display='none';
+function psFillTeam(selFid){ var s=document.getElementById('ps-team'); if(!s)return;
+  var opts='<option value="__none"'+((!fns[selFid] && selFid!=='__new')?' selected':'')+'>No team</option>';
+  Object.keys(fns).forEach(function(fid){ var f=fns[fid]; opts+='<option value="'+fid+'"'+(fid===selFid?' selected':'')+'>'+esc(f.name||'Team')+'</option>'; });
+  opts+='<option value="__new"'+(selFid==='__new'?' selected':'')+'>\u2795 New team\u2026</option>';
+  s.innerHTML=opts;
 }
-function psRenderRep(){ var dv=document.getElementById('ps-dept').value; var isNew=(dv==='__new');
-  var ceoMid=(company.ceoMemberId&&members[company.ceoMemberId])?company.ceoMemberId:null;
-  var who, lbl, list;
-  if(psLeads){ who=ceoMid; lbl=ceoMid?'Reports to someone other than the CEO':'Reports to'; list=ceoMid?[ceoMid]:[]; }
-  else { var lead=isNew?null:deptLeaderMid(dv); if(lead){ who=lead; lbl='Reports to someone else in '+(fns[dv].name||''); list=Object.keys(members).filter(function(m){return members[m].functionId===dv;}); } else { who=ceoMid; lbl='Reports to'; list=ceoMid?[ceoMid]:[]; } }
-  var effMid = (psMgrOverride==null) ? who : (psMgrOverride==='TOP'?null:psMgrOverride);
-  var whoEl=document.getElementById('ps-repWho'), roEl=document.getElementById('ps-repRole');
-  if(effMid && members[effMid]){ whoEl.textContent=personName(effMid); roEl.textContent=roleLabelFor(effMid); }
-  else { whoEl.textContent='No manager'; roEl.textContent='sits at the top'; }
-  document.getElementById('ps-repLbl').textContent=lbl;
-  var sel=(psMgrOverride==null)?(who||''):(psMgrOverride==='TOP'?'':psMgrOverride);
-  document.getElementById('ps-repList').innerHTML=list.map(function(m){return '<option value="'+m+'"'+(m===sel?' selected':'')+'>'+esc(personName(m))+' — '+esc(roleLabelFor(m))+'</option>';}).join('')+'<option value=""'+(sel===''?' selected':'')+'>No manager (sits at the top)</option>';
-}
+window.psTeam=function(){ var el=document.getElementById('ps-team'); if(!el)return; var dv=el.value; var isNew=(dv==='__new'); var hasTeam=isNew||(!!dv && dv!=='__none' && !!fns[dv]);
+  var nw=document.getElementById('ps-newTeamWrap'); if(nw)nw.classList.toggle('on', isNew);
+  var lr=document.getElementById('ps-leadRow'); if(lr)lr.style.display=hasTeam?'flex':'none';
+  if(!hasTeam){ var lc=document.getElementById('ps-lead'); if(lc)lc.checked=false; }
+};
 function createDeptInline(nm){ if(!nm) return Promise.resolve(null); var color=TEAM_COLORS[Object.keys(fns).length%TEAM_COLORS.length]; return fnsRef().add({name:nm,color:color,leaderMid:null,leaderName:''}).then(function(ref){ fns[ref.id]={id:ref.id,name:nm,color:color,leaderMid:null,leaderName:''}; return ref.id; }); }
 window.savePerson=function(){ if(!isAdmin)return;
   var first=document.getElementById('ps-first').value.trim(); if(!first){alert('Please add a first name.');return;}
   var last=document.getElementById('ps-last').value.trim();
   var email=document.getElementById('ps-email').value.trim().toLowerCase();
   var title=document.getElementById('ps-title').value.trim();
-  var dv=document.getElementById('ps-dept').value;
-  var newDeptNm=document.getElementById('ps-newDept').value.trim();
-  if(dv==='__new' && !newDeptNm){ alert('Please name the new department.'); return; }
-  var go=document.getElementById('ps-go'); go.disabled=true; go.textContent=psEditMid?'Saving…':'Adding…';
+  var repVal=document.getElementById('ps-rep').value;                 // '' = top level, else a member id
+  var teamVal=document.getElementById('ps-team').value;               // '__none' | fid | '__new'
+  var newTeamNm=document.getElementById('ps-newTeam').value.trim();
+  var wantLead=!!(document.getElementById('ps-lead')&&document.getElementById('ps-lead').checked);
+  if(teamVal==='__new' && !newTeamNm){ alert('Please name the new team, or choose No team.'); return; }
+  var go=document.getElementById('ps-go'); go.disabled=true; go.textContent=psEditMid?'Saving\u2026':'Adding\u2026';
   var name=(first+' '+last).trim();
-  var ensure=(dv==='__new')?createDeptInline(newDeptNm):Promise.resolve(dv==='__none'?null:dv);
-  ensure.then(function(fid){ if(dv==='__new' && !fid) throw new Error('Please name the department.');
-    var ceoMid=(company.ceoMemberId&&members[company.ceoMemberId])?company.ceoMemberId:null;
-    var mgr;
-    if(psMgrOverride!=null){ mgr=(psMgrOverride==='TOP')?null:psMgrOverride; }
-    else if(psLeads){ mgr=ceoMid; }
-    else { mgr=deptLeaderMid(fid)||ceoMid||null; }
-    if(psEditMid){ var mid=psEditMid;
-      var prevLeaderFid=null; Object.keys(fns).forEach(function(f){ if(fns[f].leaderMid===mid) prevLeaderFid=f; });
-      var tasks=[ membersRef().doc(mid).update({first:first,last:last,name:name,initials:initials(name),email:email||null,functionId:fid,title:title||null,isLeader:!!psLeads,managerMid:(mgr||null)}) ];
-      if(psLeads){ var oldL=fns[fid]&&fns[fid].leaderMid;
-        if(oldL&&oldL!==mid&&members[oldL]) tasks.push(membersRef().doc(oldL).update({isLeader:false}));
-        tasks.push(fnsRef().doc(fid).update({leaderMid:mid,leaderName:name}));
-        if(prevLeaderFid&&prevLeaderFid!==fid) tasks.push(fnsRef().doc(prevLeaderFid).update({leaderMid:null,leaderName:''}));
-      } else if(prevLeaderFid){ tasks.push(fnsRef().doc(prevLeaderFid).update({leaderMid:null,leaderName:''})); }
-      if(ME.isSuper){ var acb=document.getElementById('ps-admin'); var m0=members[mid];
-        if(m0 && acb && !acb.disabled){ var isA=isPersonAdmin(m0);
-          if(acb.checked!==isA){ var _t=setPersonAdmin(m0, acb.checked); if(_t) tasks.push(_t); }
-        }
-      }
+  var mgr=repVal||null;
+  var ensure=(teamVal==='__new')?createDeptInline(newTeamNm):Promise.resolve(teamVal==='__none'?null:teamVal);
+  ensure.then(function(fid){
+    if(teamVal==='__new' && !fid) throw new Error('Could not create the team.');
+    var lead=(!!fid)&&wantLead;
+    function finish(mid){
+      var tasks=[];
+      Object.keys(fns).forEach(function(f){ if(fns[f].leaderMid===mid && f!==fid){ tasks.push(fnsRef().doc(f).update({leaderMid:null,leaderName:''})); } });
+      if(lead){ var oldL=fns[fid]&&fns[fid].leaderMid; if(oldL && oldL!==mid && members[oldL]) tasks.push(membersRef().doc(oldL).update({isLeader:false})); tasks.push(fnsRef().doc(fid).update({leaderMid:mid,leaderName:name})); }
+      else if(fid && fns[fid] && fns[fid].leaderMid===mid){ tasks.push(fnsRef().doc(fid).update({leaderMid:null,leaderName:''})); }
+      if(psEditMid && ME.isSuper && members[mid]){ var acb=document.getElementById('ps-admin'); if(acb && !acb.disabled){ var isA=isPersonAdmin(members[mid]); if(acb.checked!==isA){ var _t=setPersonAdmin(members[mid], acb.checked); if(_t)tasks.push(_t); } } }
       return Promise.all(tasks);
     }
-    var mdoc={ first:first, last:last, name:name, initials:initials(name), email:email||null, functionId:fid, title:title||null, isLeader:!!psLeads, managerMid:mgr||null, uid:null, pid:newPid() };
-    return membersRef().add(mdoc).then(function(ref){ var newMid=ref.id; var tasks=[];
-      if(psLeads){ var oldL=fns[fid]&&fns[fid].leaderMid; if(oldL&&oldL!==newMid&&members[oldL]) tasks.push(membersRef().doc(oldL).update({isLeader:false}));
-        tasks.push(fnsRef().doc(fid).update({leaderMid:newMid,leaderName:name}));
-        Array.prototype.slice.call(document.querySelectorAll('#ps-drList input:checked')).forEach(function(x){ if(x.value!==newMid) tasks.push(membersRef().doc(x.value).update({managerMid:newMid})); });
-      }
-      return Promise.all(tasks);
-    });
-  }).then(function(){ closePerson(); go.disabled=false; go.textContent='Add person'; })
-   .catch(function(e){ alert(e.message||'Could not save'); go.disabled=false; go.textContent=psEditMid?'Save changes':'Add person'; });
-};
-
-/* ---------- global people search (all companies) ---------- */
-var peopleIndex=null, peopleIndexLoading=false, coOpen={};
-function buildPeopleIndex(){
-  if(!ME.isSuper){ peopleIndex=[]; return Promise.resolve([]); }
-  peopleIndexLoading=true;
-  var cids=Object.keys(companies);
-  var jobs=cids.map(function(cid){ var base=companiesCol.doc(cid);
-    return Promise.all([ base.collection('functions').get(), base.collection('members').get(), base.collection('issues').where('status','==','open').get().catch(function(){return {size:null};}) ]).then(function(r){
-      var fnMap={}; r[0].forEach(function(d){ fnMap[d.id]=d.data(); });
-      var co=companies[cid]||{}; var th=(co.theme&&co.theme.strip)||'#ff6600'; var rows=[];
-      r[1].forEach(function(d){ var m=d.data(); if(m.coach || m.uid===ME.uid || (m.email && SUPER_ADMIN_EMAILS.indexOf((m.email||'').toLowerCase())>=0)){ return; }/* PT_COACHCOUNT_V2 */ var nm=m.name||((m.first||'')+' '+(m.last||'')).trim();
-        rows.push({cid:cid,mid:d.id,name:nm,initials:m.initials||initials(nm),email:m.email||'',
-          coName:co.name||cid,coTheme:th,fnName:(m.functionId&&fnMap[m.functionId])?fnMap[m.functionId].name:'',
-          isLeader:!!m.isLeader,isCEO:(co.ceoMemberId===d.id)});
-      });
-      coOpen[cid]=(r[2]&&r[2].size!=null)?r[2].size:null;
-      return rows;
-    }).catch(function(){ return []; });
-  });
-  return Promise.all(jobs).then(function(all){ peopleIndex=[].concat.apply([],all); peopleIndexLoading=false; renderCoHome(); gpsRender(); return peopleIndex; });
-}
-window.gpsRender=function(){
-  var inp=document.getElementById('gpsInput'), box=document.getElementById('gpsResults'); if(!inp||!box)return;
-  var q=(inp.value||'').trim().toLowerCase();
-  if(!q){ box.innerHTML=''; box.style.display='none'; return; }
-  box.style.display='block';
-  if(peopleIndex===null){ box.innerHTML='<div class="gps-note">'+(peopleIndexLoading?'Searching all companies…':'Preparing search…')+'</div>'; if(!peopleIndexLoading)buildPeopleIndex(); return; }
-  var res=peopleIndex.filter(function(p){ return p.name.toLowerCase().indexOf(q)>=0 || (p.email&&p.email.toLowerCase().indexOf(q)>=0); })
-    .sort(function(a,b){ return a.name.localeCompare(b.name); }).slice(0,25);
-  box.innerHTML = res.length ? res.map(function(p){ var role=p.isCEO?'CEO':(p.isLeader?('Leader'+(p.fnName?' · '+esc(p.fnName):'')):(p.fnName?esc(p.fnName):'Team member'));
-    return '<button class="gps-row" onclick="gpsOpen(\''+p.cid+'\',\''+p.mid+'\')"><span class="gps-av" style="background:'+p.coTheme+'">'+esc(p.initials)+'</span><span class="gps-rtext"><span class="gps-nm">'+esc(p.name)+'</span><span class="gps-meta">'+role+'</span></span><span class="gps-co"><span class="gps-dot" style="background:'+p.coTheme+'"></span>'+esc(p.coName)+'</span></button>';
-  }).join('') : '<div class="gps-note">No one matches "'+esc(q)+'".</div>';
+    if(psEditMid){ var mid=psEditMid;
+      return membersRef().doc(mid).update({ first:first, last:last, name:name, initials:initials(name), email:email||null, functionId:fid||null, title:title||null, isLeader:lead, managerMid:(mgr===mid?null:mgr) }).then(function(){ return finish(mid); });
+    }
+    var mdoc={ first:first, last:last, name:name, initials:initials(name), email:email||null, functionId:fid||null, title:title||null, isLeader:lead, managerMid:mgr||null, uid:null, pid:newPid() };
+    return membersRef().add(mdoc).then(function(ref){ return finish(ref.id); });
+  }).then(function(){ closePerson(); try{refreshAux();}catch(e){} }).catch(function(e){ var g=document.getElementById('ps-go'); if(g){g.disabled=false;g.textContent=psEditMid?'Save changes':'Add person';} alert('Could not save: '+((e&&e.message)||e)); });
 };
 window.gpsOpen=function(cid,mid){ window.pendingProfileMid=mid; var inp=document.getElementById('gpsInput'); if(inp)inp.value=''; var box=document.getElementById('gpsResults'); if(box){ box.innerHTML=''; box.style.display='none'; } switchCompany(cid); };
 window.toggleShowDone=function(){ var c=document.getElementById('showDone'); showCompleted=!!(c&&c.checked); render(); };
