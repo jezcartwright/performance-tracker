@@ -2871,8 +2871,9 @@ window.openPerson=function(opts){ if(!isAdmin)return; opts=opts||{};
 window.closePerson=function(){ psEditMid=null; document.getElementById('personSheet').classList.remove('on'); };
 window.psChk=function(){ document.getElementById('ps-go').disabled=!document.getElementById('ps-first').value.trim(); };
 function renderPsDept(sel){ var s=document.getElementById('ps-dept'); var opts='';
+  opts+='<option value="__none"'+((!fns[sel] && sel!=='__new')?' selected':'')+'>No department</option>';
   Object.keys(fns).forEach(function(fid){ var f=fns[fid]; var ld=deptLeaderMid(fid)?(' (led by '+esc(personName(f.leaderMid))+')'):' (no leader yet)'; opts+='<option value="'+fid+'"'+(fid===sel?' selected':'')+'>'+esc(f.name)+ld+'</option>'; });
-  opts+='<option value="__new"'+(!Object.keys(fns).length?' selected':'')+'>➕ New department…</option>';
+  opts+='<option value="__new">➕ New department…</option>';
   s.innerHTML=opts;
 }
 window.psDept=function(){ psMgrOverride=null; psUpd(); };
@@ -2912,8 +2913,8 @@ window.savePerson=function(){ if(!isAdmin)return;
   if(dv==='__new' && !newDeptNm){ alert('Please name the new department.'); return; }
   var go=document.getElementById('ps-go'); go.disabled=true; go.textContent=psEditMid?'Saving…':'Adding…';
   var name=(first+' '+last).trim();
-  var ensure=(dv==='__new')?createDeptInline(newDeptNm):Promise.resolve(dv);
-  ensure.then(function(fid){ if(!fid) throw new Error('Please name the department.');
+  var ensure=(dv==='__new')?createDeptInline(newDeptNm):Promise.resolve(dv==='__none'?null:dv);
+  ensure.then(function(fid){ if(dv==='__new' && !fid) throw new Error('Please name the department.');
     var ceoMid=(company.ceoMemberId&&members[company.ceoMemberId])?company.ceoMemberId:null;
     var mgr;
     if(psMgrOverride!=null){ mgr=(psMgrOverride==='TOP')?null:psMgrOverride; }
