@@ -1388,6 +1388,17 @@ function openFocus(k){closeMenu();show('home');var f=document.getElementById('fo
     <div class="form-card">
       <h1 id="pr-h1">Add a priority</h1>
       <p class="lead">Something you're driving. Set where you are with it and who it involves — your line manager confirms it from their side once it's added.</p>
+      <div id="pr-forbar" style="display:none;border-left:3px solid #ff6600;padding:8px 0 8px 12px;margin:0 0 16px">
+        <div style="font-size:14px" id="pr-forbar-t"></div>
+        <div style="font-size:13px;color:var(--t3);margin-top:3px">It’ll sit in their list and show you as the person who added it.</div>
+      </div>
+      <div class="fld" id="pr-owner-fld" style="display:none">
+        <label>Owner <span style="font-weight:400;text-transform:none;letter-spacing:0;color:#999">(whose priority this is)</span></label>
+        <div class="ta">
+          <input id="pr-owner-input" class="ta-input" type="text" placeholder="Search for the person who owns it…" autocomplete="off" oninput="prOwnerSearch(this)" onfocus="prOwnerSearch(this)" onblur="taBlur('pr-owner-list')">
+          <div id="pr-owner-list" class="ta-list" style="display:none"></div>
+        </div>
+      </div>
       <div class="fld"><label>Title</label><input id="pr-title" placeholder="Short summary of the priority"></div>
       <div class="fld"><label>Detail <span style="font-weight:400;text-transform:none;letter-spacing:0;color:#999">(optional)</span></label><textarea id="pr-note" placeholder="What does done look like, and why does it matter?"></textarea></div>
       <div class="fld"><label>Where are you with it?</label>
@@ -1397,6 +1408,15 @@ function openFocus(k){closeMenu();show('home');var f=document.getElementById('fo
           <option value="Blocked">Blocked — waiting on something</option>
           <option value="Review">Review — nearly there</option>
           <option value="Completed">Completed — finished</option>
+        </select>
+      </div>
+      <div class="fld" id="pr-vis-fld" style="display:none">
+        <label>Who can see it</label>
+        <select id="pr-vis">
+          <option value="private">Private — just them (and you)</option>
+          <option value="manager">Them and their manager</option>
+          <option value="team">Their team</option>
+          <option value="everyone">Everyone</option>
         </select>
       </div>
       <div class="fld">
@@ -1504,9 +1524,15 @@ function openFocus(k){closeMenu();show('home');var f=document.getElementById('fo
       </div>
     </div>
     <div id="pfRel"></div>
-    <h3 class="pf-h3">Priorities</h3>
+    <div style="display:flex;align-items:center;gap:10px">
+      <h3 class="pf-h3" style="margin-right:auto">Priorities</h3>
+      <button class="tinybtn" id="pfAddPri" style="display:none" onclick="pfAddPriority()">+ Add</button>
+    </div>
     <div id="pfPriorities"></div>
-    <h3 class="pf-h3">Issues they're dealing with</h3>
+    <div style="display:flex;align-items:center;gap:10px">
+      <h3 class="pf-h3" style="margin-right:auto">Issues they’re dealing with</h3>
+      <button class="tinybtn" id="pfAddIss" style="display:none" onclick="pfAddIssue()">+ Add</button>
+    </div>
     <div id="pfIssues"></div>
   </section>
 
@@ -2948,7 +2974,7 @@ window.gpsRender=function(){
 window.gpsOpen=function(cid,mid){ window.pendingProfileMid=mid; var inp=document.getElementById('gpsInput'); if(inp)inp.value=''; var box=document.getElementById('gpsResults'); if(box){ box.innerHTML=''; box.style.display='none'; } switchCompany(cid); };
 window.toggleShowDone=function(){ var c=document.getElementById('showDone'); showCompleted=!!(c&&c.checked); render(); };
 function updateSortbarUI(){ var w=document.getElementById('showDoneWrap'); if(w)w.style.display=(boardMode==='done')?'none':'flex'; }
-window.openRaise=function(){ riEditId=null; clearTabs(); renderFnSelect(); var h=document.getElementById('ri-h1'); if(h)h.textContent='Raise an issue'; var b=document.getElementById('ri-submit'); if(b)b.textContent='Raise issue'; show('raise'); };
+window.openRaise=function(forMid){ riEditId=null; clearTabs(); renderFnSelect(); if(forMid&&isAdmin&&members[forMid]){ riFromMid=forMid; var _rf=document.getElementById('ri-from-input'); if(_rf)_rf.value=personName(forMid); var _rff=document.getElementById('ri-from-fld'); if(_rff)_rff.style.display=''; } var h=document.getElementById('ri-h1'); if(h)h.textContent='Raise an issue'; var b=document.getElementById('ri-submit'); if(b)b.textContent='Raise issue'; show('raise'); };
 window.riCancel=function(){ if(riEditId){ var id=riEditId; riEditId=null; openIssue(id); } else goDash(); };
 
 /* ---------- DASHBOARD ---------- */
@@ -3575,12 +3601,13 @@ window.liCreate=function(){ if(!activeCid||!LI_ROWS||!LI_ROWS.length)return; var
   if(LI_TARGET==='iss'){
     var rMid=ME.mid||null, rUid, rName, rInit;
     if(rMid&&members[rMid]){ rUid=members[rMid].uid||null; rName=personName(rMid); rInit=members[rMid].initials||initials(rName); } else { rMid=null; rUid=ME.uid; rName=ME.name; rInit=ME.initials; }
-    Promise.all(rows.map(function(r){ var lm=r.ownerMid||null; var lmem=lm?(members[lm]||{}):{}; var fid=lmem.functionId||null; var f=fid?fns[fid]:null; var parts=[]; if(rMid)parts.push(rMid); if(lm&&parts.indexOf(lm)<0)parts.push(lm);
-      return issuesRef().add({ title:r.title, description:r.desc||'', functionId:fid, functionName:f?f.name:'', color:f?f.color:null, leaderMid:lm, leaderName:lm?personName(lm):'', leaderUid:lmem.uid||null, raiserMid:rMid, raiserUid:rUid, raiserName:rName, raiserInitials:rInit, conversationHad:false, visibility:'team', targetType:(lm?'person':'function'), kind:'action', ballMid:lm, ballFromMid:rMid, status:'open', participants:parts, createdAt:FV.serverTimestamp(), updatedAt:FV.serverTimestamp() });
+    Promise.all(rows.map(function(r){ var pm=r.ownerMid||rMid||null; var pmem=pm?(members[pm]||{}):{}; var fid=pmem.functionId||null; var f=fid?fns[fid]:null; var lm=null; var parts=[]; if(pm)parts.push(pm);
+      return issuesRef().add({ title:r.title, description:r.desc||'', functionId:fid, functionName:f?f.name:'', color:f?f.color:null, leaderMid:null, leaderName:'', leaderUid:null, raiserMid:pm, raiserUid:pmem.uid||null, raiserName:pm?personName(pm):rName, raiserInitials:(pmem.initials||(pm?initials(personName(pm)):rInit)), conversationHad:false, visibility:'participants', targetType:'person', kind:'action', ballMid:null, ballFromMid:null, status:'open', participants:parts, createdAt:FV.serverTimestamp(), updatedAt:FV.serverTimestamp() });
     })).then(function(){ liClose(); try{ if(typeof render==='function')render(); }catch(e){} alert('Imported '+rows.length+' '+(rows.length===1?'issue':'issues')+'.'); }).catch(function(e){ go.disabled=false; go.textContent='Import'; alert('Import failed: '+((e&&e.message)||e)); });
     return;
   }
-  Promise.all(rows.map(function(r,i){ var onm=(members[r.ownerMid]&&members[r.ownerMid].name)||ME.name||''; return prioritiesRef().add({ ownerMid:r.ownerMid, ownerName:onm, title:r.title, involves:[], status:r.status||'Scoping', agreed:false, agreedBy:null, order:base+i, createdAt:FV.serverTimestamp(), updatedAt:FV.serverTimestamp() }); })).then(function(){ liClose(); try{renderPriorities();}catch(e){} alert('Imported '+rows.length+' '+(rows.length===1?'priority':'priorities')+'.'); }).catch(function(e){ go.disabled=false; go.textContent='Import'; alert('Import failed: '+((e&&e.message)||e)); });
+  var _seq={}; priorities.forEach(function(q){ if(!q.ownerMid)return; var o=q.order||0; if(_seq[q.ownerMid]===undefined||o>_seq[q.ownerMid])_seq[q.ownerMid]=o; });
+  Promise.all(rows.map(function(r,i){ var onm=(members[r.ownerMid]&&members[r.ownerMid].name)||personName(r.ownerMid)||''; var _o=((_seq[r.ownerMid]===undefined)?-1:_seq[r.ownerMid])+1; _seq[r.ownerMid]=_o; return prioritiesRef().add({ ownerMid:r.ownerMid, ownerName:onm, title:r.title, involves:[], status:r.status||'Scoping', agreed:false, agreedBy:null, order:_o, createdAt:FV.serverTimestamp(), updatedAt:FV.serverTimestamp() }); })).then(function(){ liClose(); try{renderPriorities();}catch(e){} alert('Imported '+rows.length+' '+(rows.length===1?'priority':'priorities')+'.'); }).catch(function(e){ go.disabled=false; go.textContent='Import'; alert('Import failed: '+((e&&e.message)||e)); });
 };
 window.liTemplate=function(){ var hdr, rows, cols;
   if(LI_TARGET==='iss'){ hdr=['Title','Description','Owner']; rows=[['Late supplier deliveries','Deliveries slipping past our SLA','Raj Patel'],['New brand guidelines','','Nadia Haqq'],['Checkout downtime','Intermittent errors at payment','']]; cols=[{wch:34},{wch:44},{wch:20}]; }
@@ -4083,6 +4110,9 @@ function paintProfile(mid){ var m=members[mid]; if(!m)return false; curProfile=m
   var prm=document.getElementById('pfRemove'); if(prm) prm.style.display=(isAdmin && company.ceoMemberId!==mid)?'inline-flex':'none';
   var pv=document.getElementById('pfInvite'); if(pv) pv.style.display=(isAdmin && !m.uid && m.email)?'inline-flex':'none';
   var pa=document.getElementById('pfAdmin'); if(pa){ if(ME.isSuper && activeCid && (m.uid||m.email) && m.uid!==ME.uid){ var _ca=isPersonAdmin(m); pa.style.display='inline-flex'; pa.textContent=_ca?'✓ Admin':'Make admin'; pa.style.background=_ca?'#0f8a6b':''; pa.style.color=_ca?'#fff':''; pa.style.borderColor=_ca?'#0f8a6b':''; } else { pa.style.display='none'; } }
+  var _fn=(firstName(mid)||'them'); /* PT_ONBEHALF_V1 */
+  var apb=document.getElementById('pfAddPri'); if(apb){ apb.style.display=isAdmin?'inline-flex':'none'; apb.textContent='+ Add for '+_fn; }
+  var aib=document.getElementById('pfAddIss'); if(aib){ aib.style.display=isAdmin?'inline-flex':'none'; aib.textContent='+ Add for '+_fn; }
   renderProfileIssues(mid);
   renderProfilePriorities(mid);
   renderProfileRel(mid);
@@ -4196,7 +4226,8 @@ function lineManagerMid(mid){ return (typeof orgParent==='function')?orgParent(m
 function canEditPriority(p){ return !!(activeCid && p && (isAdmin || (ME.mid && p.ownerMid===ME.mid))); }
 function canAgreePriority(p){ if(!activeCid||!p)return false; if(isAdmin)return true; var mgr=lineManagerMid(p.ownerMid); return !!(mgr && mgr===ME.mid); }
 function updatePriCount(){ var el=document.getElementById('priCount'); if(el)el.textContent=myPriorities().filter(function(p){return !priDone(p);}).length; }
-function ensurePriSub(){ if(!activeCid)return; if(subPri&&priSubMid===(ME.mid||null))return; if(subPri){ subPri(); subPri=null; } priSubMid=ME.mid||null; /* PL_PRIVATELOCK_V1 PL_PRI_SUBFIX_V1 */ var ownM={}, visM={}; function priRebuild(){ var map={},k; for(k in ownM)map[k]=ownM[k]; for(k in visM){ if(!map[k])map[k]=visM[k]; } priorities=[]; for(k in map)priorities.push(map[k]); priorities.sort(function(a,b){return (a.order||0)-(b.order||0);}); updatePriCount(); var ps=document.getElementById('priorities'); if(ps&&ps.classList.contains('active'))renderPriorities(); var pf=document.getElementById('profile'); if(pf&&pf.classList.contains('active')&&curProfile)renderProfilePriorities(curProfile); } var uOwn=function(){}, uVis=function(){}; if(ME.mid){ uOwn=prioritiesRef().where('ownerMid','==',ME.mid).onSnapshot(function(qs){ ownM={}; qs.forEach(function(d){ var p=d.data(); p.id=d.id; ownM[d.id]=p; }); priRebuild(); },function(e){console.warn('pri-own',e);}); } uVis=prioritiesRef().where('visibility','in',['manager','team','everyone']).onSnapshot(function(qs){ visM={}; qs.forEach(function(d){ var p=d.data(); p.id=d.id; visM[d.id]=p; }); priRebuild(); },function(e){console.warn('pri-vis',e);}); subPri=function(){ uOwn(); uVis(); }; }
+function ensurePriSub(){ if(!activeCid)return; if(subPri&&priSubMid===(ME.mid||null))return; if(subPri){ subPri(); subPri=null; } priSubMid=ME.mid||null; /* PL_PRIVATELOCK_V1 PL_PRI_SUBFIX_V1 */ var ownM={}, visM={}; function priRebuild(){ var map={},k; for(k in ownM)map[k]=ownM[k]; for(k in visM){ if(!map[k])map[k]=visM[k]; } for(k in allM){ if(!map[k])map[k]=allM[k]; } priorities=[]; for(k in map)priorities.push(map[k]); priorities.sort(function(a,b){return (a.order||0)-(b.order||0);}); updatePriCount(); var ps=document.getElementById('priorities'); if(ps&&ps.classList.contains('active'))renderPriorities(); var pf=document.getElementById('profile'); if(pf&&pf.classList.contains('active')&&curProfile)renderProfilePriorities(curProfile); } var uOwn=function(){}, uVis=function(){}, uAll=function(){}; var allM={}; if(ME.mid){ uOwn=prioritiesRef().where('ownerMid','==',ME.mid).onSnapshot(function(qs){ ownM={}; qs.forEach(function(d){ var p=d.data(); p.id=d.id; ownM[d.id]=p; }); priRebuild(); },function(e){console.warn('pri-own',e);}); } uVis=prioritiesRef().where('visibility','in',['manager','team','everyone']).onSnapshot(function(qs){ visM={}; qs.forEach(function(d){ var p=d.data(); p.id=d.id; visM[d.id]=p; }); priRebuild(); },function(e){console.warn('pri-vis',e);}); if(isAdmin){ uAll=prioritiesRef().onSnapshot(function(qs){ allM={}; qs.forEach(function(d){ var p=d.data(); p.id=d.id; allM[d.id]=p; }); priRebuild(); },function(e){console.warn('pri-all',e);}); }
+  subPri=function(){ uOwn(); uVis(); uAll(); }; }
 
 function priInvolvesHTML(p){ var ids=(p.involves||[]).filter(function(m){return members[m];}); if(!ids.length)return '<span class="pri-muted">no one yet</span>'; return '<span class="pri-avs">'+ids.map(function(m){return '<span class="pri-av" style="'+avBg(m)+'" title="'+esc(personName(m))+'">'+avBody(m)+'</span>';}).join('')+'</span><span class="pri-names">'+ids.map(function(m){return esc(personName(m));}).join(', ')+'</span>'; }
 function priCardHTML(p,canDrag,canEdit,canAgree){
@@ -4226,7 +4257,7 @@ function renderPriorities(){
   if(!done.length){ box.innerHTML=''; return; }
   box.innerHTML='<details class="pri-done-wrap"><summary class="pri-done-sum">Completed <span class="pri-done-n">'+done.length+'</span></summary><div class="pri-done-list">'+done.map(function(p){ var dt=priFmtDate(p.completedAt); var re=canEditPriority(p)?('<button class="pri-reopen" title="Reopen" onclick="event.stopPropagation();priReopen(\''+p.id+'\')">Reopen</button>'):''; return '<div class="pri-done-row" onclick="openPriority(\''+p.id+'\')"><span class="pri-done-tick">\u2713</span><span class="pri-done-ttl">'+esc(p.title||'Untitled priority')+'</span><span class="pri-done-dt">'+(dt?('Completed '+dt):'Completed')+'</span>'+re+'</div>'; }).join('')+'</div></details>';
 }
-function renderProfilePriorities(mid){ ensurePriSub(); var el=document.getElementById('pfPriorities'); if(!el)return; var list=priorities.filter(function(p){return p.ownerMid===mid && canSeePriority(p);}).sort(function(a,b){return (a.order||0)-(b.order||0);}); if(!list.length){ el.innerHTML='<div class="pf-empty">No priorities listed yet'+(mid===ME.mid?' \u2014 add some from the My Priorities tab.':'.')+'</div>'; return; } el.innerHTML='<ul class="pri-list pri-readonly">'+list.map(function(p){ var mine=(mid===ME.mid); return priCardHTML(p,false,(mine&&canEditPriority(p)),canAgreePriority(p)); }).join('')+'</ul>'; priRenumberIn(el.querySelector('.pri-list')); }
+function renderProfilePriorities(mid){ ensurePriSub(); var el=document.getElementById('pfPriorities'); if(!el)return; var list=priorities.filter(function(p){return p.ownerMid===mid && canSeePriority(p);}).sort(function(a,b){return (a.order||0)-(b.order||0);}); if(!list.length){ el.innerHTML='<div class="pf-empty">No priorities listed yet'+(mid===ME.mid?' \u2014 add some from the My Priorities tab.':'.')+'</div>'; return; } el.innerHTML='<ul class="pri-list pri-readonly">'+list.map(function(p){ return priCardHTML(p,false,canEditPriority(p),canAgreePriority(p)); }).join('')+'</ul>'; priRenumberIn(el.querySelector('.pri-list')); }
 
 window.goPriorities=function(){ setHome(false); clearTabs(); var t=document.getElementById('tabPri'); if(t)t.classList.add('active'); show('priorities'); renderPriorities(); };
 window.addPriority=function(){ if(!activeCid){alert('No company selected.');return;} if(!ME.mid){ alert('You need a person record in this company before you can own priorities. Ask an admin to add you in Team.'); return; } var title=(prompt('New priority \u2014 what are you working on?')||'').trim(); if(!title)return; var max=-1; myPriorities().forEach(function(p){ if((p.order||0)>max)max=(p.order||0); }); prioritiesRef().add({ownerMid:ME.mid, ownerName:ME.name, title:title, involves:[], status:'Scoping', agreed:false, agreedBy:null, order:max+1, createdAt:FV.serverTimestamp(), updatedAt:FV.serverTimestamp()}).catch(function(e){alert('Could not add: '+e.message);}); };
@@ -4255,12 +4286,18 @@ window.setIssueFilter=function(mode){ boardMode=(mode==='mine')?'mine':'active';
 function setIssueSegUI(){ var seg=document.getElementById('issSeg'); if(!seg)return; var btns=seg.querySelectorAll('button'); if(btns[0])btns[0].setAttribute('aria-pressed', boardMode==='mine'?'false':'true'); if(btns[1])btns[1].setAttribute('aria-pressed', boardMode==='mine'?'true':'false'); requestAnimationFrame(function(){ var ind=seg.querySelector('.iss-ind'); var act=(boardMode==='mine')?btns[1]:btns[0]; if(ind&&act){ ind.style.left=act.offsetLeft+'px'; ind.style.width=act.offsetWidth+'px'; } }); }
 
 /* ===================== ADD/EDIT PRIORITY FORM + "+ New" MENU ===================== */
-var prInvolves=[], prEditId=null, prDocs=[];
-function openRaisePriority(editId){
+var prInvolves=[], prEditId=null, prDocs=[], prOwnerMid=null;
+function openRaisePriority(editId, forMid){
   if(!activeCid){alert('No company selected.');return;}
-  if(!ME.mid){ alert('You need a person record in this company before you can own priorities. Ask an admin to add you in Team.'); return; }
   prEditId=editId||null;
   var p=prEditId?priById(prEditId):null;
+  var _own = p ? (p.ownerMid||null) : ((isAdmin&&forMid&&members[forMid])?forMid:(ME.mid||null));
+  if(!_own){ alert('You need a person record in this company before you can own priorities. Ask an admin to add you in Team.'); return; }
+  prOwnerMid=_own;
+  var _of=document.getElementById('pr-owner-fld'); if(_of)_of.style.display=isAdmin?'':'none';
+  var _oi=document.getElementById('pr-owner-input'); if(_oi)_oi.value=(personName(_own)||'');
+  hideTa('pr-owner-list');
+  var _vs=document.getElementById('pr-vis'); if(_vs)_vs.value=(p?priVisOf(p):'private');
   document.getElementById('pr-title').value=p?(p.title||''):'';
   document.getElementById('pr-note').value=p?(p.note||''):'';
   document.getElementById('pr-status').value=(p&&p.status)?p.status:'Scoping';
@@ -4269,8 +4306,7 @@ function openRaisePriority(editId){
   renderPrChips(); renderPrDocs();
   var ai=document.getElementById('pr-add-input'); if(ai)ai.value=''; hideTa('pr-add-list');
   var du=document.getElementById('pr-doc-url'); if(du)du.value='';
-  document.getElementById('pr-h1').textContent=p?'Edit priority':'Add a priority';
-  document.getElementById('pr-submit').textContent=p?'Save changes':'Add priority';
+  prSyncOwnerUI();
   clearTabs(); var t=document.getElementById('tabPri'); if(t)t.classList.add('active');
   show('raisePriority');
   setTimeout(function(){ var el=document.getElementById('pr-title'); if(el)el.focus(); },40);
@@ -4281,12 +4317,36 @@ window.priEditInvolves=function(id){ var p=priById(id); if(!p||!canEditPriority(
 window.prAddSearch=function(inp){ renderTaList('pr-add-list', inp.value, prInvolves.concat([ME.mid]), 'prAddPick'); };
 window.prAddPick=function(m){ if(m && m!==ME.mid && prInvolves.indexOf(m)<0)prInvolves.push(m); renderPrChips(); var inp=document.getElementById('pr-add-input'); if(inp)inp.value=''; hideTa('pr-add-list'); };
 window.prRemoveInvolve=function(m){ prInvolves=prInvolves.filter(function(x){return x!==m;}); renderPrChips(); };
+function prSyncOwnerUI(){
+  var mine=(!prOwnerMid || prOwnerMid===ME.mid);
+  var nm=prOwnerMid?(firstName(prOwnerMid)||personName(prOwnerMid)):'';
+  var ed=!!prEditId;
+  var bar=document.getElementById('pr-forbar'); if(bar)bar.style.display=mine?'none':'';
+  var bt=document.getElementById('pr-forbar-t');
+  if(bt)bt.innerHTML=(ed?'Editing a priority owned by ':'Adding a priority for ')+'<b>'+esc(personName(prOwnerMid)||'')+'</b>';
+  var vf=document.getElementById('pr-vis-fld'); if(vf)vf.style.display=(!mine&&isAdmin)?'':'none';
+  var h=document.getElementById('pr-h1');
+  if(h)h.textContent=ed?'Edit priority':(mine?'Add a priority':('Add a priority for '+nm));
+  var b=document.getElementById('pr-submit');
+  if(b)b.textContent=ed?'Save changes':(mine?'Add priority':('Add for '+nm));
+}
+window.prOwnerSearch=function(inp){ renderTaList('pr-owner-list', inp.value, [], 'prOwnerPick'); };
+window.prOwnerPick=function(m){ if(!isAdmin)return; prOwnerMid=m; var inp=document.getElementById('pr-owner-input'); if(inp)inp.value=personName(m); hideTa('pr-owner-list'); prSyncOwnerUI(); };
+window.pfAddPriority=function(){ if(!isAdmin||!curProfile)return; openRaisePriority(null, curProfile); };
+window.pfAddIssue=function(){ if(!isAdmin||!curProfile)return; openRaise(curProfile); };
 function renderPrChips(){ var c=document.getElementById('pr-chips'); if(!c)return; c.innerHTML=prInvolves.map(function(m){ return '<span class="rchip"><span class="mini" style="'+avBg(m)+';width:22px;height:22px;font-size:9px">'+avBody(m)+'</span>'+esc(personName(m))+'<button type="button" onclick="prRemoveInvolve(\''+m+'\')">\u00d7</button></span>'; }).join(''); }
 function renderPrDocs(){ var c=document.getElementById('pr-doc-chips'); if(!c)return; c.innerHTML=prDocs.map(function(d,idx){ return '<span class="rchip"><a href="'+esc(d.url)+'" target="_blank" rel="noopener" style="color:inherit;text-decoration:none;display:inline-flex;align-items:center;gap:6px">'+DOC_SVG+esc(d.name||d.url)+'</a><button type="button" onclick="prDocRemove('+idx+')">\u00d7</button></span>'; }).join(''); }
 window.prDocAdd=function(){ var el=document.getElementById('pr-doc-url'); if(!el)return; var u=normUrl(el.value); if(!u){ alert('That doesn\'t look like a valid web link.'); return; } prDocs.push({name:docNameFromUrl(u), url:u, by:(ME.mid||ME.uid||null), byName:(ME.name||ME.first||''), at:new Date().toISOString()}); el.value=''; renderPrDocs(); };
 window.prDocRemove=function(idx){ if(idx<0||idx>=prDocs.length)return; prDocs.splice(idx,1); renderPrDocs(); };
 window.savePriority=function(){
-  if(!activeCid||!ME.mid)return;
+  if(!activeCid)return;
+  var owner=prOwnerMid||ME.mid||null;
+  if(!isAdmin) owner=ME.mid||null;
+  if(!owner||!members[owner]){ alert('Choose who owns this priority.'); return; }
+  var ownerName=(members[owner].name)||personName(owner)||'';
+  var _vf=document.getElementById('pr-vis-fld');
+  var _shown=!!(_vf && _vf.style.display!=='none');
+  var vis=_shown?((document.getElementById('pr-vis')||{}).value||'private'):null;
   var title=(document.getElementById('pr-title').value||'').trim();
   if(!title){ alert('Please add a title.'); return; }
   var note=(document.getElementById('pr-note').value||'').trim();
@@ -4294,13 +4354,17 @@ window.savePriority=function(){
   var inv=prInvolves.slice();
   if(prEditId){
     var p=priById(prEditId); if(!p||!canEditPriority(p)){ goPriorities(); return; }
-    prioritiesRef().doc(prEditId).update({title:title, note:note, status:status, involves:inv, attachments:prDocs.slice(), updatedAt:FV.serverTimestamp()}).then(function(){ goPriorities(); }).catch(function(e){alert(e.message);});
+    var upd={title:title, note:note, status:status, involves:inv, attachments:prDocs.slice(), updatedAt:FV.serverTimestamp()};
+    if(isAdmin && owner!==p.ownerMid){ upd.ownerMid=owner; upd.ownerName=ownerName; }
+    if(vis) upd.visibility=vis;
+    prioritiesRef().doc(prEditId).update(upd).then(function(){ if(owner!==ME.mid){ openProfile(owner); } else { goPriorities(); } }).catch(function(e){alert(e.message);});
   } else {
-    var max=-1; myPriorities().forEach(function(q){ if((q.order||0)>max)max=(q.order||0); });
-    prioritiesRef().add({ownerMid:ME.mid, ownerName:ME.name, title:title, note:note, involves:inv, status:status, attachments:prDocs.slice(), agreed:false, agreedBy:null, order:max+1, createdAt:FV.serverTimestamp(), updatedAt:FV.serverTimestamp()}).then(function(){ goPriorities(); }).catch(function(e){alert('Could not add: '+e.message);});
+    var max=-1; priorities.forEach(function(q){ if(q.ownerMid===owner && (q.order||0)>max)max=(q.order||0); });
+    prioritiesRef().add({ownerMid:owner, ownerName:ownerName, title:title, note:note, involves:inv, status:status, visibility:(vis||'private'), attachments:prDocs.slice(), agreed:false, agreedBy:null, order:max+1, createdAt:FV.serverTimestamp(), updatedAt:FV.serverTimestamp()}).then(function(){ if(owner!==ME.mid){ openProfile(owner); } else { goPriorities(); } }).catch(function(e){alert('Could not add: '+e.message);});
   }
 };
 /*PL_PRICARD_V1*/function priCardOpen(e,id){if(e.target.closest('.pri-handle,.pri-status,.pri-agree,.pri-del,.pri-people,.doc-chip,button,a'))return;openPriority(id);}/* surface the optional detail line on the card */
+function priPrivTag(p){ if(priVisOf(p)!=='private')return ''; if(!isAdmin||!p.ownerMid||p.ownerMid===ME.mid)return ''; return '<span style="display:inline-block;margin-left:8px;font-size:10.5px;font-weight:700;letter-spacing:.3px;text-transform:uppercase;color:#8a4b00;background:#ffe8d1;border-radius:6px;padding:2px 7px;vertical-align:2px">Private</span>'; }
 function priCardHTML(p,canDrag,canEdit,canAgree){
   var sc=PRI_SCOL[p.status]||PRI_SCOL.Scoping;
   var statusBtn='<button class="pri-status" style="background:'+sc[0]+';color:'+sc[1]+'"'+(canEdit?(' onclick="priCycleStatus(\''+p.id+'\')"'):' disabled')+'>'+esc(priLabel(p.status))+'</button>';
@@ -4311,7 +4375,7 @@ function priCardHTML(p,canDrag,canEdit,canAgree){
   var titleClick=canEdit?(' onclick="priEditTitle(\''+p.id+'\')" style="cursor:pointer"'):'';
   var invClick=canEdit?(' onclick="priEditInvolves(\''+p.id+'\')" title="Edit who is involved"'):'';
   var note=p.note?('<div class="pri-noteline">'+esc(p.note)+'</div>'):'';var openAttr=canEdit?(' onclick="priCardOpen(event,\''+p.id+'\')"'):'';
-  return '<li class="pri-card" data-pri="'+p.id+'"'+openAttr+'>'+handle+'<span class="pri-rank" style="background:'+sc[1]+'"></span><div class="pri-main"><div class="pri-title">'+esc(p.title||'Untitled priority')+'</div>'+note+'<div class="pri-meta"><span class="pri-people"'+invClick+'>'+priPeopleHTML(p,false)+'</span>'+priDocsBadge(p)+'</div></div><div class="pri-right">'+doneBtn+statusBtn+agree+del+'</div></li>';
+  return '<li class="pri-card" data-pri="'+p.id+'"'+openAttr+'>'+handle+'<span class="pri-rank" style="background:'+sc[1]+'"></span><div class="pri-main"><div class="pri-title">'+esc(p.title||'Untitled priority')+priPrivTag(p)+'</div>'+note+'<div class="pri-meta"><span class="pri-people"'+invClick+'>'+priPeopleHTML(p,false)+'</span>'+priDocsBadge(p)+'</div></div><div class="pri-right">'+doneBtn+statusBtn+agree+del+'</div></li>';
 }
 /* contextual "+ New" button — label + action follow the active screen */
 function syncNewBtn(screen){
