@@ -2910,6 +2910,41 @@ window.savePerson=function(){ if(!isAdmin)return;
     return membersRef().add(mdoc).then(function(ref){ return finish(ref.id); });
   }).then(function(){ closePerson(); try{refreshAux();}catch(e){} }).catch(function(e){ var g=document.getElementById('ps-go'); if(g){g.disabled=false;g.textContent=psEditMid?'Save changes':'Add person';} alert('Could not save: '+((e&&e.message)||e)); });
 };
+
+/* ---------- global people search (all companies) ---------- */
+var peopleIndex=null, peopleIndexLoading=false, coOpen={};
+function buildPeopleIndex(){
+  if(!ME.isSuper){ peopleIndex=[]; return Promise.resolve([]); }
+  peopleIndexLoading=true;
+  var cids=Object.keys(companies);
+  var jobs=cids.map(function(cid){ var base=companiesCol.doc(cid);
+    return Promise.all([ base.collection('functions').get(), base.collection('members').get(), base.collection('issues').where('status','==','open').get().catch(function(){return {size:null};}) ]).then(function(r){
+      var fnMap={}; r[0].forEach(function(d){ fnMap[d.id]=d.data(); });
+      var co=companies[cid]||{}; var th=(co.theme&&co.theme.strip)||'#ff6600'; var rows=[];
+      r[1].forEach(function(d){ var m=d.data(); if(m.coach || m.uid===ME.uid || (m.email && SUPER_ADMIN_EMAILS.indexOf((m.email||'').toLowerCase())>=0)){ return; }/* PT_COACHCOUNT_V2 */ var nm=m.name||((m.first||'')+' '+(m.last||'')).trim();
+        rows.push({cid:cid,mid:d.id,name:nm,initials:m.initials||initials(nm),email:m.email||'',
+          coName:co.name||cid,coTheme:th,fnName:(m.functionId&&fnMap[m.functionId])?fnMap[m.functionId].name:'',
+          isLeader:!!m.isLeader,isCEO:(co.ceoMemberId===d.id)});
+      });
+      coOpen[cid]=(r[2]&&r[2].size!=null)?r[2].size:null;
+      return rows;
+    }).catch(function(){ return []; });
+  });
+  return Promise.all(jobs).then(function(all){ peopleIndex=[].concat.apply([],all); peopleIndexLoading=false; renderCoHome(); gpsRender(); return peopleIndex; });
+}
+window.gpsRender=function(){
+  var inp=document.getElementById('gpsInput'), box=document.getElementById('gpsResults'); if(!inp||!box)return;
+  var q=(inp.value||'').trim().toLowerCase();
+  if(!q){ box.innerHTML=''; box.style.display='none'; return; }
+  box.style.display='block';
+  if(peopleIndex===null){ box.innerHTML='<div class="gps-note">'+(peopleIndexLoading?'Searching all companies…':'Preparing search…')+'</div>'; if(!peopleIndexLoading)buildPeopleIndex(); return; }
+  var res=peopleIndex.filter(function(p){ return p.name.toLowerCase().indexOf(q)>=0 || (p.email&&p.email.toLowerCase().indexOf(q)>=0); })
+    .sort(function(a,b){ return a.name.localeCompare(b.name); }).slice(0,25);
+  box.innerHTML = res.length ? res.map(function(p){ var role=p.isCEO?'CEO':(p.isLeader?('Leader'+(p.fnName?' · '+esc(p.fnName):'')):(p.fnName?esc(p.fnName):'Team member'));
+    return '<button class="gps-row" onclick="gpsOpen(\''+p.cid+'\',\''+p.mid+'\')"><span class="gps-av" style="background:'+p.coTheme+'">'+esc(p.initials)+'</span><span class="gps-rtext"><span class="gps-nm">'+esc(p.name)+'</span><span class="gps-meta">'+role+'</span></span><span class="gps-co"><span class="gps-dot" style="background:'+p.coTheme+'"></span>'+esc(p.coName)+'</span></button>';
+  }).join('') : '<div class="gps-note">No one matches "'+esc(q)+'".</div>';
+};
+
 window.gpsOpen=function(cid,mid){ window.pendingProfileMid=mid; var inp=document.getElementById('gpsInput'); if(inp)inp.value=''; var box=document.getElementById('gpsResults'); if(box){ box.innerHTML=''; box.style.display='none'; } switchCompany(cid); };
 window.toggleShowDone=function(){ var c=document.getElementById('showDone'); showCompleted=!!(c&&c.checked); render(); };
 function updateSortbarUI(){ var w=document.getElementById('showDoneWrap'); if(w)w.style.display=(boardMode==='done')?'none':'flex'; }
