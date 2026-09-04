@@ -1535,6 +1535,7 @@ function openFocus(k){closeMenu();show('home');var f=document.getElementById('fo
       </div>
     </div>
     <div id="pfRel"></div>
+    <div id="pfCoachSet"></div><!-- PT_COACHPROFILE_V1 -->
     <div style="display:flex;align-items:center;gap:10px">
       <h3 class="pf-h3" style="margin-right:auto">Priorities</h3>
       <button class="tinybtn" id="pfAddPri" style="display:none" onclick="pfAddPriority()">+ Add</button>
@@ -3667,6 +3668,7 @@ function coachSetField(field, val){
   var upd={}; upd[field]=!!val; if(field==='showInOrg'&&!val) upd.teamCanInclude=false;
   membersRef().doc(c.mid).update(upd).then(function(){
     var m2=document.getElementById('coachSetMsg'); if(m2)m2.textContent='';
+    try{ if(typeof curProfile!=='undefined' && curProfile===c.mid) paintProfile(curProfile); }catch(e){} /* PT_COACHPROFILE_V1 */
   }).catch(function(e){
     var m2=document.getElementById('coachSetMsg'); if(m2)m2.textContent='Could not save: '+((e&&e.message)||e);
   });
@@ -3882,7 +3884,7 @@ function renderTeam(){
 function coachBoxHTML(){ /* PT_COACHVIS_V1 */
   var c=window.PT_COACH; if(!c||!c.showInOrg||!c.mid||!members[c.mid]) return '';
   var nm=esc(personName(c.mid)||c.name||''); var ti=esc((members[c.mid]||{}).title||c.title||'');
-  return '<div style="display:flex;align-items:center;gap:12px;background:var(--card);border:1.5px solid var(--strip);border-radius:11px;padding:11px 14px;max-width:280px">'
+  return '<div onclick="openProfile(\''+c.mid+'\')" title="Open profile" style="cursor:pointer;display:flex;align-items:center;gap:12px;background:var(--card);border:1.5px solid var(--strip);border-radius:11px;padding:11px 14px;max-width:280px">' /* PT_COACHPROFILE_V1 */
     +'<div style="width:38px;height:38px;border-radius:50%;background:var(--strip);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;flex:none">'+esc(c.initials||'?')+'</div>'
     +'<div style="min-width:0">'
     +'<div style="font-weight:600;font-size:14px;color:var(--t);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+nm+'</div>'
@@ -4244,9 +4246,11 @@ function paintProfile(mid){ var m=members[mid]; if(!m)return false; curProfile=m
   document.getElementById('pfEmail').textContent=m.email||'';
   var pe=document.getElementById('pfEdit'); if(pe) pe.style.display=isAdmin?'inline-flex':'none'; /* PT_CEOEDIT_V1 */
   var _pm=members[mid]; var pd=document.getElementById('pfDemote'); if(pd) pd.style.display=(isAdmin && _pm && _pm.isLeader)?'inline-flex':'none'; var pct=document.getElementById('pfClearTitle'); if(pct) pct.style.display=(isAdmin && _pm && _pm.title)?'inline-flex':'none';
-  var prm=document.getElementById('pfRemove'); if(prm) prm.style.display=(isAdmin && company.ceoMemberId!==mid)?'inline-flex':'none';
+  var prm=document.getElementById('pfRemove'); if(prm) prm.style.display=(isAdmin && company.ceoMemberId!==mid && !m.coach)?'inline-flex':'none'; /* PT_COACHPROFILE_V1 */
   var pv=document.getElementById('pfInvite'); if(pv) pv.style.display=(isAdmin && !m.uid && m.email)?'inline-flex':'none';
   var pa=document.getElementById('pfAdmin'); if(pa){ if(ME.isSuper && activeCid && (m.uid||m.email) && m.uid!==ME.uid){ var _ca=isPersonAdmin(m); pa.style.display='inline-flex'; pa.textContent=_ca?'✓ Admin':'Make admin'; pa.style.background=_ca?'#0f8a6b':''; pa.style.color=_ca?'#fff':''; pa.style.borderColor=_ca?'#0f8a6b':''; } else { pa.style.display='none'; } }
+  var _cs=document.getElementById('pfCoachSet'); /* PT_COACHPROFILE_V1 */
+  if(_cs){ var _pc=window.PT_COACH; _cs.innerHTML=(m.coach && _pc && _pc.mine && mid===_pc.mid)?coachSettingsHTML():''; }
   var _fn=(firstName(mid)||'them'); /* PT_ONBEHALF_V1 */
   var apb=document.getElementById('pfAddPri'); if(apb){ apb.style.display=isAdmin?'inline-flex':'none'; apb.textContent='+ Add for '+_fn; }
   var aib=document.getElementById('pfAddIss'); if(aib){ aib.style.display=isAdmin?'inline-flex':'none'; aib.textContent='+ Add for '+_fn; }
