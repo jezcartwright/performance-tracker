@@ -1172,6 +1172,17 @@ function openFocus(k){closeMenu();show('home');var f=document.getElementById('fo
     <button onclick="signOut()" style="font:600 13px/1 var(--ui);color:var(--t3);background:none;border:0;cursor:pointer;margin-top:6px;text-decoration:underline">Use a different account</button>
   </div>
 </div>
+<div id="noseat-screen" style="display:none;min-height:100vh;align-items:center;justify-content:center;padding:24px;background:var(--bg);font-family:var(--ui)"><!-- PT_SEATCLAIM_V1 -->
+  <div style="max-width:430px;width:100%;background:var(--card);border:1px solid var(--b);border-radius:18px;padding:34px 30px;text-align:center;box-shadow:0 10px 40px rgba(0,0,0,.06)">
+    <div style="width:54px;height:54px;border-radius:14px;background:var(--strip-soft);color:var(--strip-ink);display:flex;align-items:center;justify-content:center;margin:0 auto 18px;font-size:26px">&#9788;</div>
+    <div style="font-family:var(--display);font-size:27px;color:var(--t);line-height:1.1;margin-bottom:12px">Almost there</div>
+    <p style="font-size:14.5px;color:var(--t2);line-height:1.55;margin:0 0 8px">You&rsquo;re signed in as <b id="ns-email" style="color:var(--t)"></b>, but we couldn&rsquo;t find a place for you in any company yet.</p>
+    <p id="ns-detail" style="font-size:14.5px;color:var(--t2);line-height:1.55;margin:0 0 24px"></p>
+    <button onclick="ptRetrySeat()" style="width:100%;font:700 15px/1 var(--ui);color:#fff;background:var(--strip);border:0;border-radius:12px;padding:14px;cursor:pointer;margin-bottom:10px">Try again</button>
+    <div id="ns-msg" style="font-size:13px;color:var(--t2);margin-top:8px;min-height:18px"></div>
+    <button onclick="signOut()" style="font:600 13px/1 var(--ui);color:var(--t3);background:none;border:0;cursor:pointer;margin-top:6px;text-decoration:underline">Use a different account</button>
+  </div>
+</div>
 <div id="app" style="display:none">
 <header class="mast"><div class="mast-inner">
     <div class="logo" id="clientLogo" onclick="homeClick()"></div>
@@ -1580,6 +1591,29 @@ function openFocus(k){closeMenu();show('home');var f=document.getElementById('fo
         <div style="display:flex;gap:9px;margin-top:12px"><button class="ghost" style="flex:1;justify-content:center" onclick="closeCoachContact()">Cancel</button><button class="tg" id="coachSend" style="flex:1;justify-content:center" onclick="sendCoachContact()">Send message</button></div>
       </div>
       <div id="coachSent" style="display:none;text-align:center;padding:14px 4px"><div style="font-size:15px;font-weight:700;color:var(--green)">✓ Message sent</div><div class="amodal-sub" style="margin-top:6px">Your coach will be in touch.</div><button class="tg" style="justify-content:center;margin-top:12px" onclick="closeCoachContact()">Close</button></div>
+    </div>
+  </div>
+
+  <!-- PT_INVITEMODAL_V1 — invite hand-off. The old flow pushed a long URL straight
+       into a mailto: body, where sending clients hard-wrap at ~78 chars and break the
+       link across lines. This offers a copyable link for pasting into a real compose
+       window instead. -->
+  <div class="amodal" id="invModal">
+    <div class="amodal-card" style="max-width:520px">
+      <div class="amodal-h"><h2 id="invModalTitle">Invite</h2><button class="amodal-x" onclick="closeInvite()">✕</button></div>
+      <p class="amodal-sub" id="invModalSub"></p>
+      <label style="display:block;font-size:11px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;color:var(--t3);margin:14px 0 6px">Their sign-in link</label>
+      <input id="invLink" type="text" readonly onclick="this.select()" style="width:100%;border:1.5px solid var(--b);border-radius:9px;padding:10px 12px;font-family:var(--ui);font-size:13px;box-sizing:border-box;background:#faf9f7">
+      <div style="display:flex;gap:9px;margin-top:10px;flex-wrap:wrap">
+        <button class="tg" style="flex:1;justify-content:center;min-width:150px" onclick="invCopyLink()">Copy link</button>
+        <button class="ghost" style="flex:1;justify-content:center;min-width:150px" onclick="invCopyMessage()">Copy full message</button>
+      </div>
+      <div id="invCopied" style="display:none;font-size:13px;font-weight:700;color:var(--green);margin-top:10px"></div>
+      <div style="border-top:1.5px solid var(--b);margin-top:16px;padding-top:14px">
+        <p class="amodal-sub" style="margin:0">Paste the link into your own email so it becomes clickable. Tell them to expect a
+        second email asking them to verify — <b>it often lands in spam</b>, and they can’t get in until they open it.</p>
+        <button class="ghost" style="justify-content:center;margin-top:12px;width:100%" onclick="invOpenMail()">Or open a draft in my mail app</button>
+      </div>
     </div>
   </div>
 
@@ -2054,7 +2088,7 @@ window.invSubmit=function(){
       auth.signInWithEmailAndPassword(email,pw).then(function(){ try{history.replaceState(null,'',ACTION_URL);}catch(_){} m.textContent=''; }).catch(function(e2){
         var c2=e2.code||'';
         if(c2==='auth/wrong-password'||c2==='auth/invalid-credential'||c2==='auth/invalid-login-credentials'){ m.textContent='You already have an account with this email. Tap “Not you? Sign in differently” and use your existing password, or reset it.'; }
-        else { m.textContent='Error: '+(e2.message||c2); }
+        else { m.textContent='We couldn\u2019t sign you in with that password. Tap \u201cNot you? Sign in differently\u201d to reset it.'; console.warn('invite sign-in',e2); }
         if(go)go.disabled=false;
       });
     }
@@ -2112,16 +2146,37 @@ window.forgotPw=function(){
     else { m.textContent='Error: '+(e.message||c); }
   });
 };
+var INV=null; /* PT_INVITEMODAL_V1 */
 window.inviteCopy=function(mid){ var m=members[mid]; if(!m)return;
-  var email=m.email||''; if(!email){ alert('Add an email for '+(m.name||'this person')+' first, then you can invite them.'); return; }
+  var email=(m.email||'').trim().toLowerCase(); if(!email){ alert('Add an email for '+(m.name||'this person')+' first, then you can invite them.'); return; }
   var base=location.href.split('#')[0].split('?')[0]; var co=(company&&company.name)||'your team'; var first=(m.first||m.name||'').split(' ')[0];
   var sender=(ME&&ME.first)?ME.first:(ME&&ME.name)||'';
   var link=base+'?invite=1&em='+encodeURIComponent(email)+'&fn='+encodeURIComponent(m.first||first||'')+(m.last?('&ln='+encodeURIComponent(m.last)):'')+'&co='+encodeURIComponent(co);
-  var subject='You’ve been added to the '+co+' Progress Tracker';
-  var body='Hi '+first+',\n\nYou’ve been added to the '+co+' Progress Tracker.\n\nTo get started:\n\n1. Tap this link: '+link+'\n2. It opens a “Welcome to '+co+'” page with your email already filled in — just choose a password and tick to accept the Terms.\n3. Tap “Create account & join” and you’ll go straight into '+co+' Progress Tracker.\n\nIf the link doesn’t open, go to '+base+', tap “Create account”, and sign up with this email ('+email+').\n\nSee you there.\n\nCheers,'+(sender?('\n'+sender):'');
-  try{ if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(body); }catch(e){}
-  window.location.href='mailto:'+encodeURIComponent(email)+'?subject='+encodeURIComponent(subject)+'&body='+encodeURIComponent(body);
+  var subject='You\u2019ve been added to the '+co+' Progress Tracker';
+  var body='Hi '+first+',\n\nYou\u2019ve been added to the '+co+' Progress Tracker. Here is your link to get started:\n\n'
+    +link+'\n\n'
+    +'Open it and you\u2019ll see a \u201cWelcome to '+co+'\u201d page with your email already filled in. Choose a password, tick to accept the Terms, and tap \u201cCreate account & join\u201d.\n\n'
+    +'One thing to watch for: you\u2019ll then get a second email asking you to verify your address. It often lands in spam or junk, so please check there if you don\u2019t see it. You won\u2019t be able to get in until you\u2019ve opened it.\n\n'
+    +'If the link above doesn\u2019t work, go to '+base+', tap \u201cCreate account\u201d, and sign up with this email ('+email+').\n\n'
+    +'Any trouble, just reply to this email.\n\nCheers,'+(sender?('\n'+sender):'');
+  INV={email:email, subject:subject, body:body, link:link, name:(m.name||first)};
+  var t=document.getElementById('invModalTitle'); if(t)t.textContent='Invite '+first;
+  var sb=document.getElementById('invModalSub'); if(sb)sb.textContent='Sending to '+email+'.';
+  var li=document.getElementById('invLink'); if(li)li.value=link;
+  var cp=document.getElementById('invCopied'); if(cp)cp.style.display='none';
+  var mo=document.getElementById('invModal'); if(mo)mo.classList.add('on');
 };
+window.closeInvite=function(){ var mo=document.getElementById('invModal'); if(mo)mo.classList.remove('on'); };
+function invFlash(msg){ var cp=document.getElementById('invCopied'); if(!cp)return; cp.textContent='\u2713 '+msg; cp.style.display='block'; }
+function invWrite(txt, msg){
+  var done=false;
+  try{ if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(txt); done=true; } }catch(e){}
+  if(!done){ try{ var ta=document.createElement('textarea'); ta.value=txt; ta.style.position='fixed'; ta.style.opacity='0'; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); done=true; }catch(e2){} }
+  invFlash(done?msg:'Select the link above and copy it manually.');
+}
+window.invCopyLink=function(){ if(!INV)return; invWrite(INV.link,'Link copied \u2014 paste it into your email.'); };
+window.invCopyMessage=function(){ if(!INV)return; invWrite(INV.body,'Message copied \u2014 paste it into your email.'); };
+window.invOpenMail=function(){ if(!INV)return; window.location.href='mailto:'+encodeURIComponent(INV.email)+'?subject='+encodeURIComponent(INV.subject)+'&body='+encodeURIComponent(INV.body); };
 window.sendMagicLink=function(){
   var fn=(document.getElementById('login-fname').value||'').trim();
   var ln=(document.getElementById('login-lname').value||'').trim();
@@ -2218,8 +2273,30 @@ function ptShowVerify(user){
   var em=document.getElementById('vrf-email'); if(em)em.textContent=(user&&user.email)||'your email';
   if(user&&!window._vrfSent){ window._vrfSent=true; try{ user.sendEmailVerification().catch(function(){}); }catch(e){} }
 }
+function ptShowNoSeat(){ /* PT_SEATCLAIM_V1 */
+  ['app','pub-home','login-screen','req-form','verify-screen'].forEach(function(id){ var el=document.getElementById(id); if(el)el.style.display='none'; });
+  var v=document.getElementById('noseat-screen'); if(v)v.style.display='flex';
+  var em=document.getElementById('ns-email'); if(em)em.textContent=(ME.email||'your account');
+  var d=document.getElementById('ns-detail');
+  if(d){
+    if(PT_SEAT.queryFailed){ d.innerHTML='We couldn\u2019t look up your place just now \u2014 this is usually temporary. Try again, and if it keeps happening let your administrator know.'; }
+    else if(PT_SEAT.denied){ d.innerHTML='We found you, but couldn\u2019t finish linking your account. Tap Try again \u2014 that usually sorts it.'; }
+    else if(PT_SEAT.taken){ d.innerHTML='Your place is already linked to a different sign-in. Ask your administrator to reset it, or sign in with the account you used before.'; }
+    else { d.innerHTML='Ask whoever invited you to add <b>'+esc(ME.email||'')+'</b> to their team \u2014 it has to match this address exactly. Then tap Try again.'; }
+  }
+  var m=document.getElementById('ns-msg'); if(m)m.textContent='';
+}
+window.ptRetrySeat=function(){
+  var m=document.getElementById('ns-msg'); var u=auth.currentUser;
+  if(!u){ if(m)m.textContent='Please sign in again.'; return; }
+  if(m)m.textContent='Checking\u2026';
+  u.getIdToken(true).then(function(){ return loadCompanies(); }).then(function(){
+    if(Object.keys(companies).length){ location.reload(); return; }
+    ptShowNoSeat(); var m2=document.getElementById('ns-msg'); if(m2)m2.textContent='Still nothing yet \u2014 give it a moment and try once more.';
+  }).catch(function(e){ if(m)m.textContent='Could not check: '+((e&&e.message)||e); });
+};
 window.ptVerifyResend=function(){ var u=auth.currentUser; var m=document.getElementById('vrf-msg'); if(!u){ if(m)m.textContent='Please sign in again.'; return; } if(m)m.textContent='Sending\u2026'; u.sendEmailVerification().then(function(){ if(m)m.textContent='Sent \u2014 check your inbox, and your spam folder.'; }).catch(function(e){ if(m)m.textContent='Could not send: '+((e&&e.message)||e); }); };
-window.ptVerifyContinue=function(){ var u=auth.currentUser; var m=document.getElementById('vrf-msg'); if(!u){ if(m)m.textContent='Please sign in again.'; return; } if(m)m.textContent='Checking\u2026'; u.reload().then(function(){ if(auth.currentUser&&auth.currentUser.emailVerified){ location.reload(); } else { if(m)m.textContent='Not verified yet \u2014 open the link in your email first, then tap this again.'; } }).catch(function(e){ if(m)m.textContent='Could not check: '+((e&&e.message)||e); }); };
+window.ptVerifyContinue=function(){ var u=auth.currentUser; var m=document.getElementById('vrf-msg'); if(!u){ if(m)m.textContent='Please sign in again.'; return; } if(m)m.textContent='Checking\u2026'; u.reload().then(function(){ if(auth.currentUser&&auth.currentUser.emailVerified){ if(m)m.textContent='Verified \u2014 signing you in\u2026'; return auth.currentUser.getIdToken(true).then(function(){ location.reload(); }); } /* PT_SEATCLAIM_V1 */ else { if(m)m.textContent='Not verified yet \u2014 open the link in your email first, then tap this again.'; } }).catch(function(e){ if(m)m.textContent='Could not check: '+((e&&e.message)||e); }); };
 
 auth.onAuthStateChanged(function(user){
   if(!user){ document.getElementById('app').style.display='none'; var _v0=document.getElementById('verify-screen'); if(_v0)_v0.style.display='none'; var _aa=auth.isSignInWithEmailLink(window.location.href)||(new URLSearchParams(window.location.search).get('invite')==='1'); var _h=document.getElementById('pub-home'), _l=document.getElementById('login-screen'), _r=document.getElementById('req-form'); if(_r)_r.style.display='none'; if(_aa){ if(_h)_h.style.display='none'; if(_l)_l.style.display='flex'; } else { if(_l)_l.style.display='none'; if(_h)_h.style.display='flex'; } return; }
@@ -2227,7 +2304,9 @@ auth.onAuthStateChanged(function(user){
   loadProfile(user).then(ensureSuperBootstrap).then(function(){
     if(!user.emailVerified && !ME.isSuper){ ptShowVerify(user); throw '__PT_UNVERIFIED__'; } /* PT_EMAILVERIFY_V1 */
     return loadCompanies();
-  }).then(startApp).then(landHome).catch(function(e){ if(e==='__PT_UNVERIFIED__')return; console.error('init',e); startApp(); landHome(); });
+  }).then(function(){ /* PT_SEATCLAIM_V1 */
+    if(!ME.isSuper && !Object.keys(companies).length){ ptShowNoSeat(); throw '__PT_NOSEAT__'; }
+  }).then(startApp).then(landHome).catch(function(e){ if(e==='__PT_UNVERIFIED__'||e==='__PT_NOSEAT__')return; console.error('init',e); startApp(); landHome(); });
 });
 
 
@@ -2258,6 +2337,7 @@ function ensureSuperBootstrap(){
   }).catch(function(e){ console.warn('platform bootstrap',e); });
 }
 
+var PT_SEAT={found:0,claimed:0,taken:0,queryFailed:false,denied:false}; /* PT_SEATCLAIM_V1 */
 function loadCompanies(){
   companies={};
   if(ME.isSuper){
@@ -2273,13 +2353,14 @@ function loadCompanies(){
   }).catch(function(e){ console.warn('membership lookup (index may be needed):',e); }).then(function(){
     var emails=[]; var raw=(ME.email||'').trim(); if(raw){emails.push(raw);} var low=raw.toLowerCase(); if(low&&low!==raw){emails.push(low);}
     if(!emails.length){return;}
-    return Promise.all(emails.map(function(addr){ return db.collectionGroup('members').where('email','==',addr).get().catch(function(){return {forEach:function(){}};}); })).then(function(snaps){
+    PT_SEAT={found:0,claimed:0,taken:0,queryFailed:false,denied:false}; /* PT_SEATCLAIM_V1 */
+    return Promise.all(emails.map(function(addr){ return db.collectionGroup('members').where('email','==',addr).get().catch(function(e){ PT_SEAT.queryFailed=true; console.warn('seat query failed (collection-group index on members.email may be missing):',e); return {forEach:function(){}}; }); })).then(function(snaps){
       var claims=[], seen={};
       snaps.forEach(function(snap){ snap.forEach(function(m){
         if(seen[m.ref.path]){return;} seen[m.ref.path]=1;
-        var md=m.data(); if(md.uid&&md.uid!==ME.uid){return;}
+        var md=m.data(); PT_SEAT.found++; if(md.uid&&md.uid!==ME.uid){ PT_SEAT.taken++; return; }
         var p=m.ref.parent.parent; if(!p){return;} cids[p.id]=1;
-        if(!md.uid){ claims.push(m.ref.update({uid:ME.uid}).catch(function(e){console.warn('seat claim',e);})); }
+        if(!md.uid){ claims.push(m.ref.update({uid:ME.uid}).then(function(){PT_SEAT.claimed++;}).catch(function(e){ if(e&&(e.code==='permission-denied'||/permission/i.test(e.message||''))) PT_SEAT.denied=true; console.warn('seat claim rejected',e); })); } else { PT_SEAT.claimed++; }
         claims.push(p.collection('access').doc(ME.uid).set({mid:m.id,role:(md.isLeader?'leader':'member'),functionId:md.functionId||null,email:ME.email||null},{merge:true}).then(function(){accessEnsured[p.id]=true;}).catch(function(){}));
       }); });
       return Promise.all(claims);
