@@ -3875,21 +3875,26 @@ function renderTeam(){
   if(ORGVIEW==='list'){ wrap.innerHTML=controlsBar()+coachAsideHTML()+orgListHtml(); return; }
   var ceo=company.ceoMemberId;
   var tree=freeTreeHTML(ceo);
-  wrap.innerHTML=controlsBar()+coachAsideHTML()+'<div class="dept orgchart'+(MANAGING?' managing':'')+'">'+tree+'</div>';
+  var cb=coachInTreeHTML(); if(cb && tree.slice(-6)==='</div>') tree=tree.slice(0,-6)+cb+'</div>'; /* PT_COACHVIS_V1 */
+  wrap.innerHTML=controlsBar()+'<div class="dept orgchart'+(MANAGING?' managing':'')+'">'+tree+'</div>';
   var sc=wrap.querySelector('.orgchart'); if(sc){ sc.scrollLeft=Math.max(0,(sc.scrollWidth-sc.clientWidth)/2); sc.addEventListener('wheel',orgWheelZoom,{passive:false}); } applyOrgZoom();
 }
-function coachAsideHTML(){ /* PT_COACHVIS_V1 */
+function coachBoxHTML(){ /* PT_COACHVIS_V1 */
   var c=window.PT_COACH; if(!c||!c.showInOrg||!c.mid||!members[c.mid]) return '';
   var nm=esc(personName(c.mid)||c.name||''); var ti=esc((members[c.mid]||{}).title||c.title||'');
-  return '<div style="display:flex;justify-content:flex-end;margin:0 0 14px">'
-    +'<div style="display:flex;align-items:center;gap:12px;background:var(--card);border:1.5px solid var(--strip);border-radius:11px;padding:11px 14px;max-width:280px">'
+  return '<div style="display:flex;align-items:center;gap:12px;background:var(--card);border:1.5px solid var(--strip);border-radius:11px;padding:11px 14px;max-width:280px">'
     +'<div style="width:38px;height:38px;border-radius:50%;background:var(--strip);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;flex:none">'+esc(c.initials||'?')+'</div>'
     +'<div style="min-width:0">'
     +'<div style="font-weight:600;font-size:14px;color:var(--t);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+nm+'</div>'
     +(ti?('<div style="font-size:12px;color:var(--t2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+ti+'</div>'):'')
     +'<span style="display:inline-block;margin-top:4px;font-size:9.5px;font-weight:700;letter-spacing:.5px;background:var(--strip);color:#fff;border-radius:4px;padding:2px 6px">COACH</span>'
-    +'</div></div></div>';
+    +'</div></div>';
 }
+/* Injected as a second flex child of .tree, alongside the <ul> rather than inside
+   it. .tree is display:flex, so the card sits level with the top row, zooms with
+   the chart, and never receives the connector CSS that only applies to <li>. */
+function coachInTreeHTML(){ var b=coachBoxHTML(); return b?('<div style="align-self:flex-start;margin-left:34px;flex:none">'+b+'</div>'):''; }
+function coachAsideHTML(){ var b=coachBoxHTML(); return b?('<div style="display:flex;justify-content:flex-end;margin:0 0 14px">'+b+'</div>'):''; }
 function orgListHtml(){
   var lens='<div class="ollens">'+
     '<button class="oll'+(ORGLIST==='line'?' on':'')+'" onclick="setOrgList(\'line\')">By reporting line</button>'+
