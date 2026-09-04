@@ -2696,7 +2696,7 @@ function startApp(){
     themeSeen=true; maybeReveal(); if(window.maMaybePrompt)maMaybePrompt();
   },function(e){console.error('company',e);});
   subF=fnsRef().onSnapshot(function(qs){ fns={}; qs.forEach(function(d){var _fd=d.data(); if(_fd&&_fd.color!=null)_fd.color=cssColor(_fd.color); fns[d.id]=Object.assign({id:d.id},_fd);}); renderFnSelect(); renderAdmin(); render(); refreshAux(); if(curProfile){ var _pe=document.getElementById('profile'); if(_pe&&_pe.classList.contains("active"))paintProfile(curProfile); } tryPendingAppoint(); },function(e){console.error('fns',e);});
-  subM=membersRef().onSnapshot(function(qs){ members={}; qs.forEach(function(d){ var m=d.data(); m.mid=d.id; m.name=m.name||((m.first||'')+' '+(m.last||'')).trim(); m.initials=m.initials||initials(m.name); if(m.coach){ try{window.PT_COACH={name:m.name,email:m.email||'',initials:m.initials||initials(m.name)};}catch(e){} if(m.uid!==ME.uid){ return; } } members[d.id]=m; }); resolveMyMid(); ensurePriSub(); membersSeen=true; maybeReveal(); renderAdmin(); render(); refreshAux(); if(curIssue)fillDetail(curIssue); if(window.pendingProfileMid && members[window.pendingProfileMid]){ var _pm=window.pendingProfileMid; window.pendingProfileMid=null; openProfile(_pm); } tryPendingAppoint(); },function(e){console.error('members',e);});
+  subM=membersRef().onSnapshot(function(qs){ members={}; qs.forEach(function(d){ var m=d.data(); m.mid=d.id; m.name=m.name||((m.first||'')+' '+(m.last||'')).trim(); m.initials=m.initials||initials(m.name); if(m.coach){ try{window.PT_COACH={name:m.name,email:m.email||'',initials:m.initials||initials(m.name),title:m.title||'',showInOrg:!!m.showInOrg,teamCanInclude:!!m.teamCanInclude,mid:d.id,mine:(m.uid===ME.uid)};}catch(e){} if(m.uid!==ME.uid && !m.showInOrg){ return; } } /* PT_COACHVIS_V1 */ members[d.id]=m; }); resolveMyMid(); ensurePriSub(); membersSeen=true; maybeReveal(); renderAdmin(); render(); refreshAux(); if(curIssue)fillDetail(curIssue); if(window.pendingProfileMid && members[window.pendingProfileMid]){ var _pm=window.pendingProfileMid; window.pendingProfileMid=null; openProfile(_pm); } tryPendingAppoint(); },function(e){console.error('members',e);});
   subI=issuesRef().orderBy('createdAt','desc').onSnapshot(function(qs){
     issues=[]; qs.forEach(function(d){var i=d.data(); i.id=d.id; issues.push(i);});
     render(); updateBadge();
@@ -3137,7 +3137,8 @@ document.querySelectorAll('.schip').forEach(function(c){ c.addEventListener('cli
 /* ---------- RAISE ---------- */
 var raiseConv=null, riMode='fn', riOthers=[], riEditId=null, psMid=null, riFromMid=null, riKind='action';
 window.riSetKind=function(k){ riKind=(k==='fyi')?'fyi':'action'; var seg=document.getElementById('ri-kind'); if(seg){ seg.querySelectorAll('button').forEach(function(b,idx){ b.classList.toggle('sel', idx===(riKind==='fyi'?1:0)); }); } var n=document.getElementById('ri-kind-note'); if(n) n.textContent=(riKind==='fyi')?'Just sharing information — no action needed, so no one holds responsibility.':'Someone needs to act — they’ll hold responsibility until it’s passed on or resolved.'; };
-function peopleMatches(q, exclude){ q=(q||'').trim().toLowerCase(); var ids=Object.keys(members).filter(function(m){ if(exclude&&exclude.indexOf(m)>=0)return false; if(!q)return true; var nm=personName(m).toLowerCase(); var em=((members[m]||{}).email||'').toLowerCase(); return nm.indexOf(q)>=0||em.indexOf(q)>=0; }); ids.sort(function(a,b){return personName(a).localeCompare(personName(b));}); return ids; }
+function coachPickable(mid){ var m=members[mid]; if(!m||!m.coach)return true; return !!m.teamCanInclude; } /* PT_COACHVIS_V1 */
+function peopleMatches(q, exclude){ q=(q||'').trim().toLowerCase(); var ids=Object.keys(members).filter(function(m){ if(exclude&&exclude.indexOf(m)>=0)return false; if(!coachPickable(m))return false; if(!q)return true; var nm=personName(m).toLowerCase(); var em=((members[m]||{}).email||'').toLowerCase(); return nm.indexOf(q)>=0||em.indexOf(q)>=0; }); ids.sort(function(a,b){return personName(a).localeCompare(personName(b));}); return ids; }
 function renderTaList(listId, q, exclude, pickFn){
   var el=document.getElementById(listId); if(!el)return;
   var ms=peopleMatches(q, exclude);
@@ -3632,8 +3633,46 @@ window.maMaybePrompt=function(){ try{
 }catch(e){} };
 window.PT_COACH=window.PT_COACH||null;
 function renderCoachCard(){ var el=document.getElementById('coachCard'); if(!el)return; var c=window.PT_COACH; if(!c||!activeCid){ el.innerHTML=''; return; }
+  if(c.mine){ el.innerHTML=coachSettingsHTML(); return; } /* PT_COACHVIS_V1 */
   el.innerHTML='<div style="background:var(--strip-soft);border:1px solid #ffdcc4;border-radius:12px;padding:14px 16px;display:flex;align-items:center;gap:14px;margin:0 0 16px"><div style="width:44px;height:44px;border-radius:50%;background:var(--strip);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:16px;flex:none">'+esc(c.initials||'?')+'</div><div style="flex:1;min-width:0"><div style="font-size:11px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--strip-ink)">Your coach</div><div style="font-size:15px;font-weight:600;color:var(--t)">'+esc(c.name||'Coach')+'</div><div style="font-size:12.5px;color:var(--t2)">Please do get in touch if you need anything.</div></div><button onclick="openCoachContact()" style="font-size:13px;font-weight:700;color:#fff;background:var(--strip);border:0;border-radius:9px;padding:9px 15px;cursor:pointer;flex:none">Contact</button></div>';
 }
+function coachSwitchHTML(label, sub, on, fn, dim){ /* PT_COACHVIS_V1 */
+  return '<div style="display:flex;align-items:flex-start;gap:12px;padding:11px 0'+(dim?';opacity:1':'')+'">'
+    +'<div style="flex:1;min-width:0"><div style="font-size:13.5px;font-weight:600;color:var(--t)">'+label+'</div>'
+    +'<div style="font-size:12.5px;color:var(--t2);line-height:1.45;margin-top:3px">'+sub+'</div></div>'
+    +'<button onclick="'+fn+'" aria-pressed="'+(on?'true':'false')+'" style="flex:none;margin-top:2px;width:44px;height:26px;border-radius:13px;border:0;cursor:pointer;padding:0;background:'+(on?'var(--strip)':'var(--b2)')+'">'
+    +'<span style="display:block;width:20px;height:20px;border-radius:50%;background:#fff;margin:0 0 0 '+(on?'21px':'3px')+'"></span></button>'
+    +'</div>';
+}
+function coachSettingsHTML(){
+  var c=window.PT_COACH; if(!c||!c.mine) return '';
+  var co=(company&&company.name)?esc(company.name):'this company';
+  var vis=!!c.showInOrg, inc=!!c.teamCanInclude;
+  var h='<div style="background:var(--card);border:1px solid var(--b);border-radius:12px;padding:14px 16px;margin:0 0 16px">'
+    +'<div style="font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--t3);margin-bottom:4px">How you appear at '+co+'</div>'
+    +coachSwitchHTML('Show me in the chart and people list','You appear as a standalone box, tagged as coach.',vis,'coachSetVis('+(vis?'false':'true')+')');
+  if(vis){
+    h+='<div style="border-top:1px solid var(--b);padding-left:14px;border-left:2px solid var(--strip);margin-top:4px">'
+      +coachSwitchHTML('Let the team include me','They can send you issues, add you to priorities and pass you the ball.',inc,'coachSetInc('+(inc?'false':'true')+')')
+      +'</div>';
+  }
+  h+='<div style="border-top:1px solid var(--b);margin-top:8px;padding-top:11px;font-size:12px;color:var(--t2);line-height:1.55">'
+    +'You never count towards headcount. You never report to anyone and no one reports to you. No lines connect you to the chart. Your coach card stays on their Team page.</div>'
+    +'<div id="coachSetMsg" style="font-size:12px;color:var(--t2);margin-top:8px;min-height:16px"></div></div>';
+  return h;
+}
+function coachSetField(field, val){
+  var c=window.PT_COACH; if(!c||!c.mine||!c.mid||!activeCid)return;
+  var m=document.getElementById('coachSetMsg'); if(m)m.textContent='Saving\u2026';
+  var upd={}; upd[field]=!!val; if(field==='showInOrg'&&!val) upd.teamCanInclude=false;
+  membersRef().doc(c.mid).update(upd).then(function(){
+    var m2=document.getElementById('coachSetMsg'); if(m2)m2.textContent='';
+  }).catch(function(e){
+    var m2=document.getElementById('coachSetMsg'); if(m2)m2.textContent='Could not save: '+((e&&e.message)||e);
+  });
+}
+window.coachSetVis=function(v){ coachSetField('showInOrg',v); };
+window.coachSetInc=function(v){ coachSetField('teamCanInclude',v); };
 window.openCoachContact=function(){ var t=document.getElementById('coachMsg'); if(t)t.value=''; var s=document.getElementById('coachSent'); if(s)s.style.display='none'; var f=document.getElementById('coachForm'); if(f)f.style.display=''; var g=document.getElementById('coachSend'); if(g){g.disabled=false;g.textContent='Send message';} var nm=(window.PT_COACH&&PT_COACH.name)?String(PT_COACH.name).trim().split(/\s+/)[0]:'your coach'; var ttl=document.getElementById('coachModalTitle'); if(ttl)ttl.textContent='Message '+nm; var sub=document.getElementById('coachModalSub'); if(sub)sub.textContent='Please send me a message here and I’ll get back to you as soon as I can.'; var m=document.getElementById('coachModal'); if(m)m.classList.add('on'); };
 window.closeCoachContact=function(){ var m=document.getElementById('coachModal'); if(m)m.classList.remove('on'); };
 window.sendCoachContact=function(){ if(!activeCid)return; var t=document.getElementById('coachMsg'); var msg=(t&&t.value||'').trim(); if(!msg){ if(t)t.focus(); return; } var co=(company&&company.name)||''; var g=document.getElementById('coachSend'); if(g){g.disabled=true;g.textContent='Sending\u2026';}
@@ -3833,11 +3872,23 @@ function renderTeam(){
     var sc0=wrap.querySelector('.orgchart'); if(sc0){ sc0.scrollLeft=Math.max(0,(sc0.scrollWidth-sc0.clientWidth)/2); sc0.addEventListener('wheel',orgWheelZoom,{passive:false}); } applyOrgZoom();
     return;
   }
-  if(ORGVIEW==='list'){ wrap.innerHTML=controlsBar()+orgListHtml(); return; }
+  if(ORGVIEW==='list'){ wrap.innerHTML=controlsBar()+coachAsideHTML()+orgListHtml(); return; }
   var ceo=company.ceoMemberId;
   var tree=freeTreeHTML(ceo);
-  wrap.innerHTML=controlsBar()+'<div class="dept orgchart'+(MANAGING?' managing':'')+'">'+tree+'</div>';
+  wrap.innerHTML=controlsBar()+coachAsideHTML()+'<div class="dept orgchart'+(MANAGING?' managing':'')+'">'+tree+'</div>';
   var sc=wrap.querySelector('.orgchart'); if(sc){ sc.scrollLeft=Math.max(0,(sc.scrollWidth-sc.clientWidth)/2); sc.addEventListener('wheel',orgWheelZoom,{passive:false}); } applyOrgZoom();
+}
+function coachAsideHTML(){ /* PT_COACHVIS_V1 */
+  var c=window.PT_COACH; if(!c||!c.showInOrg||!c.mid||!members[c.mid]) return '';
+  var nm=esc(personName(c.mid)||c.name||''); var ti=esc((members[c.mid]||{}).title||c.title||'');
+  return '<div style="display:flex;justify-content:flex-end;margin:0 0 14px">'
+    +'<div style="display:flex;align-items:center;gap:12px;background:var(--card);border:1.5px solid var(--strip);border-radius:11px;padding:11px 14px;max-width:280px">'
+    +'<div style="width:38px;height:38px;border-radius:50%;background:var(--strip);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;flex:none">'+esc(c.initials||'?')+'</div>'
+    +'<div style="min-width:0">'
+    +'<div style="font-weight:600;font-size:14px;color:var(--t);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+nm+'</div>'
+    +(ti?('<div style="font-size:12px;color:var(--t2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+ti+'</div>'):'')
+    +'<span style="display:inline-block;margin-top:4px;font-size:9.5px;font-weight:700;letter-spacing:.5px;background:var(--strip);color:#fff;border-radius:4px;padding:2px 6px">COACH</span>'
+    +'</div></div></div>';
 }
 function orgListHtml(){
   var lens='<div class="ollens">'+
