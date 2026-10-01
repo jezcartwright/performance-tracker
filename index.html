@@ -2361,8 +2361,9 @@ function loadCompanies(){
         if(seen[m.ref.path]){return;} seen[m.ref.path]=1;
         var md=m.data(); PT_SEAT.found++; if(md.uid&&md.uid!==ME.uid){ PT_SEAT.taken++; return; }
         var p=m.ref.parent.parent; if(!p){return;} cids[p.id]=1;
-        if(!md.uid){ claims.push(m.ref.update({uid:ME.uid}).then(function(){PT_SEAT.claimed++;}).catch(function(e){ if(e&&(e.code==='permission-denied'||/permission/i.test(e.message||''))) PT_SEAT.denied=true; console.warn('seat claim rejected',e); })); } else { PT_SEAT.claimed++; }
-        claims.push(p.collection('access').doc(ME.uid).set({mid:m.id,role:(md.isLeader?'leader':'member'),functionId:md.functionId||null,email:ME.email||null},{merge:true}).then(function(){accessEnsured[p.id]=true;}).catch(function(){}));
+        /* PT_ACCESSCHAIN_V1 — the access index is written only AFTER the seat claim succeeds; the rules now require the seat to carry this uid */
+        var _acc=function(){ return p.collection('access').doc(ME.uid).set({mid:m.id,role:(md.isLeader?'leader':'member'),functionId:md.functionId||null,email:ME.email||null},{merge:true}).then(function(){accessEnsured[p.id]=true;}).catch(function(e){ console.warn('access write rejected',e); }); };
+        if(!md.uid){ claims.push(m.ref.update({uid:ME.uid}).then(function(){PT_SEAT.claimed++; return _acc();}).catch(function(e){ if(e&&(e.code==='permission-denied'||/permission/i.test(e.message||''))) PT_SEAT.denied=true; console.warn('seat claim rejected',e); })); } else { PT_SEAT.claimed++; claims.push(_acc()); }
       }); });
       return Promise.all(claims);
     }).catch(function(e){ console.warn('email seat discovery (index may be needed):',e); });
