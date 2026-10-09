@@ -254,6 +254,13 @@ service cloud.firestore {
       allow update: if isSuper();
     }
 
+    // ------------------------------- ironwork --------------------------------
+    // Ironwork (ironwork.progress-tracker.live) shares this Firebase project.
+    // Each signed-in person reads and writes only their own document.
+    match /ironwork/{ironUid} {
+      allow read, write: if signedIn() && ironUid == uid();
+    }
+
     // ----------------------------- default deny ------------------------------
     match /{document=**} {
       allow read, write: if false;
