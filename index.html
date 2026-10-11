@@ -977,6 +977,37 @@ body.ai-open #aiPanel{display:flex}
 .ai-send[disabled]{background:var(--b);cursor:not-allowed}
 .ai-send svg{width:18px;height:18px}
 </style>
+<style>
+/* PT_PRIEVERYONE_V1 — everyone else's priorities under My Priorities */
+.po-bar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:34px 0 4px}
+.po-h2{font-family:var(--display);font-size:25px;font-weight:600;margin:0;flex:1;min-width:200px}
+.po-sel{appearance:none;-webkit-appearance:none;background:var(--card) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b655d' stroke-width='2.5' stroke-linecap='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") no-repeat right 11px center;border:1.5px solid var(--b);border-radius:9px;padding:9px 34px 9px 12px;font:500 13.5px/1.2 var(--ui);color:var(--t);min-width:200px;max-width:100%;cursor:pointer}
+.po-sel:focus{outline:none;border-color:var(--strip)}
+.po-sub{color:var(--t2);font-size:13.5px;line-height:1.55;margin:4px 0 6px}
+.po-all{background:none;border:0;padding:0;font:600 13.5px var(--ui);color:var(--strip);cursor:pointer}
+.po-team{font-size:11px;letter-spacing:1.2px;text-transform:uppercase;color:var(--t2);font-weight:700;margin:20px 0 8px}
+.po-grp{background:var(--card);border:1px solid var(--b);border-radius:12px;margin-bottom:10px;overflow:hidden}
+.po-gh{display:flex;align-items:center;gap:10px;padding:11px 14px;cursor:pointer}
+.po-gh:hover .po-nm{color:var(--strip)}
+.po-av{width:30px;height:30px;border-radius:50%;color:#fff;font-size:11.5px;font-weight:700;display:flex;align-items:center;justify-content:center;flex:none;overflow:hidden}
+.po-av img{width:100%;height:100%;object-fit:cover}
+.po-who{min-width:0;display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+.po-nm{font-size:14.5px;font-weight:600}
+.po-tt{font-size:12.5px;color:var(--t2)}
+.po-n{margin-left:auto;font-size:12.5px;color:var(--t2);white-space:nowrap;padding-left:8px}
+.po-row{display:flex;align-items:center;gap:10px;padding:10px 14px;border-top:1px solid var(--b);font-size:14px;cursor:pointer}
+.po-row:hover{background:var(--bg)}
+.po-rk{width:18px;flex:none;color:var(--t2);font-size:12.5px;text-align:right}
+.po-ti{flex:1;min-width:0}
+.po-vis{display:inline-flex;align-items:center;gap:4px;font-size:11.5px;color:var(--t2);border:1px solid var(--b);border-radius:999px;padding:2px 8px;white-space:nowrap}
+.po-vis svg{width:12px;height:12px}
+.po-vis.pr{color:#8a2a1f;border-color:#e3b3ad;background:#fbefed}
+.po-ag{font-size:12px;white-space:nowrap;color:var(--t2)}
+.po-ag.on{color:#2e7d5b;font-weight:600}
+.po-st{border-radius:999px;padding:4px 11px;font-size:11.5px;font-weight:700;white-space:nowrap}
+.po-none{padding:0 14px 12px 54px;font-size:13px;color:var(--t2);margin-top:-4px}
+@media (max-width:640px){ .po-row{flex-wrap:wrap;row-gap:6px} .po-ti{flex-basis:calc(100% - 30px)} .po-rk{align-self:flex-start} .po-vis{margin-left:28px} .po-sel{width:100%} }
+</style>
 </head>
 <body>
 
@@ -1311,10 +1342,10 @@ function openFocus(k){closeMenu();show('home');var f=document.getElementById('fo
     <textarea id="aiInput" rows="4" placeholder="Ask about this company, or tell Claude to add something" oninput="aiGrow(this)" onkeydown="aiKey(event)" onpaste="aiPaste(event)"></textarea>
     <div class="ai-tools">
       <button class="ai-add" type="button" onclick="document.getElementById('aiFile').click()" title="Add files" aria-label="Add files"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
-      <span class="ai-hint">PDF, Word, Excel, images, CSV or text</span><span class="ai-sp"></span>
+      <span class="ai-hint">PDF, Word, images, CSV or text</span><span class="ai-sp"></span>
       <button class="ai-send" id="aiSend" onclick="aiSend()" aria-label="Send"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>
     </div>
-    <input type="file" id="aiFile" multiple hidden accept=".pdf,.docx,.xlsx,.xlsm,.xls,.ods,.png,.jpg,.jpeg,.gif,.webp,.txt,.md,.csv,.tsv,.json,application/pdf,image/png,image/jpeg,image/gif,image/webp,text/plain,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel" onchange="aiFiles(this.files);this.value=''">
+    <input type="file" id="aiFile" multiple hidden accept=".pdf,.docx,.png,.jpg,.jpeg,.gif,.webp,.txt,.md,.csv,.tsv,.json,application/pdf,image/png,image/jpeg,image/gif,image/webp,text/plain,text/csv" onchange="aiFiles(this.files);this.value=''">
   </div>
 </aside>
 
@@ -1375,6 +1406,8 @@ function openFocus(k){closeMenu();show('home');var f=document.getElementById('fo
     <div style="margin:2px 0 14px"><button class="tinybtn" onclick="openListImport('pri')">⬆ Import a list</button></div>
     <div id="priEmpty"></div>
     <ul class="pri-list" id="priList"></ul>
+    <div id="priCompleted"></div>
+    <div id="priOthers"></div><!-- PT_PRIEVERYONE_V1 -->
   </section>
 
   <!-- RAISE (full screen) -->
@@ -4563,7 +4596,8 @@ function priRenumberIn(host){ if(!host)return; Array.prototype.slice.call(host.q
 function renderPriorities(){
   ensurePriSub();
   var host=document.getElementById('priList'); var note=document.getElementById('priEmpty'); if(!host)return;
-  if(!activeCid){ host.innerHTML=''; if(note)note.innerHTML='<div class="pri-note">No company selected.</div>'; var x0=document.getElementById('priCompleted'); if(x0)x0.innerHTML=''; return; }
+  if(!activeCid){ host.innerHTML=''; if(note)note.innerHTML='<div class="pri-note">No company selected.</div>'; var x0=document.getElementById('priCompleted'); if(x0)x0.innerHTML=''; renderPriOthers(); return; }
+  renderPriOthers(); /* PT_PRIEVERYONE_V1 */
   if(!ME.mid){ host.innerHTML=''; var x1=document.getElementById('priCompleted'); if(x1)x1.innerHTML=''; if(note){ if(ME.isSuper){ note.innerHTML='<div class="pri-note">Setting up your private space in this company\u2026</div>'; } else if(isAdmin){ note.innerHTML='<div class="pri-note">You don\'t have a person record in this company yet. Add yourself to keep your own priorities here — <b>private to you</b>, and your seat stays hidden from this client\'s team.<div style="margin-top:12px"><button id="priJoinBtn" onclick="joinAsCoach()" style="font:600 14px/1 var(--ui,Inter),sans-serif;color:#fff;background:#ff6600;border:0;border-radius:12px;padding:10px 16px;cursor:pointer">+ Add me to this company</button></div></div>'; } else { note.innerHTML='<div class="pri-note">You don\'t have a person record in this company yet, so there\'s no priority list to own. Open <b>Team</b> and tap anyone to see and agree <i>their</i> priorities.</div>'; } } return; }
   if(note)note.innerHTML='';
   var all=myPriorities();
@@ -4575,6 +4609,87 @@ function renderPriorities(){
   if(!box){ box=document.createElement('div'); box.id='priCompleted'; host.parentNode.appendChild(box); }
   if(!done.length){ box.innerHTML=''; return; }
   box.innerHTML='<details class="pri-done-wrap"><summary class="pri-done-sum">Completed <span class="pri-done-n">'+done.length+'</span></summary><div class="pri-done-list">'+done.map(function(p){ var dt=priFmtDate(p.completedAt); var re=canEditPriority(p)?('<button class="pri-reopen" title="Reopen" onclick="event.stopPropagation();priReopen(\''+p.id+'\')">Reopen</button>'):''; return '<div class="pri-done-row" onclick="openPriority(\''+p.id+'\')"><span class="pri-done-tick">\u2713</span><span class="pri-done-ttl">'+esc(p.title||'Untitled priority')+'</span><span class="pri-done-dt">'+(dt?('Completed '+dt):'Completed')+'</span>'+re+'</div>'; }).join('')+'</div></details>';
+}
+/* PT_PRIEVERYONE_V1 — everyone else's priorities, below My Priorities.
+   Super admin: every active priority in the company, private included.
+   Everyone else (company admins too): only what each owner has shared with them. */
+var PO_ICON={private:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>',
+  manager:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="4"/><path d="M2 21a7 7 0 0 1 14 0M16 11l2 2 4-4"/></svg>',
+  team:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="4"/><path d="M2 21a7 7 0 0 1 14 0M17 4a4 4 0 0 1 0 8M22 21a7 7 0 0 0-4-6.3"/></svg>',
+  everyone:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg>'};
+var PO_VLBL={private:'Private',manager:'Manager',team:'Team',everyone:'Everyone'};
+function poSharedWithMe(p){
+  if(!p||!ME.mid||p.ownerMid===ME.mid) return false;
+  var v=priVisOf(p); if(v==='private') return false;
+  if((p.involves||[]).indexOf(ME.mid)>=0) return true;
+  if(v==='everyone') return true;
+  var om=members[p.ownerMid]||{}, me=members[ME.mid]||{};
+  if(v==='team') return !!(om.functionId&&me.functionId&&om.functionId===me.functionId);
+  if(v==='manager') return om.managerMid===ME.mid;
+  return false;
+}
+function poKey(){ return 'ptPriPerson:'+(activeCid||''); }
+function poGet(){ try{ return localStorage.getItem(poKey())||''; }catch(e){ return ''; } }
+window.poPick=function(mid){ try{ if(mid) localStorage.setItem(poKey(),mid); else localStorage.removeItem(poKey()); }catch(e){} renderPriOthers(); };
+function poRelation(mid){
+  var me=members[ME.mid]||{}, m=members[mid]||{};
+  if(ME.mid && me.managerMid===mid) return 'your manager';
+  if(ME.mid && m.managerMid===ME.mid) return 'reports to you';
+  return '';
+}
+function poGroups(people){
+  // Leadership (CEO) first, then each team in org order (leader first), then people with no team.
+  var ceo=company.ceoMemberId, out=[], byFn={}, noTeam=[];
+  people.forEach(function(mid){
+    if(mid===ceo) return;
+    var f=members[mid].functionId;
+    if(f&&fns[f]) (byFn[f]=byFn[f]||[]).push(mid); else noTeam.push(mid);
+  });
+  var byName=function(a,b){ return personName(a).localeCompare(personName(b)); };
+  if(ceo && people.indexOf(ceo)>=0) out.push({label:'Leadership',mids:[ceo]});
+  Object.keys(byFn).sort(function(a,b){ return (fnOrd(a)-fnOrd(b))||String(fns[a].name||'').localeCompare(String(fns[b].name||'')); }).forEach(function(f){
+    var l=fnsLeader(f); out.push({label:fns[f].name||'Team',mids:byFn[f].sort(function(a,b){ return (a===l?-1:b===l?1:0)||byName(a,b); })});
+  });
+  if(noTeam.length) out.push({label:(out.length?'No team':'People'),mids:noTeam.sort(byName)});
+  return out;
+}
+function renderPriOthers(){
+  var box=document.getElementById('priOthers'); if(!box) return;
+  if(!activeCid){ box.innerHTML=''; return; }
+  var sup=!!ME.isSuper;
+  var vis=function(p){ return !priDone(p) && (sup ? (p.ownerMid!==ME.mid) : poSharedWithMe(p)); };
+  var byOwner={};
+  priorities.forEach(function(p){ if(!members[p.ownerMid]||orgHidden(p.ownerMid)||!vis(p)) return; (byOwner[p.ownerMid]=byOwner[p.ownerMid]||[]).push(p); });
+  Object.keys(byOwner).forEach(function(m){ byOwner[m].sort(function(a,b){ return (a.order||0)-(b.order||0); }); });
+  var people=sup ? Object.keys(members).filter(function(m){ return m!==ME.mid && !orgHidden(m); }) : Object.keys(byOwner);
+  if(!people.length && !sup){ box.innerHTML='<div class="po-bar"><h2 class="po-h2">Shared with you</h2></div><div class="pri-note">Nothing has been shared with you yet. When a colleague sets a priority to <b>Team</b>, <b>Everyone</b>, or tags you as involved, it appears here.</div>'; return; }
+  if(!people.length){ box.innerHTML=''; return; }
+  var sel=poGet(); if(sel && people.indexOf(sel)<0) sel='';
+  var opts='<option value="">All people</option>'+people.slice().sort(function(a,b){ return personName(a).localeCompare(personName(b)); }).map(function(m){ return '<option value="'+esc(m)+'"'+(m===sel?' selected':'')+'>'+esc(personName(m))+'</option>'; }).join('');
+  var co=esc((company&&company.name)||'this company');
+  var h='<div class="po-bar"><h2 class="po-h2">'+(sup?'Everyone\u2019s priorities':'Shared with you')+'</h2>'
+    +'<select class="po-sel" aria-label="Show priorities for" onchange="poPick(this.value)">'+opts+'</select></div>'
+    +'<p class="po-sub">'+(sup?('Every active priority in '+co+', private ones included. Only super admins see private priorities here.'):'Priorities your colleagues have shared with you.')
+    +(sel?(' Showing '+esc(personName(sel))+' only. <button class="po-all" onclick="poPick(\'\')">Show everyone</button>'):'')+'</p>';
+  var shown=sel?[sel]:people;
+  poGroups(shown).forEach(function(g){
+    h+='<div class="po-team">'+esc(g.label)+'</div>';
+    g.mids.forEach(function(mid){
+      var list=byOwner[mid]||[], m=members[mid]||{}, rel=poRelation(mid);
+      var sub=[m.title||'',rel].filter(Boolean).join(' \u00b7 ');
+      var n=list.length?(list.length+(sup?' active':' shared')):'No active priorities';
+      h+='<div class="po-grp"><div class="po-gh" onclick="openProfile(\''+esc(mid)+'\')" title="Open profile"><span class="po-av" style="'+avBg(mid)+'">'+avBody(mid)+'</span><span class="po-who"><span class="po-nm">'+esc(personName(mid))+'</span>'+(sub?'<span class="po-tt">'+esc(sub)+'</span>':'')+'</span><span class="po-n">'+n+'</span></div>';
+      list.forEach(function(p,i){
+        var v=priVisOf(p), sc=PRI_SCOL[p.status]||PRI_SCOL.Scoping;
+        h+='<div class="po-row" onclick="openPriority(\''+esc(p.id)+'\')"><span class="po-rk">'+(i+1)+'</span><span class="po-ti">'+esc(p.title||'Untitled priority')+'</span>'
+          +'<span class="po-vis'+(v==='private'?' pr':'')+'">'+(PO_ICON[v]||'')+(PO_VLBL[v]||v)+'</span>'
+          +'<span class="po-ag'+(p.agreed?' on':'')+'">'+(p.agreed?'\u2713 Agreed':'Awaiting')+'</span>'
+          +'<span class="po-st" style="background:'+sc[0]+';color:'+sc[1]+'">'+esc(priLabel(p.status))+'</span></div>';
+      });
+      h+='</div>';
+    });
+  });
+  box.innerHTML=h;
 }
 function renderProfilePriorities(mid){ ensurePriSub(); var el=document.getElementById('pfPriorities'); if(!el)return; var list=priorities.filter(function(p){return p.ownerMid===mid && canSeePriority(p);}).sort(function(a,b){return (a.order||0)-(b.order||0);}); if(!list.length){ el.innerHTML='<div class="pf-empty">No priorities listed yet'+(mid===ME.mid?' \u2014 add some from the My Priorities tab.':'.')+'</div>'; return; } var _drag=(isAdmin||mid===ME.mid) && list.length>1; /* PT_PROFREORDER_V1 */
   el.innerHTML='<ul class="pri-list'+(_drag?'':' pri-readonly')+'" id="pfPriList">'+list.map(function(p){ return priCardHTML(p,_drag,canEditPriority(p),canAgreePriority(p)); }).join('')+'</ul>';
@@ -4711,7 +4826,7 @@ window.newBtnAction=function(){ var btn=document.getElementById('newBtn'); var a
 </script>
 <script>/* PL_RESIZE_V1 PL_RESIZE_V2 */window.addEventListener("message",function(e){var f=document.getElementById("pl-frame");if(f&&e.data&&typeof e.data.plHeight==="number"){var nh=e.data.plHeight+"px";if(f.style.height!==nh){f.style.height=nh;f.style.minHeight="0";}}});</script>
 <script>
-/* PT_ASKCLAUDE_V1 PT_AIDOCS_V1 PT_AIXLSX_V1 — Ask Claude sidebar (super admins only).
+/* PT_ASKCLAUDE_V1 PT_AIDOCS_V1 — Ask Claude sidebar (super admins only).
    Claude answers from a snapshot of the company in view and returns DRAFTS.
    Drafts are applied through the app's own forms (priority, issue, person) or,
    for progress updates, a direct log write — always under the signed-in user. */
@@ -4824,7 +4939,7 @@ function attSize(a){ return (a.data?a.data.length:0)+(a.text?a.text.length:0); }
 function convSize(){ var n=0; AI.turns.forEach(function(t){ (t.attachments||[]).forEach(function(a){ n+=attSize(a); }); }); return n; }
 function extOf(n){ var m=/\.([a-z0-9]+)$/i.exec(n||''); return m?m[1].toLowerCase():''; }
 function fileChip(a,removable){
-  var label=a.state==='reading'?'Reading\u2026':(a.state==='error'?a.err:(a.trimmed?'Large \u2014 first part only':(a.size?kb(a.size):'')));
+  var label=a.state==='reading'?'Reading\u2026':(a.state==='error'?a.err:(a.size?kb(a.size):''));
   return '<span class="ai-file'+(a.state==='error'?' err':'')+'">'+(a.kind==='image'?IMG_ICON:FILE_ICON)+'<span class="nm" title="'+esc(a.name)+'">'+esc(a.name)+'</span>'
     +(label?'<span class="sz">'+esc(label)+'</span>':'')+(removable?'<button type="button" onclick="aiRemoveFile('+a.id+')" aria-label="Remove '+esc(a.name)+'">&times;</button>':'')+'</span>';
 }
@@ -4838,26 +4953,6 @@ function loadMammoth(){
   _mammoth=new Promise(function(res,rej){ var sc=document.createElement('script'); sc.src='https://cdn.jsdelivr.net/npm/mammoth@1.11.0/mammoth.browser.min.js';
     sc.onload=function(){ window.mammoth?res(window.mammoth):rej(new Error('Word reader unavailable')); }; sc.onerror=function(){ _mammoth=null; rej(new Error('Couldn\u2019t load the Word reader')); }; document.head.appendChild(sc); });
   return _mammoth;
-}
-var _xlsx=null, SHEET_MAX=400000;
-function loadSheetJS(){
-  if(window.XLSX && window.XLSX.read) return Promise.resolve(window.XLSX);
-  if(_xlsx) return _xlsx;
-  _xlsx=new Promise(function(res,rej){ var sc=document.createElement('script'); sc.src='https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js';
-    sc.onload=function(){ (window.XLSX&&window.XLSX.read)?res(window.XLSX):rej(new Error('Spreadsheet reader unavailable')); }; sc.onerror=function(){ _xlsx=null; rej(new Error('Couldn\u2019t load the spreadsheet reader')); }; document.head.appendChild(sc); });
-  return _xlsx;
-}
-/* PT_AIXLSX_V1 — every non-empty sheet becomes a CSV section (calculated values, as displayed) */
-function sheetsToText(X,buf){
-  var wb=X.read(buf,{type:'array',cellDates:true}), parts=[], total=0, trimmed=false;
-  (wb.SheetNames||[]).forEach(function(nm){
-    var ws=wb.Sheets[nm]; if(!ws) return;
-    var csv=X.utils.sheet_to_csv(ws,{blankrows:false,strip:true}).replace(/^(,*\n)+/,'').trim(); if(!csv) return;
-    var head='## Sheet: '+nm+'\n';
-    if(total+head.length+csv.length>SHEET_MAX){ var room=SHEET_MAX-total-head.length; if(room<2000){ trimmed=true; return; } csv=csv.slice(0,csv.lastIndexOf('\n',room)>0?csv.lastIndexOf('\n',room):room); trimmed=true; }
-    parts.push(head+csv); total+=head.length+csv.length;
-  });
-  return {text:parts.join('\n\n')+(trimmed?'\n\n(Spreadsheet trimmed: only the first part was included because the file is very large.)':''),trimmed:trimmed};
 }
 function shrinkImage(file){
   return new Promise(function(res,rej){
@@ -4876,9 +4971,8 @@ function readOne(a,file){
   if(/^(png|jpe?g|gif|webp)$/.test(e)||/^image\/(png|jpeg|gif|webp)$/.test(t)){ a.kind='image'; return shrinkImage(file).then(function(r){ a.mediaType=r.mediaType; a.data=r.data; }); }
   if(e==='docx'){ a.kind='text'; return readAs(file,'readAsArrayBuffer').then(function(buf){ return loadMammoth().then(function(m){ return m.extractRawText({arrayBuffer:buf}); }); }).then(function(r){ a.text=String((r&&r.value)||'').trim(); if(!a.text) throw new Error('No text found in this document'); }); }
   if(/^(txt|md|markdown|csv|tsv|json)$/.test(e)||/^text\//.test(t)){ a.kind='text'; return readAs(file,'readAsText').then(function(x){ a.text=String(x||''); if(!a.text.trim()) throw new Error('This file is empty'); }); }
-  if(/^(xlsx|xlsm|xls|ods)$/.test(e)){ a.kind='text'; return readAs(file,'readAsArrayBuffer').then(function(buf){ return loadSheetJS().then(function(X){ return sheetsToText(X,new Uint8Array(buf)); }); }).then(function(r){ a.text=r.text; a.trimmed=r.trimmed; if(!a.text.trim()) throw new Error('No data found in this spreadsheet'); }); }
   if(e==='doc') return Promise.reject(new Error('Save as .docx or PDF first'));
-  if(e==='numbers') return Promise.reject(new Error('Export as Excel or CSV first'));
+  if(/^(xlsx|xls|numbers)$/.test(e)) return Promise.reject(new Error('Save the sheet as CSV first'));
   if(/^(pptx|ppt|key)$/.test(e)) return Promise.reject(new Error('Save the deck as PDF first'));
   return Promise.reject(new Error('This file type isn\u2019t supported'));
 }
