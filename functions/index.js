@@ -1,4 +1,4 @@
-/* PT_ASKCLAUDE_V1 PT_AIDOCS_V1 — "Ask Claude" for Progress Tracker (super admins only).
+/* PT_ASKCLAUDE_V1 PT_AIDOCS_V1 PT_TEAMPRI_V1 — "Ask Claude" for Progress Tracker (super admins only).
  *
  * The browser never sees the Anthropic key. This callable function:
  *   1. requires a signed-in caller who is listed in platform/config.superAdminUids,
@@ -32,14 +32,15 @@ const TOOLS = [
     input_schema: {
       type: "object",
       properties: {
-        ownerMid: { type: "string", description: "Member id (mid) of the person who owns the priority. Must be an id from the data." },
+        ownerMid: { type: "string", description: "Member id (mid) of the person who owns the priority. Must be an id from the data. For a team priority, the team leader's mid." },
+        ownerFid: { type: "string", description: "Only for a TEAM priority: the fid of the team that owns it (the team must have a leader). Omit for a personal priority." },
         title: { type: "string" },
         note: { type: "string", description: "Optional detail: why it matters, timing, success measure." },
         status: { type: "string", enum: ["Scoping", "Active", "Blocked", "Review"] },
         visibility: { type: "string", enum: ["private", "manager", "team", "everyone"], description: "private = owner (and admins); manager = owner and their manager; team = their team; everyone = whole company. Default private." },
         involves: { type: "array", items: { type: "string" }, description: "Member ids of others involved." }
       },
-      required: ["ownerMid", "title"]
+      required: ["title"]
     }
   },
   {
@@ -99,6 +100,7 @@ function systemPrompt(companyName, today) {
     "",
     "DATA: The user's message is accompanied by a JSON snapshot of this company: people, teams, issues and priorities. Answer only from that snapshot. If something is not in it, say so plainly. Progress-log messages are not included, so you cannot see the discussion inside an issue or priority.",
     "Issue status values: open = Open, prog = In progress, done = Completed. ballMid is the person currently responsible for an action issue.",
+    "Priorities can be owned by a person or by a team (ownedByTeamFid, with leadMid as the accountable lead). Priority status 'Need Help' means the owner asked for help (askingForHelpFrom). To draft a team priority, pass ownerFid.",
     "",
     "REFERENCES: Whenever you mention a specific issue, priority or person, write it as a link token so the app can make it clickable:",
     "  [[issue:ID|Title]]   [[pri:ID|Title]]   [[person:MID|Name]]",
