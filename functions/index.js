@@ -1,4 +1,4 @@
-/* PT_ASKCLAUDE_V1 — "Ask Claude" for Progress Tracker (super admins only).
+/* PT_ASKCLAUDE_V1 PT_AIDOCS_V1 — "Ask Claude" for Progress Tracker (super admins only).
  *
  * The browser never sees the Anthropic key. This callable function:
  *   1. requires a signed-in caller who is listed in platform/config.superAdminUids,
@@ -20,6 +20,10 @@ const CLAUDE_MODEL = defineString("CLAUDE_MODEL", { default: "claude-sonnet-5-5"
 const DAILY_LIMIT = 150;
 const MAX_CONTEXT_CHARS = 400000;
 const MAX_TURNS = 30;
+const MAX_FILES_PER_TURN = 10;
+const MAX_TEXT_CHARS = 400000;
+const MAX_PAYLOAD_CHARS = 26000000; // ~19 MB of files once base64-encoded
+const IMAGE_TYPES = new Set(["image/png", "image/jpeg", "image/gif", "image/webp"]);
 
 const TOOLS = [
   {
@@ -100,6 +104,8 @@ function systemPrompt(companyName, today) {
     "  [[issue:ID|Title]]   [[pri:ID|Title]]   [[person:MID|Name]]",
     "Use only ids that appear in the snapshot. Never invent an id.",
     "",
+    "ATTACHMENTS: The user may attach documents (PDF, Word text, spreadsheets as CSV, plain text) or images. Read them carefully and refer to them by file name. When asked to turn a document into priorities, issues or updates, call the draft tools for each item, matching people and teams to the snapshot.",
+    "",
     "ADDING THINGS: When the user asks you to add, raise, create or log something, call the matching draft_ tool. The user sees a card and confirms it, so do not ask for confirmation in text first. Use ids from the snapshot. If an essential detail is genuinely ambiguous (for example two people share a first name), ask one short question instead of guessing. You may call several draft tools in one reply.",
     "",
     "STYLE: Be concise and direct. Short paragraphs; use '- ' bullets only for genuine lists. No headers. American English. No emoji."
@@ -127,17 +133,39 @@ async function countUsage(uid) {
   });
 }
 
+// Build Claude content blocks for a user turn's attachments. Only known kinds are accepted.
+function fileBlocks(atts) {
+  const blocks = [];
+  (Array.isArray(atts) ? atts.slice(0, MAX_FILES_PER_TURN) : []).forEach((a) => {
+    if (!a || typeof a !== "object") return;
+    const name = String(a.name || "file").slice(0, 200);
+    if (a.kind === "pdf" && typeof a.data === "string" && a.data) {
+      blocks.push({ type: "document", source: { type: "base64", media_type: "application/pdf", data: a.data }, title: name });
+    } else if (a.kind === "image" && IMAGE_TYPES.has(a.mediaType) && typeof a.data === "string" && a.data) {
+      blocks.push({ type: "text", text: "Image attached: " + name });
+      blocks.push({ type: "image", source: { type: "base64", media_type: a.mediaType, data: a.data } });
+    } else if (a.kind === "text" && typeof a.text === "string" && a.text.trim()) {
+      blocks.push({ type: "document", source: { type: "text", media_type: "text/plain", data: a.text.slice(0, MAX_TEXT_CHARS) }, title: name });
+    }
+  });
+  return blocks;
+}
+
+// Normalize to arrays of content blocks so turns can be merged and files kept in place.
 function cleanMessages(raw) {
   if (!Array.isArray(raw) || !raw.length) throw new HttpsError("invalid-argument", "No message.");
-  const msgs = raw.slice(-MAX_TURNS).map((m) => ({
-    role: m && m.role === "assistant" ? "assistant" : "user",
-    content: String((m && m.content) || "").slice(0, 20000)
-  })).filter((m) => m.content.trim());
+  const msgs = raw.slice(-MAX_TURNS).map((m) => {
+    const role = m && m.role === "assistant" ? "assistant" : "user";
+    const text = String((m && m.content) || "").slice(0, 20000);
+    const blocks = role === "user" ? fileBlocks(m && m.attachments) : [];
+    if (text.trim()) blocks.push({ type: "text", text: text });
+    return { role: role, content: blocks };
+  }).filter((m) => m.content.length);
   while (msgs.length && msgs[0].role !== "user") msgs.shift();
   // merge consecutive same-role turns (the API requires alternation)
   const out = [];
   msgs.forEach((m) => {
-    if (out.length && out[out.length - 1].role === m.role) out[out.length - 1].content += "\n\n" + m.content;
+    if (out.length && out[out.length - 1].role === m.role) out[out.length - 1].content = out[out.length - 1].content.concat(m.content);
     else out.push({ role: m.role, content: m.content });
   });
   if (!out.length || out[out.length - 1].role !== "user") throw new HttpsError("invalid-argument", "The last message must be from the user.");
@@ -159,15 +187,22 @@ exports.askClaude = onCall(
     await assertSuper(uid);
 
     const data = request.data || {};
+    let size = 0;
+    try { size = JSON.stringify(data).length; } catch (e) { size = 0; }
+    if (size > MAX_PAYLOAD_CHARS) throw new HttpsError("invalid-argument", "The attached files are too large. Remove some, or start a new conversation.");
     const messages = cleanMessages(data.messages);
     let context = String(data.context || "");
     if (context.length > MAX_CONTEXT_CHARS) context = context.slice(0, MAX_CONTEXT_CHARS) + "\n…(snapshot truncated)";
     const companyName = String(data.companyName || "this company").slice(0, 200);
     const today = String(data.today || new Date().toDateString()).slice(0, 60);
 
-    // Put the snapshot in front of the newest user message.
+    // Put the snapshot just before the newest user message's own words (after any files).
     const last = messages[messages.length - 1];
-    last.content = "<company_snapshot>\n" + context + "\n</company_snapshot>\n\n" + last.content;
+    const snap = { type: "text", text: "<company_snapshot>\n" + context + "\n</company_snapshot>" };
+    let ti = -1;
+    for (let k = last.content.length - 1; k >= 0; k--) { if (last.content[k].type === "text") { ti = k; break; } }
+    if (ti < 0) { last.content.push(snap); last.content.push({ type: "text", text: "Please review the attached file(s)." }); }
+    else last.content.splice(ti, 0, snap);
 
     await countUsage(uid);
 
@@ -182,7 +217,7 @@ exports.askClaude = onCall(
         },
         body: JSON.stringify({
           model: CLAUDE_MODEL.value(),
-          max_tokens: 2000,
+          max_tokens: 4000,
           system: systemPrompt(companyName, today),
           tools: TOOLS,
           messages: messages
