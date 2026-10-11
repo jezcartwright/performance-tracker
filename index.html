@@ -1311,10 +1311,10 @@ function openFocus(k){closeMenu();show('home');var f=document.getElementById('fo
     <textarea id="aiInput" rows="4" placeholder="Ask about this company, or tell Claude to add something" oninput="aiGrow(this)" onkeydown="aiKey(event)" onpaste="aiPaste(event)"></textarea>
     <div class="ai-tools">
       <button class="ai-add" type="button" onclick="document.getElementById('aiFile').click()" title="Add files" aria-label="Add files"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
-      <span class="ai-hint">PDF, Word, images, CSV or text</span><span class="ai-sp"></span>
+      <span class="ai-hint">PDF, Word, Excel, images, CSV or text</span><span class="ai-sp"></span>
       <button class="ai-send" id="aiSend" onclick="aiSend()" aria-label="Send"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>
     </div>
-    <input type="file" id="aiFile" multiple hidden accept=".pdf,.docx,.png,.jpg,.jpeg,.gif,.webp,.txt,.md,.csv,.tsv,.json,application/pdf,image/png,image/jpeg,image/gif,image/webp,text/plain,text/csv" onchange="aiFiles(this.files);this.value=''">
+    <input type="file" id="aiFile" multiple hidden accept=".pdf,.docx,.xlsx,.xlsm,.xls,.ods,.png,.jpg,.jpeg,.gif,.webp,.txt,.md,.csv,.tsv,.json,application/pdf,image/png,image/jpeg,image/gif,image/webp,text/plain,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel" onchange="aiFiles(this.files);this.value=''">
   </div>
 </aside>
 
@@ -4711,7 +4711,7 @@ window.newBtnAction=function(){ var btn=document.getElementById('newBtn'); var a
 </script>
 <script>/* PL_RESIZE_V1 PL_RESIZE_V2 */window.addEventListener("message",function(e){var f=document.getElementById("pl-frame");if(f&&e.data&&typeof e.data.plHeight==="number"){var nh=e.data.plHeight+"px";if(f.style.height!==nh){f.style.height=nh;f.style.minHeight="0";}}});</script>
 <script>
-/* PT_ASKCLAUDE_V1 PT_AIDOCS_V1 — Ask Claude sidebar (super admins only).
+/* PT_ASKCLAUDE_V1 PT_AIDOCS_V1 PT_AIXLSX_V1 — Ask Claude sidebar (super admins only).
    Claude answers from a snapshot of the company in view and returns DRAFTS.
    Drafts are applied through the app's own forms (priority, issue, person) or,
    for progress updates, a direct log write — always under the signed-in user. */
@@ -4824,7 +4824,7 @@ function attSize(a){ return (a.data?a.data.length:0)+(a.text?a.text.length:0); }
 function convSize(){ var n=0; AI.turns.forEach(function(t){ (t.attachments||[]).forEach(function(a){ n+=attSize(a); }); }); return n; }
 function extOf(n){ var m=/\.([a-z0-9]+)$/i.exec(n||''); return m?m[1].toLowerCase():''; }
 function fileChip(a,removable){
-  var label=a.state==='reading'?'Reading\u2026':(a.state==='error'?a.err:(a.size?kb(a.size):''));
+  var label=a.state==='reading'?'Reading\u2026':(a.state==='error'?a.err:(a.trimmed?'Large \u2014 first part only':(a.size?kb(a.size):'')));
   return '<span class="ai-file'+(a.state==='error'?' err':'')+'">'+(a.kind==='image'?IMG_ICON:FILE_ICON)+'<span class="nm" title="'+esc(a.name)+'">'+esc(a.name)+'</span>'
     +(label?'<span class="sz">'+esc(label)+'</span>':'')+(removable?'<button type="button" onclick="aiRemoveFile('+a.id+')" aria-label="Remove '+esc(a.name)+'">&times;</button>':'')+'</span>';
 }
@@ -4838,6 +4838,26 @@ function loadMammoth(){
   _mammoth=new Promise(function(res,rej){ var sc=document.createElement('script'); sc.src='https://cdn.jsdelivr.net/npm/mammoth@1.11.0/mammoth.browser.min.js';
     sc.onload=function(){ window.mammoth?res(window.mammoth):rej(new Error('Word reader unavailable')); }; sc.onerror=function(){ _mammoth=null; rej(new Error('Couldn\u2019t load the Word reader')); }; document.head.appendChild(sc); });
   return _mammoth;
+}
+var _xlsx=null, SHEET_MAX=400000;
+function loadSheetJS(){
+  if(window.XLSX && window.XLSX.read) return Promise.resolve(window.XLSX);
+  if(_xlsx) return _xlsx;
+  _xlsx=new Promise(function(res,rej){ var sc=document.createElement('script'); sc.src='https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js';
+    sc.onload=function(){ (window.XLSX&&window.XLSX.read)?res(window.XLSX):rej(new Error('Spreadsheet reader unavailable')); }; sc.onerror=function(){ _xlsx=null; rej(new Error('Couldn\u2019t load the spreadsheet reader')); }; document.head.appendChild(sc); });
+  return _xlsx;
+}
+/* PT_AIXLSX_V1 — every non-empty sheet becomes a CSV section (calculated values, as displayed) */
+function sheetsToText(X,buf){
+  var wb=X.read(buf,{type:'array',cellDates:true}), parts=[], total=0, trimmed=false;
+  (wb.SheetNames||[]).forEach(function(nm){
+    var ws=wb.Sheets[nm]; if(!ws) return;
+    var csv=X.utils.sheet_to_csv(ws,{blankrows:false,strip:true}).replace(/^(,*\n)+/,'').trim(); if(!csv) return;
+    var head='## Sheet: '+nm+'\n';
+    if(total+head.length+csv.length>SHEET_MAX){ var room=SHEET_MAX-total-head.length; if(room<2000){ trimmed=true; return; } csv=csv.slice(0,csv.lastIndexOf('\n',room)>0?csv.lastIndexOf('\n',room):room); trimmed=true; }
+    parts.push(head+csv); total+=head.length+csv.length;
+  });
+  return {text:parts.join('\n\n')+(trimmed?'\n\n(Spreadsheet trimmed: only the first part was included because the file is very large.)':''),trimmed:trimmed};
 }
 function shrinkImage(file){
   return new Promise(function(res,rej){
@@ -4856,8 +4876,9 @@ function readOne(a,file){
   if(/^(png|jpe?g|gif|webp)$/.test(e)||/^image\/(png|jpeg|gif|webp)$/.test(t)){ a.kind='image'; return shrinkImage(file).then(function(r){ a.mediaType=r.mediaType; a.data=r.data; }); }
   if(e==='docx'){ a.kind='text'; return readAs(file,'readAsArrayBuffer').then(function(buf){ return loadMammoth().then(function(m){ return m.extractRawText({arrayBuffer:buf}); }); }).then(function(r){ a.text=String((r&&r.value)||'').trim(); if(!a.text) throw new Error('No text found in this document'); }); }
   if(/^(txt|md|markdown|csv|tsv|json)$/.test(e)||/^text\//.test(t)){ a.kind='text'; return readAs(file,'readAsText').then(function(x){ a.text=String(x||''); if(!a.text.trim()) throw new Error('This file is empty'); }); }
+  if(/^(xlsx|xlsm|xls|ods)$/.test(e)){ a.kind='text'; return readAs(file,'readAsArrayBuffer').then(function(buf){ return loadSheetJS().then(function(X){ return sheetsToText(X,new Uint8Array(buf)); }); }).then(function(r){ a.text=r.text; a.trimmed=r.trimmed; if(!a.text.trim()) throw new Error('No data found in this spreadsheet'); }); }
   if(e==='doc') return Promise.reject(new Error('Save as .docx or PDF first'));
-  if(/^(xlsx|xls|numbers)$/.test(e)) return Promise.reject(new Error('Save the sheet as CSV first'));
+  if(e==='numbers') return Promise.reject(new Error('Export as Excel or CSV first'));
   if(/^(pptx|ppt|key)$/.test(e)) return Promise.reject(new Error('Save the deck as PDF first'));
   return Promise.reject(new Error('This file type isn\u2019t supported'));
 }
