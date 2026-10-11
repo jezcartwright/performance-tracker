@@ -1058,6 +1058,30 @@ body.ai-open #aiPanel{display:flex}
 .tp-add:hover{border-color:var(--strip);color:var(--strip)}
 @media (max-width:560px){ .tp-row2{grid-template-columns:1fr} }
 </style>
+<style>
+/* PT_TEAMFIRST_V1 — team band above personal priorities */
+.tp-band{background:var(--card);border:1px solid var(--b);border-left:5px solid var(--tc,var(--strip));border-radius:14px;padding:14px 16px 12px;margin:4px 0 16px}
+.tp-band .tp-head{margin:0 0 2px}
+.tp-band .po-sub{margin:2px 0 10px}
+.tp-band .pri-list{margin:0}
+.tp-band .pri-card{background:var(--bg)}
+.tp-band .pri-note{background:var(--bg)}
+.tp-mem{display:flex;flex-wrap:wrap;gap:7px;margin-top:12px;padding-top:12px;border-top:1px solid var(--b)}
+.tp-mem-l{width:100%;font-size:11px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:var(--t2)}
+.tp-chip{display:inline-flex;align-items:center;gap:6px;border:1.5px solid var(--b);border-radius:999px;padding:3px 11px 3px 3px;background:var(--card);font:600 13px var(--ui);color:var(--t);cursor:pointer}
+.tp-chip:hover{border-color:var(--t2)}
+.tp-chip.on{background:var(--t);border-color:var(--t);color:#fff}
+.tp-chip .mini{width:24px;height:24px;font-size:9.5px}
+.tp-chip small{font-weight:500;opacity:1;color:inherit}
+.tp-peek{margin-top:10px;background:var(--bg);border:1px solid var(--b);border-radius:11px;overflow:hidden}
+.tp-peek-h{display:flex;align-items:center;gap:8px;padding:10px 14px;font-weight:700;font-size:14px}
+.tp-peek-h button{margin-left:auto;background:none;border:0;padding:0;font:600 13px var(--ui);color:var(--strip);cursor:pointer}
+.tp-peek .po-row{background:var(--bg)}
+.tp-peek .po-row:hover{background:var(--card)}
+.tp-peek-none{padding:0 14px 12px;font-size:13px;color:var(--t2)}
+.pm-head{margin:22px 0 10px}
+.tp-ownhead{font-family:var(--display);font-size:20px;font-weight:600;margin:16px 0 8px}
+</style>
 </head>
 <body>
 
@@ -1455,9 +1479,10 @@ function openFocus(k){closeMenu();show('home');var f=document.getElementById('fo
     </div>
     <div style="margin:2px 0 14px"><button class="tinybtn" onclick="openListImport('pri')">⬆ Import a list</button></div>
     <div id="priEmpty"></div>
+    <div id="priTeams"></div><!-- PT_TEAMPRI_V1 PT_TEAMFIRST_V1 -->
+    <h2 class="po-h2 pm-head" id="priMineHead" style="display:none">Your priorities</h2>
     <ul class="pri-list" id="priList"></ul>
     <div id="priCompleted"></div>
-    <div id="priTeams"></div><!-- PT_TEAMPRI_V1 -->
     <div id="priOthers"></div><!-- PT_PRIEVERYONE_V1 -->
   </section>
 
@@ -1663,7 +1688,7 @@ function openFocus(k){closeMenu();show('home');var f=document.getElementById('fo
     <div class="dgrid">
       <div>
         <div class="meta">
-          <div style="flex:1 1 auto"><div class="v" id="dPeopleBlock"></div></div>
+          <div style="flex:1 1 auto"><div class="v" id="dPeopleBlock"></div><div id="dAddPeople" style="margin-top:10px"></div></div>
           <div><div class="k">Spoken</div><div class="v" id="dConv"></div></div>
 
         </div>
@@ -3533,6 +3558,7 @@ function fillDetail(i){
   document.getElementById('dT').textContent=i.title;
   var f=document.getElementById('dF'); if(f){ f.textContent=i.functionName||''; f.style.background=fc; }
   var dpb=document.getElementById('dPeopleBlock'); if(dpb) dpb.innerHTML=issuePeopleHTML(i,true);
+  issRenderAdd(i); /* PT_ADDPERSON_V1 */
   var cv=document.getElementById('dConv'); if(cv) cv.innerHTML=spokenToggle(i);
   document.getElementById('dDesc').textContent=i.description||'—';
   var _dd=document.getElementById('dDocs'); if(_dd)renderDocs(i);
@@ -3618,7 +3644,22 @@ function renderParts(i){
   html+='<button class="addp" title="Add someone" onclick="addPart()">+</button>';
   el.innerHTML=html;
 }
-window.addPart=function(){
+/* PT_ADDPERSON_V1 — add people to an issue inline; the + Add person button stays after each one */
+var ISS_ADDING=false;
+function issRenderAdd(i){ var el=document.getElementById('dAddPeople'); if(!el) return; i=i||curIssue; if(!i||i.status==='done'){ el.innerHTML=''; return; }
+  if(ISS_ADDING){ el.innerHTML='<div class="ta pd-addta"><input id="issAddInput" class="ta-input" type="text" placeholder="Search to add someone\u2026" autocomplete="off" oninput="issAddSearch(this)" onfocus="issAddSearch(this)" onblur="taBlur(\'issAddList\')"><div id="issAddList" class="ta-list" style="display:none"></div></div><span class="pd-addchip" onclick="issAddClose()" style="margin-top:8px">Cancel</span>'; var x=document.getElementById('issAddInput'); if(x) x.focus(); }
+  else el.innerHTML='<span class="pd-addchip" onclick="issAddOpen()">'+PD_ADD+' Add person</span>'; }
+function issAddExclude(){ var i=curIssue||{}; var ex=(i.participants||[]).slice(); if(i.raiserMid)ex.push(i.raiserMid); if(i.leaderMid)ex.push(i.leaderMid); return ex; }
+window.issAddOpen=function(){ ISS_ADDING=true; issRenderAdd(); var el=document.getElementById('dAddPeople'); if(el&&el.scrollIntoView) el.scrollIntoView({block:'center',behavior:'smooth'}); };
+window.issAddClose=function(){ ISS_ADDING=false; issRenderAdd(); };
+window.issAddSearch=function(inp){ renderTaList('issAddList', inp.value, issAddExclude(), 'issAddPick'); };
+window.issAddPick=function(mid){ if(!curIssue||!curId||!members[mid]) return; ISS_ADDING=false;
+  var parts=(curIssue.participants||[]).slice(); if(parts.indexOf(mid)<0){ parts.push(mid); curIssue.participants=parts;
+    issuesRef().doc(curId).update({participants:FV.arrayUnion(mid),updatedAt:FV.serverTimestamp()}).catch(function(e){ alert('Could not add: '+e.message); });
+    issuesRef().doc(curId).collection('messages').add({type:'system',event:'join',text:(ME.first||firstName(ME.mid)||'Someone')+' added '+personName(mid)+' to the discussion.',authorMid:ME.mid,authorUid:ME.uid,authorName:ME.name,createdAt:FV.serverTimestamp()}); }
+  var dpb=document.getElementById('dPeopleBlock'); if(dpb) dpb.innerHTML=issuePeopleHTML(curIssue,true); renderParts(curIssue); issRenderAdd(); };
+window.addPart=function(){ issAddOpen(); };
+window._addPartOld=function(){
   if(!curIssue||!curId)return;
   var parts=curIssue.participants||[];
   var avail=Object.keys(members).filter(function(mid){return parts.indexOf(mid)<0;});
@@ -4641,7 +4682,7 @@ function pdRenderDetail(){
   var p=curPri; if(!p)return; pdRenderHelp();
   var nb=document.getElementById('pdNote'); if(nb){ var n=(p.note||'').trim(); nb.innerHTML=n?esc(n):'<span class="pd-empty">No detail yet \u2014 add it via Edit details.</span>'; }
   var pe=document.getElementById('pdPeople');
-  if(pe){ var owner=p.ownerMid||p.mid; var h=''; if(owner){ h+='<span class="rchip"><span class="mini" style="'+avBg(owner)+';width:22px;height:22px;font-size:9px">'+avBody(owner)+'</span>'+esc(personName(owner)||'You')+' \u00b7 Owner</span>'; } (p.involves||[]).forEach(function(m){ h+='<span class="rchip"><span class="mini" style="'+avBg(m)+';width:22px;height:22px;font-size:9px">'+avBody(m)+'</span>'+esc(personName(m)||'')+'<button type="button" onclick="pdRemovePerson(\''+m+'\')">\u00d7</button></span>'; }); if(pdAdding){ h+='<div class="ta pd-addta"><input id="pdPersonInput" class="ta-input" type="text" placeholder="Search to add someone\u2026" autocomplete="off" oninput="pdPersonSearch(this)" onfocus="pdPersonSearch(this)" onblur="taBlur(\'pdPersonList\')"><div id="pdPersonList" class="ta-list" style="display:none"></div></div><span class="pd-addchip" onclick="pdAddDone()" style="margin-top:8px">Done</span>'; } else { h+='<span class="pd-addchip" onclick="pdAddPerson()">'+PD_ADD+' Add person</span>'; } pe.innerHTML=h; if(pdAdding){ var _pi=document.getElementById('pdPersonInput'); if(_pi)_pi.focus(); } }
+  if(pe){ var owner=p.ownerMid||p.mid; var h=''; if(owner){ h+='<span class="rchip"><span class="mini" style="'+avBg(owner)+';width:22px;height:22px;font-size:9px">'+avBody(owner)+'</span>'+esc(personName(owner)||'You')+' \u00b7 Owner</span>'; } (p.involves||[]).forEach(function(m){ h+='<span class="rchip"><span class="mini" style="'+avBg(m)+';width:22px;height:22px;font-size:9px">'+avBody(m)+'</span>'+esc(personName(m)||'')+'<button type="button" onclick="pdRemovePerson(\''+m+'\')">\u00d7</button></span>'; }); if(pdAdding){ h+='<div class="ta pd-addta"><input id="pdPersonInput" class="ta-input" type="text" placeholder="Search to add someone\u2026" autocomplete="off" oninput="pdPersonSearch(this)" onfocus="pdPersonSearch(this)" onblur="taBlur(\'pdPersonList\')"><div id="pdPersonList" class="ta-list" style="display:none"></div></div><span class="pd-addchip" onclick="pdAddDone()" style="margin-top:8px">Cancel</span>'; } else { h+='<span class="pd-addchip" onclick="pdAddPerson()">'+PD_ADD+' Add person</span>'; } pe.innerHTML=h; if(pdAdding){ var _pi=document.getElementById('pdPersonInput'); if(_pi)_pi.focus(); } }
   var dc=document.getElementById('pdDocs');
   if(dc){ var att=p.attachments||[]; var h=''; att.forEach(function(d,idx){ h+='<span class="rchip"><a href="'+esc(d.url)+'" target="_blank" rel="noopener" style="color:inherit;text-decoration:none;display:inline-flex;align-items:center;gap:6px">'+DOC_SVG+esc(d.name||d.url)+'</a><button type="button" onclick="pdRemoveDoc('+idx+')">\u00d7</button></span>'; }); if(pdDocAdding){ h+='<div class="ta pd-addta"><input id="pdDocInput" class="ta-input" type="text" placeholder="Paste a link (Google Doc, Drive, PDF\u2026)" autocomplete="off"></div><span class="pd-addchip" onclick="pdDocSave()" style="margin-top:8px">Add</span> <span class="pd-addchip" onclick="pdDocDone()" style="margin-top:8px">Done</span>'; } else { h+='<span class="pd-addchip" onclick="pdAddDoc()">'+PD_ADD+' Add document</span>'; } dc.innerHTML=h; if(pdDocAdding){ var _di=document.getElementById('pdDocInput'); if(_di)_di.focus(); } }
 }
@@ -4650,7 +4691,7 @@ function pdRemovePerson(mid){ if(!curPid||!curPri)return; var nv=(curPri.involve
 function pdAddPerson(){ pdAdding=true; pdRenderDetail(); }
 /* PL_PRI_INLINEADD_V1 */
 window.pdPersonSearch=function(inp){ var ex=[]; if(curPri){ var _o=curPri.ownerMid||curPri.mid; if(_o)ex.push(_o); (curPri.involves||[]).forEach(function(m){ex.push(m);}); } renderTaList('pdPersonList', inp.value, ex, 'pdPersonPick'); };
-window.pdPersonPick=function(m){ if(!curPid||!curPri)return; var inv=(curPri.involves||[]).slice(); if(inv.indexOf(m)<0){ inv.push(m); prioritiesRef().doc(curPid).update({involves:inv,updatedAt:FV.serverTimestamp()}); pdLog('Added '+(personName(m)||'someone')+' to the people on this priority.'); curPri.involves=inv; } pdRenderDetail(); var pi=document.getElementById('pdPersonInput'); if(pi){ pi.value=''; pi.focus(); } };
+window.pdPersonPick=function(m){ if(!curPid||!curPri)return; var inv=(curPri.involves||[]).slice(); if(inv.indexOf(m)<0){ inv.push(m); prioritiesRef().doc(curPid).update({involves:inv,updatedAt:FV.serverTimestamp()}); pdLog('Added '+(personName(m)||'someone')+' to the people on this priority.'); curPri.involves=inv; } pdAdding=false; pdRenderDetail(); }; /* PT_ADDPERSON_V1 — back to the + Add person button after each pick */
 window.pdAddDone=function(){ pdAdding=false; pdRenderDetail(); };
 function pdRemoveDoc(idx){ if(!curPid||!curPri)return; var na=(curPri.attachments||[]).slice(); var d=na[idx]; if(!d)return; na.splice(idx,1); prioritiesRef().doc(curPid).update({attachments:na,updatedAt:FV.serverTimestamp()}); pdLog('Removed document'+(d.name?' \u201c'+d.name+'\u201d':'')+'.'); curPri.attachments=na; pdRenderDetail(); }
 function pdAddDoc(){ pdDocAdding=true; pdRenderDetail(); }
@@ -4900,25 +4941,51 @@ function prKindUI(){
   var b=document.getElementById('pr-submit'); if(b) b.textContent=prEditId?'Save changes':'Add team priority';
 }
 window.priAddTeam=function(fid){ openRaisePriority(null,null,fid); };
-function renderPriTeams(){
-  var box=document.getElementById('priTeams'); if(!box) return;
-  if(!activeCid||!ME.mid){ box.innerHTML=''; return; }
-  var fids=myTeamFids(), h='', any=false;
-  fids.forEach(function(f){
-    var all=priorities.filter(function(p){ return p.ownerFid===f && canSeePriority(p); }).sort(function(a,b){ return (a.order||0)-(b.order||0); });
-    var act=all.filter(function(p){ return !priDone(p); }), done=all.filter(priDone);
-    var lead=fnsLeader(f), canAdd=(isAdmin||lead===ME.mid);
-    if(!all.length && !canAdd) return;
-    any=true;
-    h+='<div class="tp-head"><span class="dot" style="background:'+cssColor(fns[f].color||'var(--strip)')+'"></span><span class="nm">'+esc(fns[f].name||'Team')+'</span>'+(lead&&members[lead]?'<span class="ld">\u00b7 Led by '+esc(personName(lead))+'</span>':'')+(canAdd?'<button class="tp-add" onclick="priAddTeam(\''+esc(f)+'\')">+ Team priority</button>':'')+'</div>';
-    h+='<p class="po-sub">Owned by '+esc(fns[f].name||'the team')+'. Anyone on the team can update these.</p>';
-    if(!act.length) h+='<div class="pri-note" style="margin-bottom:8px">No active team priorities.'+(canAdd?' Tap \u201c+ Team priority\u201d to add one.':'')+'</div>';
-    else h+='<ul class="pri-list" data-tp="'+esc(f)+'">'+act.map(function(p){ return priCardHTML(p,canAdd&&act.length>1,priCanStatus(p),canAgreePriority(p)); }).join('')+'</ul>';
-    if(done.length) h+='<details class="pri-done-wrap"><summary class="pri-done-sum">Completed <span class="pri-done-n">'+done.length+'</span></summary><div class="pri-done-list">'+done.map(function(p){ var dt=priFmtDate(p.completedAt); return '<div class="pri-done-row" onclick="openPriority(\''+p.id+'\')"><span class="pri-done-tick">\u2713</span><span class="pri-done-ttl">'+esc(p.title||'Untitled priority')+'</span><span class="pri-done-dt">'+(dt?('Completed '+dt):'Completed')+'</span></div>'; }).join('')+'</div></details>';
-  });
-  box.innerHTML=any?('<div class="po-bar"><h2 class="po-h2">Team priorities</h2></div>'+h):'';
+function renderPriTeams(){ /* PT_TEAMPRI_V1 PT_TEAMFIRST_V1 */
+  var box=document.getElementById('priTeams'), mh=document.getElementById('priMineHead');
+  if(!box) return false;
+  if(!activeCid||!ME.mid){ box.innerHTML=''; if(mh)mh.style.display='none'; return false; }
+  var h=''; myTeamFids().forEach(function(f){ h+=tpBandHTML(f,true); });
+  box.innerHTML=h; if(mh) mh.style.display=h?'':'none';
   Array.prototype.forEach.call(box.querySelectorAll('ul.pri-list'),function(ul){ priRenumberIn(ul); priBindDrag(ul); });
+  return !!h;
 }
+var TP_PEEK={};
+function tpMembers(f){ var lead=fnsLeader(f); var ids=Object.keys(members).filter(function(m){ return !orgHidden(m) && (members[m].functionId===f || m===lead); });
+  return ids.sort(function(a,b){ return (a===lead?-1:b===lead?1:0)||personName(a).localeCompare(personName(b)); }); }
+window.tpPeek=function(f,mid){ TP_PEEK[f]=(TP_PEEK[f]===mid)?null:mid; renderPriTeams(); };
+function tpPeekHTML(f){ var mid=TP_PEEK[f]; if(!mid||!members[mid]) return '';
+  var sup=!!ME.isSuper, self=(mid===ME.mid);
+  var list=priorities.filter(function(p){ return p.ownerMid===mid && !p.ownerFid && !priDone(p) && (sup||self||poSharedWithMe(p)); }).sort(function(a,b){ return (a.order||0)-(b.order||0); });
+  var who=self?'You are':(esc(personName(mid))+' is');
+  return '<div class="tp-peek"><div class="tp-peek-h">'+who+' working on<button type="button" onclick="openProfile(\''+esc(mid)+'\')">Open profile \u2192</button></div>'
+    +(list.length?poRowsHTML(list):'<div class="tp-peek-none">'+(self?'Nothing active yet.':'Nothing shared with you yet.')+'</div>')+'</div>'; }
+function tpBandHTML(f,withTeam){
+  if(!fns[f]) return '';
+  var all=priorities.filter(function(p){ return p.ownerFid===f && canSeePriority(p); }).sort(function(a,b){ return (a.order||0)-(b.order||0); });
+  var act=all.filter(function(p){ return !priDone(p); }), done=all.filter(priDone);
+  var lead=fnsLeader(f), canAdd=(isAdmin||lead===ME.mid), col=cssColor(fns[f].color||'var(--strip)');
+  var h='<div class="tp-band" style="--tc:'+col+'"><div class="tp-head"><span class="dot" style="background:'+col+'"></span><span class="nm">'+esc(fns[f].name||'Team')+' team</span>'+(lead&&members[lead]?'<span class="ld">\u00b7 Led by '+esc(personName(lead))+'</span>':'')+(canAdd?'<button class="tp-add" onclick="priAddTeam(\''+esc(f)+'\')">+ Team priority</button>':'')+'</div>';
+  h+='<p class="po-sub">Anyone on the team can update these.</p>';
+  if(!act.length) h+='<div class="pri-note" style="margin-bottom:4px">No active team priorities.'+(canAdd?' Tap \u201c+ Team priority\u201d to add one.':'')+'</div>';
+  else h+='<ul class="pri-list" data-tp="'+esc(f)+'">'+act.map(function(p){ return priCardHTML(p,canAdd&&act.length>1,priCanStatus(p),canAgreePriority(p)); }).join('')+'</ul>';
+  if(done.length) h+='<details class="pri-done-wrap"><summary class="pri-done-sum">Completed <span class="pri-done-n">'+done.length+'</span></summary><div class="pri-done-list">'+done.map(function(p){ var dt=priFmtDate(p.completedAt); return '<div class="pri-done-row" onclick="openPriority(\''+p.id+'\')"><span class="pri-done-tick">\u2713</span><span class="pri-done-ttl">'+esc(p.title||'Untitled priority')+'</span><span class="pri-done-dt">'+(dt?('Completed '+dt):'Completed')+'</span></div>'; }).join('')+'</div></details>';
+  if(withTeam){ var mem=tpMembers(f);
+    if(mem.length){ h+='<div class="tp-mem"><span class="tp-mem-l">The team</span>'+mem.map(function(m){ var tag=(m===lead?' \u00b7 lead':'')+(m===ME.mid?' \u00b7 you':'');
+        return '<button type="button" class="tp-chip'+(TP_PEEK[f]===m?' on':'')+'" onclick="tpPeek(\''+esc(f)+'\',\''+esc(m)+'\')" aria-pressed="'+(TP_PEEK[f]===m?'true':'false')+'"><span class="mini" style="'+avBg(m)+'">'+avBody(m)+'</span>'+esc(personName(m))+(tag?'<small>'+tag+'</small>':'')+'</button>'; }).join('')+'</div>'+tpPeekHTML(f); } }
+  return h+'</div>';
+}
+/* a person's profile: their team's priorities sit above their own */
+function pfTeamFids(mid){ var m=members[mid]; if(!m) return []; var out=[]; if(m.functionId&&fns[m.functionId]) out.push(m.functionId);
+  Object.keys(fns).forEach(function(k){ if(fnsLeader(k)===mid && out.indexOf(k)<0) out.push(k); }); return out; }
+var _ptRenderProfilePriorities=renderProfilePriorities;
+renderProfilePriorities=function(mid){ _ptRenderProfilePriorities(mid);
+  var el=document.getElementById('pfPriorities'); if(!el) return;
+  var bands=pfTeamFids(mid).map(function(f){ var vis=priorities.filter(function(p){ return p.ownerFid===f && !priDone(p) && canSeePriority(p); }); return vis.length?tpBandHTML(f,false):''; }).join('');
+  if(!bands) return;
+  el.insertAdjacentHTML('afterbegin', bands+'<div class="tp-ownhead">'+esc(mid===ME.mid?'Your own':(firstName(mid)+'\u2019s own'))+'</div>');
+  Array.prototype.forEach.call(el.querySelectorAll('.tp-band ul.pri-list'),function(ul){ priRenumberIn(ul); priBindDrag(ul); });
+};
 function renderProfilePriorities(mid){ ensurePriSub(); var el=document.getElementById('pfPriorities'); if(!el)return; var list=priorities.filter(function(p){return p.ownerMid===mid && !p.ownerFid && canSeePriority(p);}).sort(function(a,b){return (a.order||0)-(b.order||0);}); if(!list.length){ el.innerHTML='<div class="pf-empty">No priorities listed yet'+(mid===ME.mid?' \u2014 add some from the My Priorities tab.':'.')+'</div>'; return; } var _drag=(isAdmin||mid===ME.mid) && list.length>1; /* PT_PROFREORDER_V1 */
   el.innerHTML='<ul class="pri-list'+(_drag?'':' pri-readonly')+'" id="pfPriList">'+list.map(function(p){ return priCardHTML(p,_drag,canEditPriority(p),canAgreePriority(p)); }).join('')+'</ul>';
   if(_drag){ var _h=document.getElementById('pfPriList'); priRenumberIn(_h); priBindDrag(_h); } priRenumberIn(el.querySelector('.pri-list')); }
