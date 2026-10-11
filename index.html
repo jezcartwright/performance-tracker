@@ -952,10 +952,28 @@ body.ai-open #aiPanel{display:flex}
 .ai-chips{display:flex;flex-wrap:wrap;gap:7px}
 .ai-chip{background:var(--card);border:1px solid var(--b);border-radius:16px;padding:6px 11px;font:500 12.5px/1.2 var(--ui);color:var(--t);cursor:pointer;text-align:left}
 .ai-chip:hover{border-color:var(--strip)}
-.ai-in{display:flex;align-items:flex-end;gap:8px;padding:10px 12px calc(12px + var(--sb,0px));border-top:1px solid var(--b)}
-.ai-in textarea{flex:1;resize:none;border:1.5px solid var(--b);border-radius:12px;padding:9px 12px;font:400 14px/1.4 var(--ui);color:var(--t);background:var(--card);max-height:140px;min-height:40px}
+/* PT_AIDOCS_V1 — taller composer that grows with the text, plus file attachments */
+.ai-in{display:flex;flex-direction:column;gap:8px;padding:10px 12px calc(12px + var(--sb,0px));border-top:1px solid var(--b)}
+.ai-in textarea{width:100%;box-sizing:border-box;resize:none;border:1.5px solid var(--b);border-radius:12px;padding:10px 12px;font:400 14px/1.5 var(--ui);color:var(--t);background:var(--card);min-height:96px;max-height:45vh;overflow-y:auto}
 .ai-in textarea:focus{outline:none;border-color:var(--strip)}
-.ai-send{width:40px;height:40px;flex:none;border-radius:50%;border:0;background:var(--strip);color:#fff;display:grid;place-items:center;cursor:pointer}
+.ai-tools{display:flex;align-items:center;gap:8px}
+.ai-add{width:36px;height:36px;flex:none;border-radius:50%;border:1.5px solid var(--b);background:var(--card);color:var(--t);display:grid;place-items:center;cursor:pointer}
+.ai-add:hover{border-color:var(--strip);color:var(--strip)}
+.ai-add svg{width:18px;height:18px}
+.ai-hint{font-size:12px;color:var(--t2)}
+.ai-atts{display:flex;flex-wrap:wrap;gap:6px}
+.ai-atts:empty{display:none}
+.ai-file{display:inline-flex;align-items:center;gap:6px;max-width:100%;border:1px solid var(--b);background:var(--bg);border-radius:8px;padding:5px 6px 5px 8px;font-size:12.5px;color:var(--t)}
+.ai-file svg{width:14px;height:14px;flex:none;color:var(--t2)}
+.ai-file .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:190px}
+.ai-file .sz{color:var(--t2);font-size:11.5px;white-space:nowrap}
+.ai-file.err{border-color:#e3b3ad;background:#fbefed;color:#8a2a1f}
+.ai-file button{border:0;background:none;color:var(--t2);font-size:16px;line-height:1;cursor:pointer;padding:0 2px}
+.ai-file button:hover{color:var(--t)}
+.ai-u .ai-atts{margin-bottom:6px}
+.ai-u .ai-file{background:var(--card)}
+#aiPanel.drag .ai-in{background:var(--bg);outline:2px dashed var(--strip);outline-offset:-6px}
+.ai-send{width:36px;height:36px;flex:none;border-radius:50%;border:0;background:var(--strip);color:#fff;display:grid;place-items:center;cursor:pointer}
 .ai-send[disabled]{background:var(--b);cursor:not-allowed}
 .ai-send svg{width:18px;height:18px}
 </style>
@@ -1280,7 +1298,7 @@ function openFocus(k){closeMenu();show('home');var f=document.getElementById('fo
       </div>
     </div>
 </div></header>
-<aside id="aiPanel" aria-label="Ask Claude"><!-- PT_ASKCLAUDE_V1 -->
+<aside id="aiPanel" aria-label="Ask Claude" ondragover="aiDrag(event,true)" ondragleave="aiDrag(event,false)" ondrop="aiDrop(event)"><!-- PT_ASKCLAUDE_V1 -->
   <div class="ai-hd">
     <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2.5l2.2 6.6 6.8 2.4-6.8 2.4L12 20.5l-2.2-6.6L3 11.5l6.8-2.4z"/></svg>
     <span class="ai-hd-t">Claude</span><span class="ai-co" id="aiCo"></span><span class="ai-sp"></span>
@@ -1288,9 +1306,15 @@ function openFocus(k){closeMenu();show('home');var f=document.getElementById('fo
     <button class="ai-hb ai-x" onclick="aiToggle(false)" aria-label="Close">&times;</button>
   </div>
   <div class="ai-msgs" id="aiMsgs" aria-live="polite"></div>
-  <div class="ai-in">
-    <textarea id="aiInput" rows="1" placeholder="Ask about this company, or tell Claude to add something" oninput="aiGrow(this)" onkeydown="aiKey(event)"></textarea>
-    <button class="ai-send" id="aiSend" onclick="aiSend()" aria-label="Send"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>
+  <div class="ai-in"><!-- PT_AIDOCS_V1 -->
+    <div class="ai-atts" id="aiAtts"></div>
+    <textarea id="aiInput" rows="4" placeholder="Ask about this company, or tell Claude to add something" oninput="aiGrow(this)" onkeydown="aiKey(event)" onpaste="aiPaste(event)"></textarea>
+    <div class="ai-tools">
+      <button class="ai-add" type="button" onclick="document.getElementById('aiFile').click()" title="Add files" aria-label="Add files"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
+      <span class="ai-hint">PDF, Word, images, CSV or text</span><span class="ai-sp"></span>
+      <button class="ai-send" id="aiSend" onclick="aiSend()" aria-label="Send"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>
+    </div>
+    <input type="file" id="aiFile" multiple hidden accept=".pdf,.docx,.png,.jpg,.jpeg,.gif,.webp,.txt,.md,.csv,.tsv,.json,application/pdf,image/png,image/jpeg,image/gif,image/webp,text/plain,text/csv" onchange="aiFiles(this.files);this.value=''">
   </div>
 </aside>
 
@@ -4687,12 +4711,12 @@ window.newBtnAction=function(){ var btn=document.getElementById('newBtn'); var a
 </script>
 <script>/* PL_RESIZE_V1 PL_RESIZE_V2 */window.addEventListener("message",function(e){var f=document.getElementById("pl-frame");if(f&&e.data&&typeof e.data.plHeight==="number"){var nh=e.data.plHeight+"px";if(f.style.height!==nh){f.style.height=nh;f.style.minHeight="0";}}});</script>
 <script>
-/* PT_ASKCLAUDE_V1 — Ask Claude sidebar (super admins only).
+/* PT_ASKCLAUDE_V1 PT_AIDOCS_V1 — Ask Claude sidebar (super admins only).
    Claude answers from a snapshot of the company in view and returns DRAFTS.
    Drafts are applied through the app's own forms (priority, issue, person) or,
    for progress updates, a direct log write — always under the signed-in user. */
 (function(){
-var AI={open:false,cid:null,turns:[],busy:false,drafts:{},seq:0,fn:null};
+var AI={open:false,cid:null,turns:[],busy:false,drafts:{},seq:0,fn:null,pending:[],fseq:0};
 var PRI_VIS={private:'Owner only (and admins)',manager:'Owner and their manager',team:'Their team',everyone:'Everyone'};
 var ISS_VIS={private:'Just the raiser',teamleader:'Raiser and the person tagged',participants:'Those involved',dept:'The whole department',leader:'Leaders and the CEO',team:'Whole company'};
 var LABEL={priority:'New priority',issue:'New issue',update:'Progress update',person:'New person'};
@@ -4725,7 +4749,7 @@ function aiSnapshot(){
 }
 
 function aiSync(){
-  if(AI.cid!==activeCid){ AI.cid=activeCid; AI.turns=[]; AI.drafts={}; }
+  if(AI.cid!==activeCid){ AI.cid=activeCid; AI.turns=[]; AI.drafts={}; AI.pending=[]; renderAtts(); }
   var co=document.getElementById('aiCo'); if(co) co.textContent=(activeCid&&company&&company.name)?company.name:'';
 }
 window.aiToggle=function(force){
@@ -4735,8 +4759,8 @@ window.aiToggle=function(force){
   var b=document.getElementById('aiBtn'); if(b){ b.classList.toggle('on',open); b.setAttribute('aria-expanded',open?'true':'false'); }
   if(open){ aiSync(); aiRender(); setTimeout(function(){ var i=document.getElementById('aiInput'); if(i&&wide())i.focus(); },30); }
 };
-window.aiNew=function(){ if(AI.busy)return; AI.turns=[]; AI.drafts={}; aiRender(); var i=document.getElementById('aiInput'); if(i)i.focus(); };
-window.aiGrow=function(t){ t.style.height='auto'; t.style.height=Math.min(140,t.scrollHeight)+'px'; };
+window.aiNew=function(){ if(AI.busy)return; AI.turns=[]; AI.drafts={}; AI.pending=[]; renderAtts(); aiRender(); var i=document.getElementById('aiInput'); if(i)i.focus(); };
+window.aiGrow=function(t){ t.style.height='auto'; var cap=Math.round(window.innerHeight*0.45); t.style.height=Math.max(96,Math.min(cap,t.scrollHeight+3))+'px'; };
 window.aiKey=function(e){ if(e.key==='Enter'&&!e.shiftKey&&!e.isComposing){ e.preventDefault(); aiSend(); } else if(e.key==='Escape'){ aiToggle(false); } };
 window.aiChip=function(i){ aiSend(SUGGEST[i]); };
 
@@ -4750,11 +4774,12 @@ function errText(e){
   if(c==='internal' && /^internal$/i.test(m)) return 'Couldn\u2019t reach Ask Claude. If the askClaude Cloud Function hasn\u2019t been deployed yet, deploy it; otherwise try again.';
   if(c==='deadline-exceeded') return 'Claude took too long to answer. Try a narrower question.';
   if(c==='unauthenticated') return 'Your session expired. Reload the page and sign in again.';
+  if(/payload|too large|413/i.test(m)) return 'The attached files are too large. Remove some, or tap New to start a fresh conversation.';
   return m||'Something went wrong. Try again.';
 }
 
 function turnForApi(t){
-  if(t.role==='user') return {role:'user',content:t.content};
+  if(t.role==='user') return {role:'user',content:t.content,attachments:(t.attachments||[]).map(function(a){ return a.kind==='text'?{kind:'text',name:a.name,text:a.text}:{kind:a.kind,name:a.name,mediaType:a.mediaType,data:a.data}; })};
   var s=t.content||'';
   (t.drafts||[]).forEach(function(id){ var d=AI.drafts[id]; if(!d)return; var nm=(d.type==='person')?((d.input.first||'')+' '+(d.input.last||'')).trim():(d.input.title||d.input.text||'');
     var st=d.state==='added'?'the user added it':(d.state==='cancelled'?'the user cancelled it':(d.state==='editing'?'the user opened it in the form to edit':'not yet confirmed'));
@@ -4765,10 +4790,16 @@ function turnForApi(t){
 window.aiSend=function(preset){
   if(AI.busy) return;
   var inp=document.getElementById('aiInput');
-  var text=String(preset!=null?preset:(inp?inp.value:'')).trim(); if(!text) return;
+  var text=String(preset!=null?preset:(inp?inp.value:'')).trim();
   aiSync();
+  if(AI.pending.some(function(a){ return a.state==='reading'; })) return;
+  var files=AI.pending.filter(function(a){ return a.state==='ready'; });
+  if(!text && !files.length) return;
+  if(files.length && convSize()+files.reduce(function(n,a){ return n+attSize(a); },0)>MAX_CONV){ AI.turns.push({role:'error',content:'Those files would make this conversation too large. Remove some, or tap New to start a fresh conversation.'}); aiRender(); return; }
+  if(!text) text='Please review the attached '+(files.length>1?'files':'file')+'.';
   if(!activeCid){ AI.turns.push({role:'user',content:text}); AI.turns.push({role:'error',content:'Open a company first. Claude answers about the company in view.'}); if(inp){inp.value='';aiGrow(inp);} aiRender(); return; }
-  AI.turns.push({role:'user',content:text});
+  AI.turns.push({role:'user',content:text,attachments:files.map(function(a){ return {kind:a.kind,name:a.name,mediaType:a.mediaType,data:a.data,text:a.text,size:a.size}; })});
+  AI.pending=AI.pending.filter(function(a){ return a.state!=='ready'; }); renderAtts();
   if(inp){ inp.value=''; aiGrow(inp); }
   AI.busy=true; aiRender();
   var cidAtSend=activeCid;
@@ -4782,6 +4813,69 @@ window.aiSend=function(preset){
   }).catch(function(e){ console.warn('askClaude',e); if(AI.cid===cidAtSend) AI.turns.push({role:'error',content:errText(e)}); })
   .then(function(){ AI.busy=false; aiRender(); });
 };
+
+
+/* ---- attachments (PT_AIDOCS_V1) ---- */
+var MAX_FILE=15*1024*1024, MAX_CONV=24000000, IMG_MAX=1568;
+var FILE_ICON='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/></svg>';
+var IMG_ICON='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M21 17l-5-5-9 8"/></svg>';
+function kb(n){ return n>=1048576?((n/1048576).toFixed(1)+' MB'):(Math.max(1,Math.round(n/1024))+' KB'); }
+function attSize(a){ return (a.data?a.data.length:0)+(a.text?a.text.length:0); }
+function convSize(){ var n=0; AI.turns.forEach(function(t){ (t.attachments||[]).forEach(function(a){ n+=attSize(a); }); }); return n; }
+function extOf(n){ var m=/\.([a-z0-9]+)$/i.exec(n||''); return m?m[1].toLowerCase():''; }
+function fileChip(a,removable){
+  var label=a.state==='reading'?'Reading\u2026':(a.state==='error'?a.err:(a.size?kb(a.size):''));
+  return '<span class="ai-file'+(a.state==='error'?' err':'')+'">'+(a.kind==='image'?IMG_ICON:FILE_ICON)+'<span class="nm" title="'+esc(a.name)+'">'+esc(a.name)+'</span>'
+    +(label?'<span class="sz">'+esc(label)+'</span>':'')+(removable?'<button type="button" onclick="aiRemoveFile('+a.id+')" aria-label="Remove '+esc(a.name)+'">&times;</button>':'')+'</span>';
+}
+function renderAtts(){ var b=document.getElementById('aiAtts'); if(b) b.innerHTML=AI.pending.map(function(a){ return fileChip(a,true); }).join(''); var s=document.getElementById('aiSend'); if(s) s.disabled=AI.busy||AI.pending.some(function(a){ return a.state==='reading'; }); }
+window.aiRemoveFile=function(id){ AI.pending=AI.pending.filter(function(a){ return a.id!==id; }); renderAtts(); };
+function readAs(file,how){ return new Promise(function(res,rej){ var r=new FileReader(); r.onload=function(){ res(r.result); }; r.onerror=function(){ rej(new Error('Couldn\u2019t read the file')); }; r[how](file); }); }
+var _mammoth=null;
+function loadMammoth(){
+  if(window.mammoth) return Promise.resolve(window.mammoth);
+  if(_mammoth) return _mammoth;
+  _mammoth=new Promise(function(res,rej){ var sc=document.createElement('script'); sc.src='https://cdn.jsdelivr.net/npm/mammoth@1.11.0/mammoth.browser.min.js';
+    sc.onload=function(){ window.mammoth?res(window.mammoth):rej(new Error('Word reader unavailable')); }; sc.onerror=function(){ _mammoth=null; rej(new Error('Couldn\u2019t load the Word reader')); }; document.head.appendChild(sc); });
+  return _mammoth;
+}
+function shrinkImage(file){
+  return new Promise(function(res,rej){
+    var url=URL.createObjectURL(file), img=new Image();
+    img.onload=function(){ var w=img.naturalWidth, h=img.naturalHeight, big=Math.max(w,h);
+      if(big<=IMG_MAX && file.size<=3500000){ URL.revokeObjectURL(url); readAs(file,'readAsDataURL').then(function(d){ res({mediaType:file.type,data:String(d).split(',')[1]}); },rej); return; }
+      var k=Math.min(1,IMG_MAX/big), c=document.createElement('canvas'); c.width=Math.round(w*k); c.height=Math.round(h*k);
+      var x=c.getContext('2d'); x.fillStyle='#ffffff'; x.fillRect(0,0,c.width,c.height); x.drawImage(img,0,0,c.width,c.height); URL.revokeObjectURL(url);
+      res({mediaType:'image/jpeg',data:c.toDataURL('image/jpeg',0.86).split(',')[1]}); };
+    img.onerror=function(){ URL.revokeObjectURL(url); rej(new Error('Couldn\u2019t open the image')); };
+    img.src=url; });
+}
+function readOne(a,file){
+  var e=extOf(file.name), t=(file.type||'').toLowerCase();
+  if(e==='pdf'||t==='application/pdf'){ a.kind='pdf'; a.mediaType='application/pdf'; return readAs(file,'readAsDataURL').then(function(d){ a.data=String(d).split(',')[1]; }); }
+  if(/^(png|jpe?g|gif|webp)$/.test(e)||/^image\/(png|jpeg|gif|webp)$/.test(t)){ a.kind='image'; return shrinkImage(file).then(function(r){ a.mediaType=r.mediaType; a.data=r.data; }); }
+  if(e==='docx'){ a.kind='text'; return readAs(file,'readAsArrayBuffer').then(function(buf){ return loadMammoth().then(function(m){ return m.extractRawText({arrayBuffer:buf}); }); }).then(function(r){ a.text=String((r&&r.value)||'').trim(); if(!a.text) throw new Error('No text found in this document'); }); }
+  if(/^(txt|md|markdown|csv|tsv|json)$/.test(e)||/^text\//.test(t)){ a.kind='text'; return readAs(file,'readAsText').then(function(x){ a.text=String(x||''); if(!a.text.trim()) throw new Error('This file is empty'); }); }
+  if(e==='doc') return Promise.reject(new Error('Save as .docx or PDF first'));
+  if(/^(xlsx|xls|numbers)$/.test(e)) return Promise.reject(new Error('Save the sheet as CSV first'));
+  if(/^(pptx|ppt|key)$/.test(e)) return Promise.reject(new Error('Save the deck as PDF first'));
+  return Promise.reject(new Error('This file type isn\u2019t supported'));
+}
+window.aiFiles=function(list){
+  if(!list||!list.length) return;
+  Array.prototype.slice.call(list,0,10).forEach(function(file){
+    var a={id:++AI.fseq,name:file.name||'pasted-image.png',size:file.size,state:'reading'};
+    AI.pending.push(a);
+    if(file.size>MAX_FILE){ a.state='error'; a.err='Over 15 MB'; return; }
+    readOne(a,file).then(function(){ a.state='ready'; a.size=attSize(a)*(a.kind==='text'?1:0.75); })
+      .catch(function(e){ a.state='error'; a.err=(e&&e.message)||'Couldn\u2019t read'; console.warn('aiFiles',e); })
+      .then(renderAtts);
+  });
+  renderAtts();
+};
+window.aiPaste=function(e){ var it=(e.clipboardData&&e.clipboardData.files)||[]; var imgs=Array.prototype.filter.call(it,function(f){ return /^image\//.test(f.type); }); if(imgs.length){ e.preventDefault(); aiFiles(imgs); } };
+window.aiDrag=function(e,on){ e.preventDefault(); var p=document.getElementById('aiPanel'); if(p) p.classList.toggle('drag',!!on); };
+window.aiDrop=function(e){ e.preventDefault(); var p=document.getElementById('aiPanel'); if(p) p.classList.remove('drag'); if(e.dataTransfer&&e.dataTransfer.files) aiFiles(e.dataTransfer.files); };
 
 /* ---- rendering ---- */
 function refBtn(kind,id,label){
@@ -4865,13 +4959,13 @@ function aiRender(){
       +(activeCid?('<div class="ai-chips">'+SUGGEST.map(function(s,i){ return '<button class="ai-chip" onclick="aiChip('+i+')">'+esc(s)+'</button>'; }).join('')+'</div>'):'')+'</div>';
   }
   AI.turns.forEach(function(t){
-    if(t.role==='user') h+='<div class="ai-u">'+esc(t.content)+'</div>';
+    if(t.role==='user') h+='<div class="ai-u">'+((t.attachments||[]).length?('<div class="ai-atts">'+t.attachments.map(function(a){ return fileChip(a,false); }).join('')+'</div>'):'')+esc(t.content)+'</div>';
     else if(t.role==='error') h+='<div class="ai-err">'+esc(t.content)+'</div>';
     else h+='<div class="ai-a">'+md(t.content)+(t.drafts||[]).map(draftCard).join('')+'</div>';
   });
   if(AI.busy) h+='<div class="ai-think">Claude is thinking\u2026</div>';
   box.innerHTML=h; box.scrollTop=box.scrollHeight;
-  var s=document.getElementById('aiSend'); if(s) s.disabled=AI.busy;
+  var s=document.getElementById('aiSend'); if(s) s.disabled=AI.busy||AI.pending.some(function(a){ return a.state==='reading'; });
 }
 window.aiCancel=function(id){ var d=AI.drafts[id]; if(d){ d.state='cancelled'; aiRender(); } };
 
