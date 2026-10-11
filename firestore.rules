@@ -14,7 +14,9 @@ rules_version = '2';
 //       edit everything else but cannot add/remove admins.
 //   #3  members docs are admin-created. A user may CLAIM an unlinked seat that
 //       already carries their email (setting only `uid`); cannot forge a member,
-//       flip isLeader, or change functionId. No self-made seats.
+//       flip isLeader, or change functionId. No self-made seats. The claim and
+//       the email-matched read both require a VERIFIED email (PT_RULES_TENANT_V1).
+//   #4  access/{uid} self-writes must point at a seat already carrying that uid.
 //
 // App-behaviour notes:
 //   - Issue reads are COMPANY level; the 5 visibility levels filter client side.
@@ -48,6 +50,12 @@ service cloud.firestore {
     function uid()      { return request.auth.uid; }
     function tokenEmail() {
       return request.auth != null ? request.auth.token.email : null;
+    }
+    // PT_RULES_TENANT_V1 — email identity counts only once Firebase has verified it.
+    function verifiedEmail() {
+      return request.auth != null
+        && request.auth.token.email_verified == true
+        && request.auth.token.email != null;
     }
     function inList(list, u) {
       return list is list && u in list;
@@ -87,11 +95,23 @@ service cloud.firestore {
     function ownsNewPriority(cid) {
       return signedIn() && memberUid(cid, request.resource.data.ownerMid) == uid();
     }
+    // PT_TEAMPRI_V1 — team-owned priorities. ownerFid names the team; ownerMid is its leader.
+    // myTeam(): the signed-in member's team, via their access entry -> their seat.
+    function myTeam(cid) {
+      let acc = get(/databases/$(database)/documents/companies/$(cid)/access/$(request.auth.uid));
+      return get(/databases/$(database)/documents/companies/$(cid)/members/$(acc.data.mid)).data.get('functionId', null);
+    }
+    // A non-admin may only create a team priority for a team they lead.
+    function teamLeadOk(cid) {
+      return request.resource.data.get('ownerFid', null) == null
+        || get(/databases/$(database)/documents/companies/$(cid)/functions/$(request.resource.data.ownerFid)).data.get('leaderMid', null)
+             == request.resource.data.ownerMid;
+    }
     // PURE field-only test — NO get()/exists(). Used by the collection-group match.
     function ownMemberDoc() {
       return signedIn()
         && ( resource.data.uid == uid()
-             || resource.data.email == tokenEmail() );
+             || ( verifiedEmail() && resource.data.email == tokenEmail() ) );
     }
 
     // =========================================================================
@@ -131,9 +151,18 @@ service cloud.firestore {
                          && request.resource.data.adminUids == resource.data.adminUids );
 
       // ----- membership index ------------------------------------------------
+      // PT_RULES_TENANT_V1 — a user may write their OWN access entry only when it
+      // points at a seat in THIS company that already carries their uid. Without
+      // this, anyone signed in could make themselves a member of any company whose
+      // ID they knew. Leaving (self-delete) stays open; admins are unchanged.
       match /access/{accessUid} {
-        allow read:  if signedIn() && ( accessUid == uid() || companyAdmin(cid) );
-        allow write: if signedIn() && ( accessUid == uid() || companyAdmin(cid) );
+        allow read:   if signedIn() && ( accessUid == uid() || companyAdmin(cid) );
+        allow delete: if signedIn() && ( accessUid == uid() || companyAdmin(cid) );
+        allow create, update: if companyAdmin(cid)
+          || ( signedIn()
+               && accessUid == uid()
+               && request.resource.data.mid is string
+               && memberUid(cid, request.resource.data.mid) == uid() );
       }
 
       // ----- departments / functions ----------------------------------------
@@ -157,6 +186,7 @@ service cloud.firestore {
           || ( signedIn()
                && resource.data.uid == null
                && request.resource.data.uid == uid()
+               && verifiedEmail()
                && resource.data.email == tokenEmail()
                && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['uid']) );
       }
@@ -199,14 +229,22 @@ service cloud.firestore {
                          && resource.data.visibility != 'private' );
 
         allow create: if companyAdmin(cid)
-                      || ( isMember(cid) && ownsNewPriority(cid) );
+                      || ( isMember(cid) && ownsNewPriority(cid) && teamLeadOk(cid) );
 
         allow update: if companyAdmin(cid)
                       || ownsPriority(cid)
                       || ( isMember(cid)
                            && request.resource.data.ownerMid == resource.data.ownerMid
                            && request.resource.data.diff(resource.data)
-                                .affectedKeys().hasOnly(['agreed','agreedBy','agreedAt','updatedAt']) );
+                                .affectedKeys().hasOnly(['agreed','agreedBy','agreedAt','updatedAt']) )
+                      // PT_TEAMPRI_V1 — anyone on the owning team may move it along (status,
+                      // a help request and what that touches); never its title, owner or team.
+                      || ( isMember(cid)
+                           && resource.data.get('ownerFid', null) is string
+                           && resource.data.get('visibility', 'private') != 'private'
+                           && myTeam(cid) == resource.data.ownerFid
+                           && request.resource.data.diff(resource.data)
+                                .affectedKeys().hasOnly(['status','help','completedAt','updatedAt','involves','visibility']) );
 
         allow delete: if companyAdmin(cid) || ownsPriority(cid);
 
@@ -252,13 +290,6 @@ service cloud.firestore {
                     || ( signedIn() && resource.data.fromCid != null
                          && companyAdmin(resource.data.fromCid) );
       allow update: if isSuper();
-    }
-
-    // ------------------------------- ironwork --------------------------------
-    // Ironwork (ironwork.progress-tracker.live) shares this Firebase project.
-    // Each signed-in person reads and writes only their own document.
-    match /ironwork/{ironUid} {
-      allow read, write: if signedIn() && ironUid == uid();
     }
 
     // ----------------------------- default deny ------------------------------
