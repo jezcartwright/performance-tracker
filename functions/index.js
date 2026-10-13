@@ -1,4 +1,4 @@
-/* PT_ASKCLAUDE_V1 PT_AIDOCS_V1 PT_TEAMPRI_V1 — "Ask Claude" for Progress Tracker (super admins only).
+/* PT_ASKCLAUDE_V1 PT_AIDOCS_V1 PT_TEAMPRI_V1 PT_AIPOLICY_V1 — "Ask Claude" for Progress Tracker (super admins only).
  *
  * The browser never sees the Anthropic key. This callable function:
  *   1. requires a signed-in caller who is listed in platform/config.superAdminUids,
@@ -122,6 +122,19 @@ async function assertSuper(uid) {
   }
 }
 
+// PT_AIPOLICY_V1 — Ask Claude is off for a company unless the super admin has switched it on
+// in platform/aiPolicy. Checked here so nothing about a company reaches Anthropic without it.
+async function assertCompanyAllowed(cid) {
+  if (typeof cid !== "string" || !/^[A-Za-z0-9_-]{1,128}$/.test(cid)) {
+    throw new HttpsError("invalid-argument", "No company specified.");
+  }
+  const snap = await db.doc("platform/aiPolicy").get();
+  const a = snap.exists ? ((snap.data().allowed || {})[cid]) : null;
+  if (!a || a.on !== true) {
+    throw new HttpsError("permission-denied", "Ask Claude is switched off for this company.");
+  }
+}
+
 async function countUsage(uid) {
   const day = new Date().toISOString().slice(0, 10);
   const ref = db.collection("aiUsage").doc(uid + "_" + day);
@@ -187,6 +200,8 @@ exports.askClaude = onCall(
     if (!request.auth) throw new HttpsError("unauthenticated", "Please sign in.");
     const uid = request.auth.uid;
     await assertSuper(uid);
+    const data0 = request.data || {};
+    await assertCompanyAllowed(data0.cid);
 
     const data = request.data || {};
     let size = 0;
