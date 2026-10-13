@@ -1,5 +1,14 @@
 rules_version = '2';
 
+// #############################################################################
+// SHARED PROJECT — READ BEFORE EDITING OR PUBLISHING
+// This Firebase project also serves Ironwork (ironwork.progress-tracker.live).
+// The `match /ironwork/{ironUid}` block above the default deny MUST stay in
+// this file. Rebuilding these rules from an older copy without it takes
+// Ironwork offline on every device the moment they are published. It has
+// happened twice (Sep 2 and Oct 11, 2026).
+// #############################################################################
+
 // =============================================================================
 // Progress Tracker — Firestore security rules  (Stage 1, reconciled to app)
 // =============================================================================
@@ -290,6 +299,13 @@ service cloud.firestore {
                     || ( signedIn() && resource.data.fromCid != null
                          && companyAdmin(resource.data.fromCid) );
       allow update: if isSuper();
+    }
+
+    // ------------------------------- ironwork --------------------------------
+    // Ironwork shares this Firebase project. Each signed-in person reads and
+    // writes only their own document. DO NOT REMOVE — see the note at the top.
+    match /ironwork/{ironUid} {
+      allow read, write: if signedIn() && ironUid == uid();
     }
 
     // ----------------------------- default deny ------------------------------
