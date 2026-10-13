@@ -1159,6 +1159,16 @@ body.ai-open #aiPanel{display:flex}
 .wn-eb button{border-radius:9px;padding:8px 14px;font:600 13px var(--ui);cursor:pointer}
 .wn-eb .s{background:#ff6600;color:#fff;border:0}.wn-eb .c{background:var(--card);border:1px solid var(--b);color:var(--t2)}
 </style>
+<style>
+/* PT_AIPOLICY_V1 */
+.ai-pol{border:1.5px solid var(--b);border-radius:12px;padding:13px 14px;background:var(--bg);font-size:13.5px;line-height:1.55;color:var(--t)}
+.ai-pol b{display:block;font-size:14px;margin-bottom:4px}
+.ai-pol p{margin:0 0 8px;color:var(--t2)}
+.ai-pol ul{margin:0 0 10px;padding-left:18px;color:var(--t2)}
+.ai-pol button{background:var(--strip);color:#fff;border:0;border-radius:9px;padding:9px 14px;font:700 13px var(--ui);cursor:pointer}
+.ai-polbar{display:flex;align-items:center;gap:8px;font-size:12px;color:#2e7d5b;background:#e2f1ea;border:1px solid #bfe0cf;border-radius:9px;padding:6px 10px}
+.ai-polbar button{margin-left:auto;background:none;border:0;padding:0;font:600 12px var(--ui);color:var(--t2);cursor:pointer;text-decoration:underline}
+</style>
 </head>
 <body>
 
@@ -3072,6 +3082,9 @@ function startApp(){
   var appEl=document.getElementById('app'); if(appEl)appEl.classList.toggle('cansuper',!!ME.isSuper);
   try{ var _t=(activeCid&&companies[activeCid]&&companies[activeCid].theme)?companies[activeCid].theme:JSON.parse(localStorage.getItem('ptTheme')||'null'); if(_t&&_t.strip)applyTheme(_t); }catch(e){}
   [subC,subF,subM,subI,subA,subPri].forEach(function(u){ if(u)u(); }); subC=subF=subM=subI=subA=subPri=null;
+  /* PT_RINGFENCE_V1 — never let one company's data sit beside another's: clear everything on switch */
+  company={}; fns={}; members={}; issues=[]; priorities=[]; allM={}; window.__ptLoaded={cid:activeCid};
+  try{ if(typeof WINS!=='undefined'){ if(WINS.uCur){WINS.uCur();WINS.uCur=null;} if(WINS.uView){WINS.uView();WINS.uView=null;} WINS.cid=null; WINS.cur=[]; WINS.view=[]; } }catch(_e){}
   if(!activeCid){
     isAdmin=ME.isSuper; company={}; fns={}; members={}; issues=[]; ME.mid=null;
     document.getElementById('tabAdmin').style.display=isAdmin?'':'none';
@@ -3081,7 +3094,9 @@ function startApp(){
   }
   if(appShown){ document.getElementById('app').style.display='block'; }
   else { document.getElementById('login-screen').style.display='none'; document.getElementById('app').style.display='none'; revealPending=true; themeSeen=false; membersSeen=false; clearTimeout(revealTimer); revealTimer=setTimeout(revealApp,2000); }
+  var _ringCid=activeCid;
   subC=cRef().onSnapshot(function(s){
+    if(activeCid!==_ringCid) return; if(window.__ptLoaded&&window.__ptLoaded.cid===_ringCid) window.__ptLoaded.co=true;
     company=s.exists?s.data():{}; company.adminUids=company.adminUids||[];
     isAdmin=amAdminOf(company);
     applyTheme(company.theme||DEFAULT_THEME);
@@ -3092,9 +3107,10 @@ function startApp(){
     if(curProfile){ var _pe=document.getElementById('profile'); if(_pe&&_pe.classList.contains("active"))paintProfile(curProfile); }
     themeSeen=true; maybeReveal(); if(window.maMaybePrompt)maMaybePrompt();
   },function(e){console.error('company',e);});
-  subF=fnsRef().onSnapshot(function(qs){ fns={}; qs.forEach(function(d){var _fd=d.data(); if(_fd&&_fd.color!=null)_fd.color=cssColor(_fd.color); fns[d.id]=Object.assign({id:d.id},_fd);}); renderFnSelect(); renderAdmin(); render(); refreshAux(); if(curProfile){ var _pe=document.getElementById('profile'); if(_pe&&_pe.classList.contains("active"))paintProfile(curProfile); } tryPendingAppoint(); },function(e){console.error('fns',e);});
-  subM=membersRef().onSnapshot(function(qs){ members={}; qs.forEach(function(d){ var m=d.data(); m.mid=d.id; m.name=m.name||((m.first||'')+' '+(m.last||'')).trim(); m.initials=m.initials||initials(m.name); if(m.coach){ try{window.PT_COACH={name:m.name,email:m.email||'',initials:m.initials||initials(m.name),title:m.title||'',showInOrg:!!m.showInOrg,teamCanInclude:!!m.teamCanInclude,mid:d.id,mine:(m.uid===ME.uid)};}catch(e){} if(m.uid!==ME.uid && !m.showInOrg){ return; } } /* PT_COACHVIS_V1 */ members[d.id]=m; }); resolveMyMid(); ensurePriSub(); membersSeen=true; maybeReveal(); renderAdmin(); render(); refreshAux(); if(curIssue)fillDetail(curIssue); if(window.pendingProfileMid && members[window.pendingProfileMid]){ var _pm=window.pendingProfileMid; window.pendingProfileMid=null; openProfile(_pm); } tryPendingAppoint(); },function(e){console.error('members',e);});
+  subF=fnsRef().onSnapshot(function(qs){ if(activeCid!==_ringCid) return; if(window.__ptLoaded&&window.__ptLoaded.cid===_ringCid) window.__ptLoaded.fns=true; fns={}; qs.forEach(function(d){var _fd=d.data(); if(_fd&&_fd.color!=null)_fd.color=cssColor(_fd.color); fns[d.id]=Object.assign({id:d.id},_fd);}); renderFnSelect(); renderAdmin(); render(); refreshAux(); if(curProfile){ var _pe=document.getElementById('profile'); if(_pe&&_pe.classList.contains("active"))paintProfile(curProfile); } tryPendingAppoint(); },function(e){console.error('fns',e);});
+  subM=membersRef().onSnapshot(function(qs){ if(activeCid!==_ringCid) return; if(window.__ptLoaded&&window.__ptLoaded.cid===_ringCid) window.__ptLoaded.mem=true; members={}; qs.forEach(function(d){ var m=d.data(); m.mid=d.id; m.name=m.name||((m.first||'')+' '+(m.last||'')).trim(); m.initials=m.initials||initials(m.name); if(m.coach){ try{window.PT_COACH={name:m.name,email:m.email||'',initials:m.initials||initials(m.name),title:m.title||'',showInOrg:!!m.showInOrg,teamCanInclude:!!m.teamCanInclude,mid:d.id,mine:(m.uid===ME.uid)};}catch(e){} if(m.uid!==ME.uid && !m.showInOrg){ return; } } /* PT_COACHVIS_V1 */ members[d.id]=m; }); resolveMyMid(); ensurePriSub(); membersSeen=true; maybeReveal(); renderAdmin(); render(); refreshAux(); if(curIssue)fillDetail(curIssue); if(window.pendingProfileMid && members[window.pendingProfileMid]){ var _pm=window.pendingProfileMid; window.pendingProfileMid=null; openProfile(_pm); } tryPendingAppoint(); },function(e){console.error('members',e);});
   subI=issuesRef().orderBy('createdAt','desc').onSnapshot(function(qs){
+    if(activeCid!==_ringCid) return; if(window.__ptLoaded&&window.__ptLoaded.cid===_ringCid) window.__ptLoaded.iss=true;
     issues=[]; qs.forEach(function(d){var i=d.data(); i.id=d.id; issues.push(i);});
     render(); updateBadge();
     var vis=applyVisibility(issues);
@@ -4813,7 +4829,7 @@ function lineManagerMid(mid){ return (typeof orgParent==='function')?orgParent(m
 function canEditPriority(p){ return !!(activeCid && p && (isAdmin || (ME.mid && p.ownerMid===ME.mid))); }
 function canAgreePriority(p){ if(!activeCid||!p)return false; if(isAdmin)return true; var mgr=lineManagerMid(p.ownerMid); return !!(mgr && mgr===ME.mid); }
 function updatePriCount(){ var el=document.getElementById('priCount'); if(el)el.textContent=myPriorities().filter(function(p){return !priDone(p);}).length; }
-function ensurePriSub(){ if(!activeCid)return; if(subPri&&priSubMid===(ME.mid||null))return; if(subPri){ subPri(); subPri=null; } priSubMid=ME.mid||null; /* PL_PRIVATELOCK_V1 PL_PRI_SUBFIX_V1 */ var ownM={}, visM={}; function priRebuild(){ var map={},k; for(k in ownM)map[k]=ownM[k]; for(k in visM){ if(!map[k])map[k]=visM[k]; } for(k in allM){ if(!map[k])map[k]=allM[k]; } priorities=[]; for(k in map)priorities.push(map[k]); priorities.sort(function(a,b){return (a.order||0)-(b.order||0);}); updatePriCount(); try{ updateBadge(); }catch(_e){} try{ var _ar=document.getElementById('archive'); if(_ar&&_ar.classList.contains('active')) renderArchive(true); }catch(_e){} var ps=document.getElementById('priorities'); if(ps&&ps.classList.contains('active'))renderPriorities(); var pf=document.getElementById('profile'); if(pf&&pf.classList.contains('active')&&curProfile)renderProfilePriorities(curProfile); } var uOwn=function(){}, uVis=function(){}, uAll=function(){}; var allM={}; if(ME.mid){ uOwn=prioritiesRef().where('ownerMid','==',ME.mid).onSnapshot(function(qs){ ownM={}; qs.forEach(function(d){ var p=d.data(); p.id=d.id; ownM[d.id]=p; }); priRebuild(); },function(e){console.warn('pri-own',e);}); } uVis=prioritiesRef().where('visibility','in',['manager','team','everyone']).onSnapshot(function(qs){ visM={}; qs.forEach(function(d){ var p=d.data(); p.id=d.id; visM[d.id]=p; }); priRebuild(); },function(e){console.warn('pri-vis',e);}); if(isAdmin){ uAll=prioritiesRef().onSnapshot(function(qs){ allM={}; qs.forEach(function(d){ var p=d.data(); p.id=d.id; allM[d.id]=p; }); priRebuild(); },function(e){console.warn('pri-all',e);}); }
+function ensurePriSub(){ if(!activeCid)return; if(subPri&&priSubMid===(ME.mid||null)&&priSubCid===activeCid)return; if(subPri){ subPri(); subPri=null; } priSubMid=ME.mid||null; priSubCid=activeCid; var _pc=activeCid; /* PT_RINGFENCE_V1 */ /* PL_PRIVATELOCK_V1 PL_PRI_SUBFIX_V1 */ var ownM={}, visM={}; function priRebuild(){ var map={},k; for(k in ownM)map[k]=ownM[k]; for(k in visM){ if(!map[k])map[k]=visM[k]; } for(k in allM){ if(!map[k])map[k]=allM[k]; } priorities=[]; for(k in map)priorities.push(map[k]); priorities.sort(function(a,b){return (a.order||0)-(b.order||0);}); updatePriCount(); try{ updateBadge(); }catch(_e){} try{ var _ar=document.getElementById('archive'); if(_ar&&_ar.classList.contains('active')) renderArchive(true); }catch(_e){} var ps=document.getElementById('priorities'); if(ps&&ps.classList.contains('active'))renderPriorities(); var pf=document.getElementById('profile'); if(pf&&pf.classList.contains('active')&&curProfile)renderProfilePriorities(curProfile); } var uOwn=function(){}, uVis=function(){}, uAll=function(){}; var allM={}, priSubCid=null; if(ME.mid){ uOwn=prioritiesRef().where('ownerMid','==',ME.mid).onSnapshot(function(qs){ if(activeCid!==_pc) return; ownM={}; qs.forEach(function(d){ var p=d.data(); p.id=d.id; ownM[d.id]=p; }); priRebuild(); },function(e){console.warn('pri-own',e);}); } uVis=prioritiesRef().where('visibility','in',['manager','team','everyone']).onSnapshot(function(qs){ if(activeCid!==_pc) return; visM={}; qs.forEach(function(d){ var p=d.data(); p.id=d.id; visM[d.id]=p; }); priRebuild(); },function(e){console.warn('pri-vis',e);}); if(isAdmin){ uAll=prioritiesRef().onSnapshot(function(qs){ if(activeCid!==_pc) return; allM={}; qs.forEach(function(d){ var p=d.data(); p.id=d.id; allM[d.id]=p; }); priRebuild(); },function(e){console.warn('pri-all',e);}); }
   subPri=function(){ uOwn(); uVis(); uAll(); }; }
 
 function priInvolvesHTML(p){ var ids=(p.involves||[]).filter(function(m){return members[m];}); if(!ids.length)return '<span class="pri-muted">no one yet</span>'; return '<span class="pri-avs">'+ids.map(function(m){return '<span class="pri-av" style="'+avBg(m)+'" title="'+esc(personName(m))+'">'+avBody(m)+'</span>';}).join('')+'</span><span class="pri-names">'+ids.map(function(m){return esc(personName(m));}).join(', ')+'</span>'; }
@@ -5397,6 +5413,17 @@ var LABEL={priority:'New priority',issue:'New issue',update:'Progress update',pe
 var GO={priority:'Add priority',issue:'Raise issue',update:'Post update',person:'Add person'};
 var SUGGEST=['What\u2019s stuck right now?','Who has no priorities yet?','Summarize open issues by team','Which priorities are blocked?'];
 
+/* PT_AIPOLICY_V1 — Ask Claude is OFF for every company until the super admin switches it on for that
+   company. The setting lives in platform/aiPolicy (super-admin only) and the server enforces it too. */
+var AI_POLICY={allowed:{}}, _aiPolSub=null;
+function aiPolicyWatch(){ if(_aiPolSub||!ME.isSuper) return; _aiPolSub=db.collection('platform').doc('aiPolicy').onSnapshot(function(s){ AI_POLICY=s.exists?(s.data()||{}):{}; AI_POLICY.allowed=AI_POLICY.allowed||{}; if(typeof aiRender==='function') aiRender(); }, function(e){ console.warn('aiPolicy',e); }); }
+function aiAllowed(cid){ var a=AI_POLICY.allowed&&AI_POLICY.allowed[cid]; return !!(a&&a.on===true); }
+window.aiPolicySet=function(on){ if(!ME.isSuper||!activeCid) return; var nm=(company&&company.name)||'this company';
+  if(on && !confirm('Switch on Ask Claude for '+nm+'?\n\nOnly do this if '+nm+'\u2019s agreement allows their data to be processed by Anthropic (in the US; not used for training; deleted within 30 days).\n\nLeave it off for clients who need zero data retention or EU/UK data residency.')) return;
+  var upd={allowed:{}}; upd.allowed[activeCid]={on:!!on,name:nm,by:ME.uid,at:FV.serverTimestamp()};
+  db.collection('platform').doc('aiPolicy').set(upd,{merge:true}).catch(function(e){ alert('Could not update: '+e.message); }); };
+function aiPolicyHTML(){ var nm=esc((company&&company.name)||'this company');
+  return '<div class="ai-pol"><b>Ask Claude is off for '+nm+'</b><p>Switching it on sends '+nm+'\u2019s people, teams, issues, priorities and wins to Anthropic each time you ask a question.</p><ul><li>Processed in the US</li><li>Not used to train models</li><li>Deleted within 30 days</li></ul><p>Only switch it on if '+nm+'\u2019s agreement allows this. Leave it off for clients who need zero data retention or EU/UK data residency.</p><button type="button" onclick="aiPolicySet(true)">Switch on for '+nm+'</button></div>'; }
 function aiFn(){ if(!AI.fn){ AI.fn=firebase.app().functions('us-central1').httpsCallable('askClaude',{timeout:120000}); } return AI.fn; }
 function wide(){ return window.innerWidth>=900; }
 function isMem(m){ return !!(m&&members[m]); }
@@ -5419,7 +5446,7 @@ function aiSnapshot(){
     o.created=day(i.createdAt); o.updated=day(i.updatedAt); return o; });
   var pri=priorities.map(function(p){ var o={id:p.id,ownerMid:p.ownerMid,title:p.title||'',status:priLabel(p.status),visibility:priVisOf(p),agreedByManager:!!p.agreed};
     if(p.ownerFid&&fns[p.ownerFid]){ o.ownedByTeamFid=p.ownerFid; o.team=fns[p.ownerFid].name; o.leadMid=p.ownerMid; } if(p.note)o.note=clip(p.note,400); if(p.status==='Need Help'&&p.help){ o.askingForHelpFrom=p.help.from==='everyone'?'everyone':(p.help.mids||[]); if(p.help.note)o.helpNote=clip(p.help.note,300); } if((p.involves||[]).length)o.involves=p.involves; o.created=day(p.createdAt); o.updated=day(p.updatedAt); var c=day(p.completedAt); if(c)o.completed=c; return o; });
-  var wins=(typeof WINS!=='undefined'?WINS.cur:[]).map(function(w){ return {byMid:w.authorMid,text:clip(w.text,500),celebrations:(w.cheers||[]).length}; });
+  var wins=((typeof WINS!=='undefined'&&WINS.cid===activeCid)?WINS.cur:[]).map(function(w){ return {byMid:w.authorMid,text:clip(w.text,500),celebrations:(w.cheers||[]).length}; });
   return JSON.stringify({company:company.name||'',ceoMid:(isMem(company.ceoMemberId)?company.ceoMemberId:null),people:people,teams:teams,issues:iss,priorities:pri,winsThisWeek:wins});
 }
 
@@ -5432,7 +5459,7 @@ window.aiToggle=function(force){
   var open=(typeof force==='boolean')?force:!AI.open; AI.open=open;
   document.body.classList.toggle('ai-open',open);
   var b=document.getElementById('aiBtn'); if(b){ b.classList.toggle('on',open); b.setAttribute('aria-expanded',open?'true':'false'); }
-  if(open){ aiSync(); aiRender(); setTimeout(function(){ var i=document.getElementById('aiInput'); if(i&&wide())i.focus(); },30); }
+  if(open){ aiPolicyWatch(); aiSync(); aiRender(); setTimeout(function(){ var i=document.getElementById('aiInput'); if(i&&wide())i.focus(); },30); }
 };
 window.aiNew=function(){ if(AI.busy)return; AI.turns=[]; AI.drafts={}; AI.pending=[]; renderAtts(); aiRender(); var i=document.getElementById('aiInput'); if(i)i.focus(); };
 window.aiGrow=function(t){ t.style.height='auto'; var cap=Math.round(window.innerHeight*0.45); t.style.height=Math.max(96,Math.min(cap,t.scrollHeight+3))+'px'; };
@@ -5472,16 +5499,18 @@ window.aiSend=function(preset){
   if(!text && !files.length) return;
   if(files.length && convSize()+files.reduce(function(n,a){ return n+attSize(a); },0)>MAX_CONV){ AI.turns.push({role:'error',content:'Those files would make this conversation too large. Remove some, or tap New to start a fresh conversation.'}); aiRender(); return; }
   if(!text) text='Please review the attached '+(files.length>1?'files':'file')+'.';
+  if(activeCid && !aiAllowed(activeCid)){ aiRender(); return; } /* PT_AIPOLICY_V1 */
+  var _L=window.__ptLoaded||{}; if(activeCid && !(_L.cid===activeCid && _L.co && _L.fns && _L.mem && _L.iss)){ AI.turns.push({role:'error',content:'Still loading this company. Try again in a moment.'}); aiRender(); return; } /* PT_RINGFENCE_V1 */
   if(!activeCid){ AI.turns.push({role:'user',content:text}); AI.turns.push({role:'error',content:'Open a company first. Claude answers about the company in view.'}); if(inp){inp.value='';aiGrow(inp);} aiRender(); return; }
   AI.turns.push({role:'user',content:text,attachments:files.map(function(a){ return {kind:a.kind,name:a.name,mediaType:a.mediaType,data:a.data,text:a.text,size:a.size}; })});
   AI.pending=AI.pending.filter(function(a){ return a.state!=='ready'; }); renderAtts();
   if(inp){ inp.value=''; aiGrow(inp); }
   AI.busy=true; aiRender();
   var cidAtSend=activeCid;
-  var payload={companyName:company.name||'',today:new Date().toDateString(),context:aiSnapshot(),
+  var payload={cid:activeCid,companyName:company.name||'',today:new Date().toDateString(),context:aiSnapshot(),
     messages:AI.turns.filter(function(t){return t.role!=='error';}).map(turnForApi)};
   aiFn()(payload).then(function(r){
-    if(AI.cid!==cidAtSend) return;
+    if(AI.cid!==cidAtSend||activeCid!==cidAtSend) return;
     var d=(r&&r.data)||{};
     var ids=(d.drafts||[]).map(function(dr){ var id='d'+(++AI.seq); AI.drafts[id]={type:dr.type,input:dr.input||{},state:'pending'}; return id; });
     AI.turns.push({role:'assistant',content:d.text||'',drafts:ids});
@@ -5629,8 +5658,10 @@ function draftCard(id){
 function aiRender(){
   var box=document.getElementById('aiMsgs'); if(!box) return;
   var h='';
+  if(activeCid && !aiAllowed(activeCid)){ box.innerHTML=aiPolicyHTML(); var _s0=document.getElementById('aiSend'); if(_s0)_s0.disabled=true; return; } /* PT_AIPOLICY_V1 */
+  if(activeCid) h+='<div class="ai-polbar">AI processing allowed for '+esc(company.name||'this company')+'<button type="button" onclick="if(confirm(\'Switch off Ask Claude for this company?\'))aiPolicySet(false)">Switch off</button></div>';
   if(!AI.turns.length){
-    h='<div class="ai-empty"><p>'+(activeCid?('Ask about '+esc(company.name||'this company')+'\u2019s people, issues and priorities, or tell Claude to add something. You confirm every change.'):'Open a company to ask about it.')+'</p>'
+    h+='<div class="ai-empty"><p>'+(activeCid?('Ask about '+esc(company.name||'this company')+'\u2019s people, issues and priorities, or tell Claude to add something. You confirm every change.'):'Open a company to ask about it.')+'</p>'
       +(activeCid?('<div class="ai-chips">'+SUGGEST.map(function(s,i){ return '<button class="ai-chip" onclick="aiChip('+i+')">'+esc(s)+'</button>'; }).join('')+'</div>'):'')+'</div>';
   }
   AI.turns.forEach(function(t){
