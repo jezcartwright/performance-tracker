@@ -1082,6 +1082,83 @@ body.ai-open #aiPanel{display:flex}
 .pm-head{margin:22px 0 10px}
 .tp-ownhead{font-family:var(--display);font-size:20px;font-weight:600;margin:16px 0 8px}
 </style>
+<style>
+/* PT_ARCHIVE_V1 */
+.ar-h1{font-family:var(--display);font-size:30px;font-weight:600;margin:0}
+.ar-sub{color:var(--t2);font-size:13.5px;margin:6px 0 16px;line-height:1.55;max-width:640px}
+.ar-fl{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:6px}
+.ar-seg{display:inline-flex;border:1.5px solid var(--b);border-radius:10px;overflow:hidden;background:var(--card)}
+.ar-seg button{border:0;background:var(--card);padding:8px 13px;font:600 13px var(--ui);color:var(--t2);cursor:pointer}
+.ar-seg button+button{border-left:1.5px solid var(--b)}
+.ar-seg button.on{background:var(--t);color:#fff}
+.ar-sel{appearance:none;-webkit-appearance:none;background:var(--card) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b655d' stroke-width='2.5' stroke-linecap='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") no-repeat right 10px center;border:1.5px solid var(--b);border-radius:10px;padding:8px 30px 8px 11px;font:500 13px var(--ui);color:var(--t);cursor:pointer;max-width:200px}
+.ar-q{flex:1;min-width:170px;border:1.5px solid var(--b);border-radius:10px;padding:8px 11px;font:400 13.5px var(--ui);color:var(--t);background:var(--card)}
+.ar-sel:focus,.ar-q:focus{outline:none;border-color:var(--strip)}
+.ar-count{font-size:12.5px;color:var(--t2);margin:10px 0 0}
+.ar-mo{display:flex;justify-content:space-between;font-size:11px;font-weight:800;letter-spacing:.8px;text-transform:uppercase;color:var(--t2);margin:20px 0 8px}
+.ar-row{display:flex;align-items:center;gap:11px;background:var(--card);border:1px solid var(--b);border-radius:12px;padding:11px 14px;margin-bottom:7px;cursor:pointer}
+.ar-row:hover{border-color:var(--t2)}
+.ar-tick{color:#2e7d5b;font-weight:800;flex:none}
+.ar-k{font-size:11px;font-weight:700;border-radius:6px;padding:3px 8px;white-space:nowrap;flex:none}
+.ar-k.p{background:#e7eefa;color:#2f5fa0}.ar-k.i{background:#efe7f6;color:#6b3f8f}
+.ar-t{flex:1;min-width:0;font-size:14.5px}
+.ar-t small{display:block;font-size:12.5px;color:var(--t2);margin-top:2px}
+.ar-av{width:26px;height:26px;border-radius:50%;color:#fff;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex:none;overflow:hidden}
+.ar-av img{width:100%;height:100%;object-fit:cover}
+.ar-dt{font-size:12.5px;color:var(--t2);white-space:nowrap;flex:none}
+@media (max-width:600px){ .ar-row{flex-wrap:wrap} .ar-t{flex-basis:calc(100% - 120px)} .ar-av{display:none} .ar-sel{flex:1;max-width:none} }
+</style>
+<style>
+/* PT_WINS_V1 — orange Wins tab and the weekly wins wall */
+.navbar .tg.tg-wins:not(.active){background:#fff1e6;border-color:#ffc9a3;color:#d24f00}
+.navbar .tg.tg-wins:not(.active):hover{border-color:#ff6600}
+.navbar .tg.tg-wins.active{background:#ff6600;border-color:#ff6600;color:#fff}
+.navbar .tg.tg-wins:not(.active) .ct{background:#ff6600;color:#fff}
+.navbar .tg.tg-wins.active .ct{background:#fff;color:#d24f00}
+.wn-top{display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap}
+.wn-h1{font-family:var(--display);font-size:30px;font-weight:600;margin:0}
+.wn-wk{display:flex;align-items:center;gap:6px;margin-left:auto}
+.wn-ar{width:36px;height:36px;border:1.5px solid var(--b);border-radius:10px;background:var(--card);display:grid;place-items:center;cursor:pointer;color:var(--t);font-size:16px}
+.wn-ar[disabled]{color:var(--b);cursor:default}
+.wn-wl{font-size:14px;font-weight:600;padding:0 6px;white-space:nowrap}
+.wn-now{background:none;border:0;padding:0 4px;font:600 13px var(--ui);color:#d24f00;cursor:pointer}
+.wn-sub{color:var(--t2);font-size:13.5px;margin:6px 0 16px;line-height:1.55}
+.wn-cmp{background:var(--card);border:1.5px solid var(--b);border-radius:14px;padding:12px 14px;margin-bottom:18px}
+.wn-cmp:focus-within{border-color:#ff6600}
+.wn-cmp textarea{width:100%;box-sizing:border-box;border:0;resize:none;outline:none;font:400 15px/1.5 var(--ui);color:var(--t);background:transparent;min-height:56px;max-height:40vh}
+.wn-cf{display:flex;align-items:center;gap:12px;border-top:1px solid var(--b);padding-top:10px;margin-top:6px;flex-wrap:wrap}
+.wn-who{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;color:var(--t2)}
+.wn-who svg{width:14px;height:14px}
+.wn-link{appearance:none;-webkit-appearance:none;border:1px solid var(--b);border-radius:999px;background:var(--card);padding:5px 12px;font:500 12.5px var(--ui);color:var(--t2);max-width:240px;cursor:pointer}
+.wn-go{margin-left:auto;background:#ff6600;color:#fff;border:0;border-radius:10px;padding:10px 16px;font:700 14px var(--ui);cursor:pointer}
+.wn-go[disabled]{background:var(--b);color:var(--t2);cursor:default}
+.wn-stat{font-size:13px;color:var(--t2);margin:0 0 10px}
+.wn-stat b{color:var(--t)}
+.wn-card{background:var(--card);border:1px solid var(--b);border-radius:14px;padding:14px 16px;margin-bottom:10px}
+.wn-ch{display:flex;align-items:center;gap:10px;margin-bottom:7px}
+.wn-av{width:34px;height:34px;border-radius:50%;color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex:none;overflow:hidden;cursor:pointer}
+.wn-av img{width:100%;height:100%;object-fit:cover}
+.wn-nm{font-size:14.5px;font-weight:600;cursor:pointer}
+.wn-tm{font-size:12.5px;color:var(--t2)}
+.wn-own{margin-left:auto;display:flex;gap:4px}
+.wn-own button{background:none;border:0;padding:4px 6px;font:600 12.5px var(--ui);color:var(--t2);cursor:pointer;border-radius:6px}
+.wn-own button:hover{color:var(--t);background:var(--bg)}
+.wn-tx{font-size:15px;line-height:1.55;white-space:pre-wrap;word-wrap:break-word}
+.wn-pri{display:inline-flex;align-items:center;gap:5px;margin-top:9px;font-size:12.5px;color:#2f5fa0;background:#e7eefa;border:0;border-radius:999px;padding:4px 11px;cursor:pointer;font-family:var(--ui)}
+.wn-pri.ro{cursor:default}
+.wn-pri svg{width:13px;height:13px}
+.wn-ft{display:flex;align-items:center;gap:9px;margin-top:11px;flex-wrap:wrap}
+.wn-cl{display:inline-flex;align-items:center;gap:6px;border:1.5px solid var(--b);border-radius:999px;background:var(--card);padding:5px 12px;font:600 13px var(--ui);color:var(--t);cursor:pointer}
+.wn-cl svg{width:15px;height:15px}
+.wn-cl.on{border-color:#ff6600;color:#d24f00;background:#fff1e6}
+.wn-cl.ro{cursor:default}
+.wn-by{font-size:12.5px;color:var(--t2)}
+.wn-edit textarea{width:100%;box-sizing:border-box;border:1.5px solid var(--b);border-radius:10px;padding:10px 12px;font:400 15px/1.5 var(--ui);min-height:80px;resize:vertical}
+.wn-edit textarea:focus{outline:none;border-color:#ff6600}
+.wn-eb{display:flex;gap:8px;justify-content:flex-end;margin-top:8px}
+.wn-eb button{border-radius:9px;padding:8px 14px;font:600 13px var(--ui);cursor:pointer}
+.wn-eb .s{background:#ff6600;color:#fff;border:0}.wn-eb .c{background:var(--card);border:1px solid var(--b);color:var(--t2)}
+</style>
 </head>
 <body>
 
@@ -1430,9 +1507,11 @@ function openFocus(k){closeMenu();show('home');var f=document.getElementById('fo
   <div class="salute" id="salute"></div>
 
   <nav class="navbar">
-    <button class="tg active" data-s="priorities" id="tabPri">My Priorities <span class="ct" id="priCount">0</span></button>
+    <button class="tg tg-wins" data-s="wins" id="tabWins">Wins <span class="ct" id="winsCount" style="display:none">0</span></button><!-- PT_WINS_V1 -->
+    <button class="tg active" data-s="priorities" id="tabPri">Priorities <span class="ct" id="priCount">0</span></button>
     <button class="tg" data-s="dashboard" id="tabAll">Issues <span class="ct" id="allCount">0</span></button>
     <button class="tg" data-s="team" id="tabTeam">Team</button>
+    <button class="tg" data-s="archive" id="tabArchive">Archive</button><!-- PT_ARCHIVE_V1 -->
     <button class="tg" data-s="admin" id="tabAdmin" style="display:none">Admin &amp; Setup</button>
     <span class="grow"></span>
     <button class="primary" id="newBtn" onclick="newBtnAction()" style="display:none">
@@ -1440,6 +1519,32 @@ function openFocus(k){closeMenu();show('home');var f=document.getElementById('fo
       <span id="newBtnLabel">New</span>
     </button>
   </nav>
+
+
+  <!-- WINS (PT_WINS_V1) -->
+  <section class="screen" id="wins">
+    <div class="wn-top"><h1 class="wn-h1" id="wnTitle">This week’s wins</h1>
+      <div class="wn-wk"><button type="button" class="wn-ar" onclick="winsStep(-1)" aria-label="Previous week">&lsaquo;</button><span class="wn-wl" id="wnWeek"></span><button type="button" class="wn-ar" id="wnNext" onclick="winsStep(1)" aria-label="Next week">&rsaquo;</button></div></div>
+    <p class="wn-sub" id="wnSub">Share something that went well this week. A fresh week starts every Monday; past weeks stay one tap away.</p>
+    <div id="wnCompose"></div>
+    <div class="wn-stat" id="wnStat"></div>
+    <div id="wnList"></div>
+  </section>
+
+  <!-- ARCHIVE (PT_ARCHIVE_V1) -->
+  <section class="screen" id="archive">
+    <h1 class="ar-h1">Archive</h1>
+    <p class="ar-sub">Every completed priority and resolved issue you can see, newest first. Open any item to read its full history.</p>
+    <div class="ar-fl">
+      <div class="ar-seg" id="arKind"><button type="button" class="on" onclick="arSet('kind','all')">All</button><button type="button" onclick="arSet('kind','pri')">Priorities</button><button type="button" onclick="arSet('kind','iss')">Issues</button></div>
+      <select class="ar-sel" id="arTeam" aria-label="Team" onchange="arSet('fid',this.value)"></select>
+      <select class="ar-sel" id="arPerson" aria-label="Person" onchange="arSet('mid',this.value)"></select>
+      <select class="ar-sel" id="arRange" aria-label="Time range" onchange="arSet('range',this.value)"><option value="30">Last 30 days</option><option value="90">Last 3 months</option><option value="365" selected>Last 12 months</option><option value="all">All time</option></select>
+      <input class="ar-q" id="arQ" type="search" placeholder="Search titles and notes" oninput="arSet('q',this.value)">
+    </div>
+    <div class="ar-count" id="arCount"></div>
+    <div id="arList"></div>
+  </section>
 
   <!-- DASHBOARD -->
   <section class="screen active" id="dashboard">
@@ -1475,7 +1580,7 @@ function openFocus(k){closeMenu();show('home');var f=document.getElementById('fo
   </style>
   <section class="screen" id="priorities">
     <div class="pri-head">
-      <div><h1 class="pri-h1">My Priorities</h1><p class="pri-sub">What you're working on, in order. Drag to reorder as things shift, tap a status to update where you are, and your line manager ticks the ones they've agreed.</p></div>
+      <div><h1 class="pri-h1">Priorities</h1><p class="pri-sub">What you're working on, in order. Drag to reorder as things shift, tap a status to update where you are, and your line manager ticks the ones they've agreed.</p></div>
     </div>
     <div style="margin:2px 0 14px"><button class="tinybtn" onclick="openListImport('pri')">⬆ Import a list</button></div>
     <div id="priEmpty"></div>
@@ -1564,7 +1669,7 @@ function openFocus(k){closeMenu();show('home');var f=document.getElementById('fo
 <!-- PL_PRIDETAIL_V1 -->
 <section class="screen" id="priDetail">
   <button class="back" onclick="goPriorities()">
-    <svg viewBox="0 0 24 24" width="15" fill="none" stroke="currentColor" stroke-width="2"><path d="m15 18-6-6 6-6"/></svg> My Priorities
+    <svg viewBox="0 0 24 24" width="15" fill="none" stroke="currentColor" stroke-width="2"><path d="m15 18-6-6 6-6"/></svg> Priorities
   </button>
   <div class="form-card">
     <div class="pd-head">
@@ -1610,7 +1715,7 @@ function openFocus(k){closeMenu();show('home');var f=document.getElementById('fo
 </section>
   <section class="screen" id="raisePriority">
     <button class="back" onclick="goPriorities()">
-      <svg viewBox="0 0 24 24" width="15" fill="none" stroke="currentColor" stroke-width="2"><path d="m15 18-6-6 6-6"/></svg> My Priorities
+      <svg viewBox="0 0 24 24" width="15" fill="none" stroke="currentColor" stroke-width="2"><path d="m15 18-6-6 6-6"/></svg> Priorities
     </button>
     <div class="form-card">
       <h1 id="pr-h1">Add a priority</h1>
@@ -2951,7 +3056,7 @@ window.pickCo=function(cid){ pushRecent(cid); closeCoMenu(); switchCompany(cid);
 window.toggleCoMenu=function(e){ if(e)e.stopPropagation(); var m=document.getElementById('coMenu'); var open=m.classList.toggle('on'); if(open){ var s=document.getElementById('coSearch'); s.value=''; renderCoList(); setTimeout(function(){try{s.focus();}catch(_){}}, 30); } };
 function closeCoMenu(){ var m=document.getElementById('coMenu'); if(m)m.classList.remove('on'); }
 document.addEventListener('click',function(e){ var w=document.getElementById('coWrap'); if(w && !w.contains(e.target)) closeCoMenu(); });
-window.switchCompany=function(cid){ if(!cid)return; if(cid===activeCid&&!document.getElementById('app').classList.contains('home'))return; setHome(false); try{pushRecent(cid);}catch(e){} activeCid=cid; curId=null; curIssue=null; FOCUSFID=null; ORGZOOM=1; if(msgsUnsub){msgsUnsub();msgsUnsub=null;} boardMode='active'; clearTabs(); var t=document.getElementById('tabPri'); if(t)t.classList.add('active'); updateSortbarUI(); startApp(); show('priorities'); renderPriorities(); };
+window.switchCompany=function(cid){ if(!cid)return; if(cid===activeCid&&!document.getElementById('app').classList.contains('home'))return; setHome(false); try{pushRecent(cid);}catch(e){} activeCid=cid; curId=null; curIssue=null; FOCUSFID=null; ORGZOOM=1; if(msgsUnsub){msgsUnsub();msgsUnsub=null;} boardMode='active'; clearTabs(); var t=document.getElementById('tabWins')||document.getElementById('tabPri'); if(t)t.classList.add('active'); updateSortbarUI(); startApp(); renderPriorities(); show('wins'); renderWins(); }; /* PT_WINS_V1 — open on Wins */
 
 var appShown=false, revealPending=false, themeSeen=false, membersSeen=false, revealTimer=null;
 function revealApp(){ clearTimeout(revealTimer); revealPending=false; appShown=true; var ls=document.getElementById('login-screen'); if(ls)ls.style.display='none'; ['pub-home','req-form'].forEach(function(id){var e=document.getElementById(id);if(e)e.style.display='none';}); document.getElementById('app').style.display='block'; setHeader(); }
@@ -3038,7 +3143,7 @@ function applyTheme(t){ if(!t)return; var r=document.documentElement; r.style.se
 /* ---------- NAV ---------- */
 function show(id){ document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active');}); var el=document.getElementById(id); if(el)el.classList.add('active'); window.scrollTo(0,0); syncNewBtn(id); }
 function clearTabs(){ document.querySelectorAll('.tg[data-s]').forEach(function(n){n.classList.remove('active');}); }
-document.querySelectorAll('.tg[data-s]').forEach(function(b){ b.addEventListener('click',function(){ clearTabs(); b.classList.add('active'); if(b.dataset.s==='priorities'){ show('priorities'); renderPriorities(); return; } if(b.dataset.s==='admin'){ show('admin'); renderAdmin(); renderTeam(); return; } if(b.dataset.s==='team'){ show('team'); renderTeam(); return; } boardMode='active'; updateSortbarUI(); show('dashboard'); setIssueSegUI(); render(); }); });
+document.querySelectorAll('.tg[data-s]').forEach(function(b){ b.addEventListener('click',function(){ clearTabs(); b.classList.add('active'); if(b.dataset.s==='priorities'){ show('priorities'); renderPriorities(); return; } if(b.dataset.s==='admin'){ show('admin'); renderAdmin(); renderTeam(); return; } if(b.dataset.s==='team'){ show('team'); renderTeam(); return; } if(b.dataset.s==='archive'){ show('archive'); renderArchive(); return; } if(b.dataset.s==='wins'){ show('wins'); renderWins(); return; } boardMode='active'; updateSortbarUI(); show('dashboard'); setIssueSegUI(); render(); }); });
 window.goTeam=function(){ setHome(false); clearTabs(); var t=document.getElementById('tabTeam'); if(t)t.classList.add('active'); show('team'); renderTeam(); };
 window.goDash=function(){ setHome(false); clearTabs(); var t=document.getElementById('tabAll'); if(t)t.classList.add('active'); boardMode='active'; updateSortbarUI(); show('dashboard'); setIssueSegUI(); render(); };
 window.goAdmin=function(){ setHome(false); clearTabs(); var t=document.getElementById('tabAdmin'); if(t)t.classList.add('active'); show('admin'); renderAdmin(); renderTeam(); };
@@ -4639,7 +4744,7 @@ var curPid=null, curPri=null, subPM=null;
 var pdAdding=false;
 var pdDocAdding=false;
 /* PL_PRI_DELETE_V1 */
-window.deletePriority=function(){ var id=curPid||(curPri&&curPri.id); if(!id)return; if(!confirm('Delete this priority? This cannot be undone.'))return; prioritiesRef().doc(id).delete().then(function(){ goPriorities(); }).catch(function(e){ alert('Could not delete: '+((e&&e.message)||e)); }); };
+window.deletePriority=function(){ var id=curPid||(curPri&&curPri.id); if(!id)return; var _dp=priById(id); if(_dp&&priDone(_dp)&&!isAdmin){ alert('Completed priorities are kept in the Archive. Reopen it first if you need to delete it.'); return; } /* PT_ARCHIVE_V1 */ if(!confirm('Delete this priority? This cannot be undone.'))return; prioritiesRef().doc(id).delete().then(function(){ goPriorities(); }).catch(function(e){ alert('Could not delete: '+((e&&e.message)||e)); }); };
 function pdStatusPill(st){ var sc=PRI_SCOL[st]||PRI_SCOL.Scoping; return '<span class="st" style="background:'+sc[0]+';color:'+sc[1]+'">'+esc(priLabel(st))+'</span>'; }
 function pdInvolvesHTML(p){ var inv=(p&&(p.involves||p.involve))||[]; var owner=personName(p.ownerMid||p.mid||ME.mid)||'You'; var s='Owner: '+esc(owner); if(inv&&inv.length){ var ns=inv.map(function(m){return esc(personName(m));}).filter(Boolean).join(', '); if(ns) s+=' \u00b7 Involves '+ns; } return s; }
 function pdBadgeHTML(p,idx){ return (priDone(p))?'<svg viewBox="0 0 24 24" width="15" fill="none" stroke="#fff" stroke-width="2.4"><path d="m5 13 4 4L19 7"/></svg>':(idx>=0?String(idx+1):''); }
@@ -4679,7 +4784,7 @@ function pdSetVisibility(sel){ if(!curPid||!sel)return; var nv=sel.value; var ov
 /* PL_PRIDETAIL_V2 */
 var PD_ADD='<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>';
 function pdRenderDetail(){
-  var p=curPri; if(!p)return; pdRenderHelp();
+  var p=curPri; if(!p)return; pdRenderHelp(); var _pf=document.querySelector('#priDetail .pd-foot')||document.querySelector('.pd-foot'); if(_pf) _pf.style.display=(priDone(p)&&!isAdmin)?'none':'';
   var nb=document.getElementById('pdNote'); if(nb){ var n=(p.note||'').trim(); nb.innerHTML=n?esc(n):'<span class="pd-empty">No detail yet \u2014 add it via Edit details.</span>'; }
   var pe=document.getElementById('pdPeople');
   if(pe){ var owner=p.ownerMid||p.mid; var h=''; if(owner){ h+='<span class="rchip"><span class="mini" style="'+avBg(owner)+';width:22px;height:22px;font-size:9px">'+avBody(owner)+'</span>'+esc(personName(owner)||'You')+' \u00b7 Owner</span>'; } (p.involves||[]).forEach(function(m){ h+='<span class="rchip"><span class="mini" style="'+avBg(m)+';width:22px;height:22px;font-size:9px">'+avBody(m)+'</span>'+esc(personName(m)||'')+'<button type="button" onclick="pdRemovePerson(\''+m+'\')">\u00d7</button></span>'; }); if(pdAdding){ h+='<div class="ta pd-addta"><input id="pdPersonInput" class="ta-input" type="text" placeholder="Search to add someone\u2026" autocomplete="off" oninput="pdPersonSearch(this)" onfocus="pdPersonSearch(this)" onblur="taBlur(\'pdPersonList\')"><div id="pdPersonList" class="ta-list" style="display:none"></div></div><span class="pd-addchip" onclick="pdAddDone()" style="margin-top:8px">Cancel</span>'; } else { h+='<span class="pd-addchip" onclick="pdAddPerson()">'+PD_ADD+' Add person</span>'; } pe.innerHTML=h; if(pdAdding){ var _pi=document.getElementById('pdPersonInput'); if(_pi)_pi.focus(); } }
@@ -4708,7 +4813,7 @@ function lineManagerMid(mid){ return (typeof orgParent==='function')?orgParent(m
 function canEditPriority(p){ return !!(activeCid && p && (isAdmin || (ME.mid && p.ownerMid===ME.mid))); }
 function canAgreePriority(p){ if(!activeCid||!p)return false; if(isAdmin)return true; var mgr=lineManagerMid(p.ownerMid); return !!(mgr && mgr===ME.mid); }
 function updatePriCount(){ var el=document.getElementById('priCount'); if(el)el.textContent=myPriorities().filter(function(p){return !priDone(p);}).length; }
-function ensurePriSub(){ if(!activeCid)return; if(subPri&&priSubMid===(ME.mid||null))return; if(subPri){ subPri(); subPri=null; } priSubMid=ME.mid||null; /* PL_PRIVATELOCK_V1 PL_PRI_SUBFIX_V1 */ var ownM={}, visM={}; function priRebuild(){ var map={},k; for(k in ownM)map[k]=ownM[k]; for(k in visM){ if(!map[k])map[k]=visM[k]; } for(k in allM){ if(!map[k])map[k]=allM[k]; } priorities=[]; for(k in map)priorities.push(map[k]); priorities.sort(function(a,b){return (a.order||0)-(b.order||0);}); updatePriCount(); try{ updateBadge(); }catch(_e){} var ps=document.getElementById('priorities'); if(ps&&ps.classList.contains('active'))renderPriorities(); var pf=document.getElementById('profile'); if(pf&&pf.classList.contains('active')&&curProfile)renderProfilePriorities(curProfile); } var uOwn=function(){}, uVis=function(){}, uAll=function(){}; var allM={}; if(ME.mid){ uOwn=prioritiesRef().where('ownerMid','==',ME.mid).onSnapshot(function(qs){ ownM={}; qs.forEach(function(d){ var p=d.data(); p.id=d.id; ownM[d.id]=p; }); priRebuild(); },function(e){console.warn('pri-own',e);}); } uVis=prioritiesRef().where('visibility','in',['manager','team','everyone']).onSnapshot(function(qs){ visM={}; qs.forEach(function(d){ var p=d.data(); p.id=d.id; visM[d.id]=p; }); priRebuild(); },function(e){console.warn('pri-vis',e);}); if(isAdmin){ uAll=prioritiesRef().onSnapshot(function(qs){ allM={}; qs.forEach(function(d){ var p=d.data(); p.id=d.id; allM[d.id]=p; }); priRebuild(); },function(e){console.warn('pri-all',e);}); }
+function ensurePriSub(){ if(!activeCid)return; if(subPri&&priSubMid===(ME.mid||null))return; if(subPri){ subPri(); subPri=null; } priSubMid=ME.mid||null; /* PL_PRIVATELOCK_V1 PL_PRI_SUBFIX_V1 */ var ownM={}, visM={}; function priRebuild(){ var map={},k; for(k in ownM)map[k]=ownM[k]; for(k in visM){ if(!map[k])map[k]=visM[k]; } for(k in allM){ if(!map[k])map[k]=allM[k]; } priorities=[]; for(k in map)priorities.push(map[k]); priorities.sort(function(a,b){return (a.order||0)-(b.order||0);}); updatePriCount(); try{ updateBadge(); }catch(_e){} try{ var _ar=document.getElementById('archive'); if(_ar&&_ar.classList.contains('active')) renderArchive(true); }catch(_e){} var ps=document.getElementById('priorities'); if(ps&&ps.classList.contains('active'))renderPriorities(); var pf=document.getElementById('profile'); if(pf&&pf.classList.contains('active')&&curProfile)renderProfilePriorities(curProfile); } var uOwn=function(){}, uVis=function(){}, uAll=function(){}; var allM={}; if(ME.mid){ uOwn=prioritiesRef().where('ownerMid','==',ME.mid).onSnapshot(function(qs){ ownM={}; qs.forEach(function(d){ var p=d.data(); p.id=d.id; ownM[d.id]=p; }); priRebuild(); },function(e){console.warn('pri-own',e);}); } uVis=prioritiesRef().where('visibility','in',['manager','team','everyone']).onSnapshot(function(qs){ visM={}; qs.forEach(function(d){ var p=d.data(); p.id=d.id; visM[d.id]=p; }); priRebuild(); },function(e){console.warn('pri-vis',e);}); if(isAdmin){ uAll=prioritiesRef().onSnapshot(function(qs){ allM={}; qs.forEach(function(d){ var p=d.data(); p.id=d.id; allM[d.id]=p; }); priRebuild(); },function(e){console.warn('pri-all',e);}); }
   subPri=function(){ uOwn(); uVis(); uAll(); }; }
 
 function priInvolvesHTML(p){ var ids=(p.involves||[]).filter(function(m){return members[m];}); if(!ids.length)return '<span class="pri-muted">no one yet</span>'; return '<span class="pri-avs">'+ids.map(function(m){return '<span class="pri-av" style="'+avBg(m)+'" title="'+esc(personName(m))+'">'+avBody(m)+'</span>';}).join('')+'</span><span class="pri-names">'+ids.map(function(m){return esc(personName(m));}).join(', ')+'</span>'; }
@@ -4986,7 +5091,153 @@ renderProfilePriorities=function(mid){ _ptRenderProfilePriorities(mid);
   el.insertAdjacentHTML('afterbegin', bands+'<div class="tp-ownhead">'+esc(mid===ME.mid?'Your own':(firstName(mid)+'\u2019s own'))+'</div>');
   Array.prototype.forEach.call(el.querySelectorAll('.tp-band ul.pri-list'),function(ul){ priRenumberIn(ul); priBindDrag(ul); });
 };
-function renderProfilePriorities(mid){ ensurePriSub(); var el=document.getElementById('pfPriorities'); if(!el)return; var list=priorities.filter(function(p){return p.ownerMid===mid && !p.ownerFid && canSeePriority(p);}).sort(function(a,b){return (a.order||0)-(b.order||0);}); if(!list.length){ el.innerHTML='<div class="pf-empty">No priorities listed yet'+(mid===ME.mid?' \u2014 add some from the My Priorities tab.':'.')+'</div>'; return; } var _drag=(isAdmin||mid===ME.mid) && list.length>1; /* PT_PROFREORDER_V1 */
+/* PT_ARCHIVE_V1 — one place for completed priorities and resolved issues (a view, nothing moves) */
+var AR={kind:'all',fid:'',mid:'',range:'365',q:''};
+window.arSet=function(k,v){ AR[k]=v; if(k==='kind'){ Array.prototype.forEach.call(document.querySelectorAll('#arKind button'),function(b,i){ b.classList.toggle('on',['all','pri','iss'][i]===v); }); } renderArchive(k==='q'); };
+window.goArchive=function(){ setHome(false); clearTabs(); var t=document.getElementById('tabArchive'); if(t)t.classList.add('active'); show('archive'); renderArchive(); };
+function arDate(m){ if(!m) return ''; var d=new Date(m), now=new Date(); return d.toLocaleDateString('en-US',(d.getFullYear()===now.getFullYear())?{month:'short',day:'numeric'}:{month:'short',day:'numeric',year:'numeric'}); }
+function arItems(){
+  var out=[];
+  priorities.forEach(function(p){ if(!priDone(p)||!members[p.ownerMid]&&!priTeamOf(p)) return; if(!(ME.isSuper||canSeePriority(p))) return;
+    var tf=priTeamOf(p), fid=tf||((members[p.ownerMid]||{}).functionId)||'';
+    out.push({kind:'pri',id:p.id,title:p.title||'Untitled priority',text:(p.title||'')+' '+(p.note||''),at:ms(p.completedAt)||ms(p.updatedAt),fid:fid,mids:[p.ownerMid],
+      sub:tf?((fns[tf].name||'Team')+' team'+(members[p.ownerMid]?(' \u00b7 led by '+personName(p.ownerMid)):'')):(personName(p.ownerMid)+(fid&&fns[fid]?(' \u00b7 '+(fns[fid].name||'')):'')),
+      av:tf?('<span class="ar-av" style="background:'+cssColor(fns[tf].color||'var(--strip)')+'">'+esc(String(fns[tf].name||'T').slice(0,2).toUpperCase())+'</span>'):('<span class="ar-av" style="'+avBg(p.ownerMid)+'">'+avBody(p.ownerMid)+'</span>')}); });
+  applyVisibility(issues.slice()).forEach(function(i){ if(i.status!=='done') return;
+    var at=ms(i.resolvedAt)||ms(i.updatedAt), c=ms(i.createdAt), days=(at&&c)?Math.max(1,Math.round((at-c)/86400000)):0;
+    var to=i.leaderMid&&members[i.leaderMid]?personName(i.leaderMid):(i.functionName||'');
+    out.push({kind:'iss',id:i.id,title:i.title||'Untitled issue',text:(i.title||'')+' '+(i.description||''),at:at,fid:i.functionId||'',mids:[i.raiserMid,i.leaderMid].concat(i.participants||[]),
+      sub:'Raised by '+(members[i.raiserMid]?personName(i.raiserMid):'someone')+(to?(' \u00b7 to '+to):'')+(days?(' \u00b7 open '+days+' day'+(days===1?'':'s')):''),
+      av:members[i.raiserMid]?('<span class="ar-av" style="'+avBg(i.raiserMid)+'">'+avBody(i.raiserMid)+'</span>'):''}); });
+  return out.sort(function(a,b){ return (b.at||0)-(a.at||0); });
+}
+function arFillFilters(all){
+  var ts=document.getElementById('arTeam'), ps=document.getElementById('arPerson'); if(!ts||!ps) return;
+  var fids=Object.keys(fns).sort(function(a,b){ return String(fns[a].name||'').localeCompare(String(fns[b].name||'')); });
+  ts.innerHTML='<option value="">All teams</option>'+fids.map(function(f){ return '<option value="'+esc(f)+'"'+(f===AR.fid?' selected':'')+'>'+esc(fns[f].name||'Team')+'</option>'; }).join('');
+  var seen={}; all.forEach(function(x){ x.mids.forEach(function(m){ if(m&&members[m]&&!orgHidden(m)) seen[m]=1; }); });
+  var ppl=Object.keys(seen).sort(function(a,b){ return personName(a).localeCompare(personName(b)); });
+  if(AR.mid && !seen[AR.mid]) AR.mid='';
+  ps.innerHTML='<option value="">Anyone</option>'+ppl.map(function(m){ return '<option value="'+esc(m)+'"'+(m===AR.mid?' selected':'')+'>'+esc(personName(m))+'</option>'; }).join('');
+}
+function renderArchive(fromSearch){
+  var host=document.getElementById('arList'), cnt=document.getElementById('arCount'); if(!host) return;
+  if(!activeCid){ host.innerHTML='<div class="pri-note">Open a company to see its archive.</div>'; if(cnt)cnt.textContent=''; return; }
+  var all=arItems(); if(!fromSearch) arFillFilters(all);
+  var since=AR.range==='all'?0:(Date.now()-Number(AR.range)*86400000), q=String(AR.q||'').toLowerCase().trim();
+  var list=all.filter(function(x){ return (AR.kind==='all'||x.kind===AR.kind) && (!AR.fid||x.fid===AR.fid) && (!AR.mid||x.mids.indexOf(AR.mid)>=0) && (!since||(x.at||0)>=since) && (!q||x.text.toLowerCase().indexOf(q)>=0); });
+  if(cnt) cnt.textContent=list.length+' item'+(list.length===1?'':'s')+(list.length!==all.length?(' of '+all.length):'');
+  if(!list.length){ host.innerHTML='<div class="pri-note" style="margin-top:14px">'+(all.length?'Nothing matches these filters.':'Nothing completed yet. Finished priorities and resolved issues will collect here.')+'</div>'; return; }
+  var h='', cur='', grp=[];
+  function flush(){ if(!grp.length) return; h+='<div class="ar-mo"><span>'+esc(cur)+'</span><span>'+grp.length+' item'+(grp.length===1?'':'s')+'</span></div>'+grp.join(''); grp=[]; }
+  list.forEach(function(x){ var mo=x.at?new Date(x.at).toLocaleDateString('en-US',{month:'long',year:'numeric'}):'Undated';
+    if(mo!==cur){ flush(); cur=mo; }
+    grp.push('<div class="ar-row" onclick="'+(x.kind==='pri'?'openPriority':'openIssue')+'(\''+esc(x.id)+'\')"><span class="ar-tick">\u2713</span><span class="ar-k '+(x.kind==='pri'?'p':'i')+'">'+(x.kind==='pri'?'Priority':'Issue')+'</span><span class="ar-t">'+esc(x.title)+'<small>'+esc(x.sub)+'</small></span>'+x.av+'<span class="ar-dt">'+esc(arDate(x.at))+'</span></div>'); });
+  flush(); host.innerHTML=h;
+}
+/* PT_WINS_V1 — weekly wins, shared with everyone in the company. A week runs Monday to Sunday in the poster's time zone. */
+var WINS={cid:null,curWk:null,viewWk:null,cur:[],view:[],uCur:null,uView:null,editId:null,timer:null};
+function winsRef(){ return db.collection('companies').doc(activeCid).collection('wins'); }
+function wnPad(n){ return (n<10?'0':'')+n; }
+function wnStart(d){ d=new Date(d||Date.now()); d.setHours(0,0,0,0); d.setDate(d.getDate()-((d.getDay()+6)%7)); return d; }
+function wnId(d){ var s=wnStart(d); return s.getFullYear()+'-'+wnPad(s.getMonth()+1)+'-'+wnPad(s.getDate()); }
+function wnDate(id){ var p=String(id).split('-'); return new Date(+p[0],+p[1]-1,+p[2]); }
+function wnShift(id,n){ var d=wnDate(id); d.setDate(d.getDate()+7*n); return wnId(d); }
+function wnLabel(id){ var a=wnDate(id), b=new Date(a); b.setDate(b.getDate()+6);
+  var am=a.toLocaleDateString('en-US',{month:'short'}), bm=b.toLocaleDateString('en-US',{month:'short'});
+  var y=(a.getFullYear()!==new Date().getFullYear())?(', '+a.getFullYear()):'';
+  return am+' '+a.getDate()+' \u2013 '+(bm!==am?bm+' ':'')+b.getDate()+y; }
+function wnSeenKey(){ return 'ptWinsSeen:'+(activeCid||''); }
+function wnSeen(){ try{ return Number(localStorage.getItem(wnSeenKey())||0); }catch(e){ return 0; } }
+function wnMarkSeen(){ try{ localStorage.setItem(wnSeenKey(),String(Date.now())); }catch(e){} wnBadge(); }
+function wnBadge(){ var b=document.getElementById('winsCount'); if(!b) return; var s=wnSeen();
+  var n=WINS.cur.filter(function(w){ return w.authorMid!==ME.mid && ms(w.createdAt)>s; }).length;
+  var onWins=(document.getElementById('wins')||{}).classList; if(onWins&&onWins.contains('active')&&WINS.viewWk===WINS.curWk) n=0;
+  b.textContent=n>9?'9+':String(n); b.style.display=n?'':'none'; }
+function wnSort(list){ return list.sort(function(a,b){ return (ms(b.createdAt)||Date.now())-(ms(a.createdAt)||Date.now()); }); }
+function winsEnsure(){
+  if(!activeCid){ return; }
+  var wk=wnId();
+  if(WINS.cid===activeCid && WINS.curWk===wk) return;
+  if(WINS.uCur){ WINS.uCur(); WINS.uCur=null; } if(WINS.uView){ WINS.uView(); WINS.uView=null; }
+  var rolled=(WINS.cid===activeCid && WINS.curWk && WINS.curWk!==wk), newCo=(WINS.cid!==activeCid);
+  WINS.cid=activeCid; WINS.curWk=wk; if(!WINS.viewWk||newCo||rolled||WINS.viewWk>wk) WINS.viewWk=wk; WINS.cur=[]; WINS.view=[]; WINS.editId=null;
+  var cidAt=activeCid;
+  WINS.uCur=winsRef().where('weekId','==',wk).onSnapshot(function(qs){ if(activeCid!==cidAt) return; var a=[]; qs.forEach(function(d){ var x=d.data(); x.id=d.id; a.push(x); }); WINS.cur=wnSort(a); wnBadge(); if(WINS.viewWk===WINS.curWk) renderWins(true); }, function(e){ console.warn('wins',e); });
+  if(!WINS.timer) WINS.timer=setInterval(function(){ if(activeCid && WINS.curWk && wnId()!==WINS.curWk){ winsEnsure(); renderWins(); } },300000);
+}
+function winsWatchView(){
+  if(WINS.uView){ WINS.uView(); WINS.uView=null; } WINS.view=[];
+  if(WINS.viewWk===WINS.curWk) return;
+  var wk=WINS.viewWk, cidAt=activeCid;
+  WINS.uView=winsRef().where('weekId','==',wk).onSnapshot(function(qs){ if(activeCid!==cidAt||WINS.viewWk!==wk) return; var a=[]; qs.forEach(function(d){ var x=d.data(); x.id=d.id; a.push(x); }); WINS.view=wnSort(a); renderWins(true); });
+}
+window.winsStep=function(n){ var nx=wnShift(WINS.viewWk||wnId(),n); if(nx>WINS.curWk) return; WINS.viewWk=nx; WINS.editId=null; winsWatchView(); renderWins(); };
+window.winsNow=function(){ WINS.viewWk=WINS.curWk; WINS.editId=null; winsWatchView(); renderWins(); };
+window.goWins=function(){ setHome(false); clearTabs(); var t=document.getElementById('tabWins'); if(t)t.classList.add('active'); show('wins'); renderWins(); };
+function wnCanPost(){ return !!(ME.mid && members[ME.mid]); }
+function wnLinkOptions(){
+  var mine=priorities.filter(function(p){ return (p.ownerMid===ME.mid && !p.ownerFid) || (p.ownerFid && myTeamFids().indexOf(p.ownerFid)>=0 && canSeePriority(p)); });
+  mine.sort(function(a,b){ return (priDone(a)?1:0)-(priDone(b)?1:0) || (a.order||0)-(b.order||0); });
+  return '<option value="">Link a priority (optional)</option>'+mine.map(function(p){ return '<option value="'+esc(p.id)+'">'+esc((p.ownerFid&&fns[p.ownerFid]?((fns[p.ownerFid].name||'Team')+': '):'')+(p.title||'Untitled priority'))+(priDone(p)?' (completed)':'')+'</option>'; }).join(''); }
+window.wnGrow=function(t){ t.style.height='auto'; t.style.height=Math.min(t.scrollHeight+2,Math.round(window.innerHeight*0.4))+'px'; var g=document.getElementById('wnGo'); if(g) g.disabled=!t.value.trim(); };
+window.wnShare=function(){
+  var t=document.getElementById('wnText'), g=document.getElementById('wnGo'); if(!t||!wnCanPost()) return;
+  var text=t.value.trim(); if(!text) return; if(text.length>2000){ alert('Please keep a win under 2,000 characters.'); return; }
+  var ls=document.getElementById('wnLink'), pid=ls?ls.value:'', p=pid?priById(pid):null;
+  if(g) g.disabled=true;
+  winsRef().add({authorMid:ME.mid,authorUid:ME.uid,authorName:ME.name||personName(ME.mid),text:text,weekId:wnId(),priId:p?p.id:null,priTitle:p?(p.title||''):'',cheers:[],createdAt:FV.serverTimestamp(),updatedAt:FV.serverTimestamp()})
+    .then(function(){ t.value=''; wnGrow(t); if(ls) ls.value=''; wnMarkSeen(); })
+    .catch(function(e){ if(g) g.disabled=false; alert('Could not share your win: '+e.message); });
+};
+window.wnCheer=function(id){ if(!wnCanPost()) return; var w=WINS.cur.concat(WINS.view).filter(function(x){ return x.id===id; })[0]; if(!w||w.authorMid===ME.mid) return;
+  var on=(w.cheers||[]).indexOf(ME.mid)>=0;
+  w.cheers=on?(w.cheers||[]).filter(function(m){ return m!==ME.mid; }):(w.cheers||[]).concat([ME.mid]); renderWins(true);
+  winsRef().doc(id).update({cheers:on?firebase.firestore.FieldValue.arrayRemove(ME.mid):firebase.firestore.FieldValue.arrayUnion(ME.mid)}).catch(function(e){ alert('Could not update: '+e.message); }); };
+window.wnEdit=function(id){ WINS.editId=id; renderWins(true); var t=document.getElementById('wnEditText'); if(t){ t.focus(); t.setSelectionRange(t.value.length,t.value.length); } };
+window.wnEditCancel=function(){ WINS.editId=null; renderWins(true); };
+window.wnEditSave=function(id){ var t=document.getElementById('wnEditText'); if(!t) return; var text=t.value.trim(); if(!text){ alert('A win can\u2019t be empty. Delete it instead.'); return; }
+  winsRef().doc(id).update({text:text.slice(0,2000),updatedAt:FV.serverTimestamp()}).then(function(){ WINS.editId=null; renderWins(true); }).catch(function(e){ alert('Could not save: '+e.message); }); };
+window.wnDelete=function(id){ if(!confirm('Delete this win?')) return; winsRef().doc(id).delete().catch(function(e){ alert('Could not delete: '+e.message); }); };
+function wnByLine(w){ var c=(w.cheers||[]).filter(function(m){ return members[m]; }); if(!c.length) return '';
+  var you=c.indexOf(ME.mid)>=0, others=c.filter(function(m){ return m!==ME.mid; }).map(firstName).filter(Boolean);
+  var names=others.slice(0,3); if(others.length>3) names.push((others.length-3)+' more'); if(you) names.push('you');
+  return names.length<=1?names.join(''):(names.slice(0,-1).join(', ')+' and '+names[names.length-1]); }
+function wnCard(w){
+  var mid=w.authorMid, m=members[mid]||{}, own=(mid===ME.mid), cur=(w.weekId===WINS.curWk), canDel=own||isAdmin;
+  var team=(m.functionId&&fns[m.functionId])?(fns[m.functionId].name||''):'';
+  var when=ms(w.createdAt)?new Date(ms(w.createdAt)).toLocaleDateString('en-US',{weekday:'long'}):'Just now';
+  var h='<div class="wn-card"><div class="wn-ch"><span class="wn-av" style="'+avBg(mid)+'" onclick="openProfile(\''+esc(mid)+'\')">'+avBody(mid)+'</span><div><div class="wn-nm" onclick="openProfile(\''+esc(mid)+'\')">'+esc(members[mid]?personName(mid):(w.authorName||'Former member'))+'</div><div class="wn-tm">'+esc([team,when].filter(Boolean).join(' \u00b7 '))+(ms(w.updatedAt)-ms(w.createdAt)>60000?' \u00b7 edited':'')+'</div></div>'
+    +((own&&cur)||canDel?'<span class="wn-own">'+(own&&cur&&WINS.editId!==w.id?'<button type="button" onclick="wnEdit(\''+esc(w.id)+'\')">Edit</button>':'')+(canDel?'<button type="button" onclick="wnDelete(\''+esc(w.id)+'\')">Delete</button>':'')+'</span>':'')+'</div>';
+  if(WINS.editId===w.id) h+='<div class="wn-edit"><textarea id="wnEditText" maxlength="2000">'+esc(w.text||'')+'</textarea><div class="wn-eb"><button type="button" class="c" onclick="wnEditCancel()">Cancel</button><button type="button" class="s" onclick="wnEditSave(\''+esc(w.id)+'\')">Save</button></div></div>';
+  else h+='<div class="wn-tx">'+esc(w.text||'')+'</div>';
+  if(w.priId||w.priTitle){ var p=w.priId?priById(w.priId):null, can=!!(p&&canSeePriority(p));
+    h+='<button type="button" class="wn-pri'+(can?'':' ro')+'"'+(can?(' onclick="openPriority(\''+esc(w.priId)+'\')"'):'')+'><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 22V4M4 4h12l-2 4 2 4H4"/></svg>'+esc((p&&p.title)||w.priTitle||'A priority')+'</button>'; }
+  var n=(w.cheers||[]).length, on=(w.cheers||[]).indexOf(ME.mid)>=0, ro=(own||!wnCanPost()), by=wnByLine(w);
+  h+='<div class="wn-ft"><button type="button" class="wn-cl'+(on?' on':'')+(ro?' ro':'')+'"'+(ro?' disabled':(' onclick="wnCheer(\''+esc(w.id)+'\')"'))+' aria-pressed="'+(on?'true':'false')+'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21l5-14 9 9-14 5z"/><path d="M14 3v2M19 8h2M17 5l1.5-1.5M10 4l.5 1.5M19.5 12l1.5.5"/></svg>Celebrate'+(n?' \u00b7 '+n:'')+'</button>'+(by?'<span class="wn-by">'+esc(by)+'</span>':'')+'</div>';
+  return h+'</div>';
+}
+function renderWins(keep){
+  var box=document.getElementById('wnList'); if(!box) return;
+  if(!activeCid){ box.innerHTML='<div class="pri-note">Open a company to see its wins.</div>'; return; }
+  winsEnsure(); if(!WINS.viewWk) WINS.viewWk=WINS.curWk;
+  var isCur=(WINS.viewWk===WINS.curWk), list=isCur?WINS.cur:WINS.view;
+  var tt=document.getElementById('wnTitle'); if(tt) tt.textContent=isCur?'This week\u2019s wins':('Wins \u00b7 week of '+wnDate(WINS.viewWk).toLocaleDateString('en-US',{month:'short',day:'numeric'}));
+  var wl=document.getElementById('wnWeek'); if(wl) wl.innerHTML=esc(wnLabel(WINS.viewWk))+(isCur?'':' <button type="button" class="wn-now" onclick="winsNow()">This week</button>');
+  var nx=document.getElementById('wnNext'); if(nx) nx.disabled=isCur;
+  var sb=document.getElementById('wnSub'); if(sb) sb.textContent=isCur?'Share something that went well this week. A fresh week starts every Monday; past weeks stay one tap away.':'A past week. Wins from this week are kept here to look back on.';
+  var cp=document.getElementById('wnCompose');
+  if(cp && !(keep && document.getElementById('wnText') && isCur)){
+    if(!isCur) cp.innerHTML='';
+    else if(!wnCanPost()) cp.innerHTML='<div class="pri-note" style="margin-bottom:16px">Wins are shared by people in the company. You can read them here; to share one, you need a person record in this company.</div>';
+    else cp.innerHTML='<div class="wn-cmp"><textarea id="wnText" rows="2" maxlength="2000" placeholder="What went well this week, '+esc(firstName(ME.mid)||'')+'?" oninput="wnGrow(this)"></textarea><div class="wn-cf"><span class="wn-who"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg>Shared with everyone at '+esc(company.name||'the company')+'</span><select class="wn-link" id="wnLink" aria-label="Link a priority">'+wnLinkOptions()+'</select><button type="button" class="wn-go" id="wnGo" onclick="wnShare()" disabled>Share win</button></div></div>';
+  }
+  var people={}; list.forEach(function(w){ people[w.authorMid]=1; }); var np=Object.keys(people).length;
+  var st=document.getElementById('wnStat'); if(st) st.innerHTML=list.length?('<b>'+list.length+' win'+(list.length===1?'':'s')+'</b> from '+np+' '+(np===1?'person':'people')):'';
+  box.innerHTML=list.length?list.map(wnCard).join(''):('<div class="pri-note">'+(isCur?'No wins yet this week. Be the first to share one.':'No wins were shared this week.')+'</div>');
+  if(isCur && (document.getElementById('wins')||{classList:{contains:function(){return false;}}}).classList.contains('active')) wnMarkSeen();
+}
+function renderProfilePriorities(mid){ ensurePriSub(); var el=document.getElementById('pfPriorities'); if(!el)return; var list=priorities.filter(function(p){return p.ownerMid===mid && !p.ownerFid && canSeePriority(p);}).sort(function(a,b){return (a.order||0)-(b.order||0);}); if(!list.length){ el.innerHTML='<div class="pf-empty">No priorities listed yet'+(mid===ME.mid?' \u2014 add some from the Priorities tab.':'.')+'</div>'; return; } var _drag=(isAdmin||mid===ME.mid) && list.length>1; /* PT_PROFREORDER_V1 */
   el.innerHTML='<ul class="pri-list'+(_drag?'':' pri-readonly')+'" id="pfPriList">'+list.map(function(p){ return priCardHTML(p,_drag,canEditPriority(p),canAgreePriority(p)); }).join('')+'</ul>';
   if(_drag){ var _h=document.getElementById('pfPriList'); priRenumberIn(_h); priBindDrag(_h); } priRenumberIn(el.querySelector('.pri-list')); }
 
@@ -5168,7 +5419,8 @@ function aiSnapshot(){
     o.created=day(i.createdAt); o.updated=day(i.updatedAt); return o; });
   var pri=priorities.map(function(p){ var o={id:p.id,ownerMid:p.ownerMid,title:p.title||'',status:priLabel(p.status),visibility:priVisOf(p),agreedByManager:!!p.agreed};
     if(p.ownerFid&&fns[p.ownerFid]){ o.ownedByTeamFid=p.ownerFid; o.team=fns[p.ownerFid].name; o.leadMid=p.ownerMid; } if(p.note)o.note=clip(p.note,400); if(p.status==='Need Help'&&p.help){ o.askingForHelpFrom=p.help.from==='everyone'?'everyone':(p.help.mids||[]); if(p.help.note)o.helpNote=clip(p.help.note,300); } if((p.involves||[]).length)o.involves=p.involves; o.created=day(p.createdAt); o.updated=day(p.updatedAt); var c=day(p.completedAt); if(c)o.completed=c; return o; });
-  return JSON.stringify({company:company.name||'',ceoMid:(isMem(company.ceoMemberId)?company.ceoMemberId:null),people:people,teams:teams,issues:iss,priorities:pri});
+  var wins=(typeof WINS!=='undefined'?WINS.cur:[]).map(function(w){ return {byMid:w.authorMid,text:clip(w.text,500),celebrations:(w.cheers||[]).length}; });
+  return JSON.stringify({company:company.name||'',ceoMid:(isMem(company.ceoMemberId)?company.ceoMemberId:null),people:people,teams:teams,issues:iss,priorities:pri,winsThisWeek:wins});
 }
 
 function aiSync(){
