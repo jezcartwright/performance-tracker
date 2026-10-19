@@ -1245,6 +1245,7 @@ body.ai-open #aiPanel{display:flex}
 .ft-def input{width:16px;height:16px;accent-color:#2e7d5b;margin:0}
 .ft-note{font-size:12.5px;color:var(--t2);margin-top:10px}
 </style>
+<style>/* PT_AIPLUS_V1 */ .ai-add.off{color:var(--t2);border-style:dashed;background:var(--bg)}</style>
 </head>
 <body>
 
@@ -1579,7 +1580,7 @@ function openFocus(k){closeMenu();show('home');var f=document.getElementById('fo
     <div class="ai-atts" id="aiAtts"></div>
     <textarea id="aiInput" rows="4" placeholder="Ask about this company, or tell Claude to add something" oninput="aiGrow(this)" onkeydown="aiKey(event)" onpaste="aiPaste(event)"></textarea>
     <div class="ai-tools">
-      <button class="ai-add" type="button" onclick="document.getElementById('aiFile').click()" title="Add files" aria-label="Add files"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
+      <button class="ai-add" type="button" onclick="aiAddFiles()" title="Add files" aria-label="Add files"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
       <span class="ai-hint">PDF, Word, images, CSV or text</span><span class="ai-sp"></span>
       <button class="ai-send" id="aiSend" onclick="aiSend()" aria-label="Send"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>
     </div>
@@ -5623,7 +5624,7 @@ window.aiToggle=function(force){
   var open=(typeof force==='boolean')?force:!AI.open; AI.open=open;
   document.body.classList.toggle('ai-open',open);
   var b=document.getElementById('aiBtn'); if(b){ b.classList.toggle('on',open); b.setAttribute('aria-expanded',open?'true':'false'); }
-  if(open){ aiPolicyWatch(); aiSync(); aiRender(); setTimeout(function(){ var i=document.getElementById('aiInput'); if(i&&wide())i.focus(); },30); }
+  if(open){ if(AI.scope==='all'&&!AI.busy){ AI.scope='this'; AI.turns=[]; AI.sets={}; } aiPolicyWatch(); aiSync(); aiRender(); setTimeout(function(){ var i=document.getElementById('aiInput'); if(i&&wide())i.focus(); },30); }
 };
 window.aiNew=function(){ if(AI.busy)return; AI.turns=[]; AI.drafts={}; AI.sets={}; AI.runs={}; AI.pending=[]; renderAtts(); aiRender(); var i=document.getElementById('aiInput'); if(i)i.focus(); };
 window.aiGrow=function(t){ t.style.height='auto'; var cap=Math.round(window.innerHeight*0.45); t.style.height=Math.max(96,Math.min(cap,t.scrollHeight+3))+'px'; };
@@ -5876,16 +5877,18 @@ function chSetHTML(sid){ var S=AI.sets[sid]; if(!S) return ''; var n=chCount(S),
   if(S.state==='applying') h+='<div class="ch-foot"><span class="ch-prog">Applying '+S.done+' of '+S.total+'\u2026</span></div>';
   else h+='<div class="ch-foot"><button type="button" class="ch-apply" onclick="chApplyOne(\''+sid+'\')"'+(n?'':' disabled')+'>Apply '+n+' change'+(n===1?'':'s')+' to '+esc(S.name)+'</button><button type="button" class="ch-dis" onclick="chDiscard(\''+sid+'\')">Discard</button></div>';
   return h+'</div>'; }
-window.aiScope=function(sc){ if(AI.busy) return; AI.scope=sc; AI.turns=[]; AI.sets={}; AI.pending=[]; renderAtts(); aiRenderScope(); aiRender(); };
+window.aiAddFiles=function(){ if(AI.scope==='all'){ AI.turns.push({role:'error',content:'Files can\u2019t be used in All companies mode, because a document about one client mustn\u2019t be read alongside other clients\u2019 data. Switch to '+((company&&company.name)||'a company')+' at the top of this panel to attach files.'}); aiRender(); return; } var f=document.getElementById('aiFile'); if(f) f.click(); };
+window.aiScope=function(sc){ if(AI.busy) return; AI.cid=activeCid; AI.scope=sc; AI.turns=[]; AI.sets={}; AI.pending=[]; renderAtts(); aiRenderScope(); aiRender(); };
 function aiRenderScope(){ var el=document.getElementById('aiScope'); if(!el) return;
   el.innerHTML='<div class="ai-seg"><button type="button" class="'+(AI.scope==='this'?'on':'')+'" onclick="aiScope(\'this\')">'+esc(activeCid?((company&&company.name)||'This company'):'This company')+'</button><button type="button" class="'+(AI.scope==='all'?'on':'')+'" onclick="aiScope(\'all\')">All companies</button></div>';
   var add=document.querySelector('#aiPanel .ai-add'), hint=document.querySelector('#aiPanel .ai-hint'), inp=document.getElementById('aiInput');
-  if(add) add.style.display=AI.scope==='all'?'none':''; if(hint) hint.textContent=AI.scope==='all'?'No files in all-companies mode: each company is handled on its own':'PDF, Word, Excel, images, CSV or text';
+  if(add){ add.style.display=''; add.classList.toggle('off',AI.scope==='all'); add.setAttribute('aria-disabled',AI.scope==='all'?'true':'false'); add.title=AI.scope==='all'?'Files can\u2019t be used in All companies mode':'Add files'; } /* PT_AIPLUS_V1 — never hidden */
+  if(hint) hint.textContent=AI.scope==='all'?'Files work in one company at a time':'PDF, Word, Excel, images, CSV or text';
   if(inp) inp.placeholder=AI.scope==='all'?'Tell Claude what to change in every company (each is handled separately)':'Ask about this company, or tell Claude to add or change something'; }
 function allCompaniesSplit(){ var on=[], off=[]; Object.keys(companies||{}).sort(function(a,b){ return String((companies[a]||{}).name||'').localeCompare(String((companies[b]||{}).name||'')); }).forEach(function(c){ (aiAllowed(c)?on:off).push(c); }); return {on:on,off:off}; }
 
 function aiSync(){
-  if(AI.cid!==activeCid){ AIPOL.step=null; AIPOL.err=''; AI.cid=activeCid; if(AI.scope==='this'){ AI.turns=[]; AI.sets={}; AI.pending=[]; renderAtts(); } }
+  if(AI.cid!==activeCid){ AIPOL.step=null; AIPOL.err=''; AI.cid=activeCid; AI.scope='this'; AI.turns=[]; AI.sets={}; AI.pending=[]; renderAtts(); }
   var co=document.getElementById('aiCo'); if(co) co.textContent=AI.scope==='all'?'All companies':((activeCid&&company&&company.name)?company.name:'');
   aiRenderScope();
 }
