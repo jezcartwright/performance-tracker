@@ -1181,6 +1181,70 @@ body.ai-open #aiPanel{display:flex}
 .ai-polbar .ai-pb{margin-left:auto;display:flex;gap:10px}
 .ai-polbar .ai-pb button{margin:0}
 </style>
+<style>
+/* PT_AIBATCH_V1 */
+.ai-scope{padding:10px 14px 0}
+.ai-seg{display:flex;border:1.5px solid var(--b);border-radius:10px;overflow:hidden}
+.ai-seg button{flex:1;border:0;background:var(--card);padding:8px 10px;font:600 13px var(--ui);color:var(--t2);cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ai-seg button+button{border-left:1.5px solid var(--b)}
+.ai-seg button.on{background:var(--t);color:#fff}
+.ch-set{border:1.5px solid var(--t2);border-radius:12px;margin-top:10px;background:var(--card);overflow:hidden}
+.ch-set.done{border-color:#bfe0cf}
+.ch-set.gone{border:1px dashed var(--b);padding:9px 12px;color:var(--t2);font-size:13px}
+.ch-h{padding:10px 12px;font-weight:700;font-size:13.5px;border-bottom:1px solid var(--b)}
+.ch-g{border-bottom:1px solid var(--b)}
+.ch-gh{display:flex;align-items:center;gap:9px;padding:9px 12px}
+.ch-gt{font-weight:600;font-size:13.5px}
+.ch-gp{font-size:12px;color:#8a5a12}
+.ch-rv{margin-left:auto;background:none;border:0;padding:0;font:600 12.5px var(--ui);color:var(--t2);cursor:pointer;text-decoration:underline}
+.ch-ck{width:18px;height:18px;flex:none;border:1.5px solid var(--t2);border-radius:5px;background:var(--card);padding:0;cursor:pointer;position:relative}
+.ch-ck.on{background:var(--t);border-color:var(--t)}
+.ch-ck.on:after{content:'';position:absolute;left:5px;top:1px;width:4px;height:9px;border:solid #fff;border-width:0 2px 2px 0;transform:rotate(45deg)}
+.ch-ck.some{background:var(--t2);border-color:var(--t2)}
+.ch-ck[disabled]{cursor:default;border-color:var(--b);background:var(--bg)}
+.ch-i{display:flex;align-items:flex-start;gap:9px;padding:7px 12px 7px 39px;font-size:13px;line-height:1.45}
+.ch-i .ch-ck{margin-top:1px}
+.ch-i em{display:block;font-style:normal;font-size:12px;color:#8a2a1f}
+.ch-i.bad{color:var(--t2)}
+.ch-st{margin-left:auto;font-size:12px;color:#2e7d5b;font-weight:700}
+.ch-st.bad{color:#8a2a1f}
+.ch-foot{display:flex;gap:8px;padding:10px 12px;align-items:center}
+.ch-apply{flex:1;background:var(--t);color:#fff;border:0;border-radius:9px;padding:10px;font:700 13px var(--ui);cursor:pointer}
+.ch-apply[disabled]{background:var(--b);color:var(--t2);cursor:default}
+.ch-dis{background:var(--card);border:1px solid var(--b);border-radius:9px;padding:10px 12px;font:600 13px var(--ui);color:var(--t2);cursor:pointer}
+.ch-prog{font-size:13px;color:var(--t2)}
+.ch-warn{margin:8px 12px;font-size:12.5px;line-height:1.5;color:#7a4a12;background:#fff6ee;border:1px solid #f3cfaa;border-radius:9px;padding:8px 10px}
+.ch-ok{padding:10px 12px;font-weight:700;font-size:13.5px;color:#2e7d5b;background:#e2f1ea;border-bottom:1px solid #bfe0cf}
+.ch-res{display:flex;width:100%;justify-content:space-between;gap:10px;text-align:left;background:var(--card);border:0;border-bottom:1px solid var(--b);padding:8px 12px;font:400 13px var(--ui);color:var(--t);cursor:pointer}
+.ch-res:last-child{border-bottom:0}
+.ch-res .ch-go{color:var(--strip);font-weight:600;flex:none}
+.ch-res.bad{cursor:default;color:#8a2a1f}
+.ch-co{margin-top:12px}
+.ch-con{font-size:11px;font-weight:800;letter-spacing:.7px;text-transform:uppercase;color:var(--t2);margin-bottom:4px}
+.ch-skip{margin-top:12px;font-size:12.5px;color:var(--t2)}
+.ch-applyall{width:100%;margin-top:12px;background:var(--strip);color:#fff;border:0;border-radius:10px;padding:11px;font:700 13.5px var(--ui);cursor:pointer}
+.wn-by2{font-size:12px;color:var(--t2)}
+</style>
+<style>
+/* PT_FEATURES_V1 */
+.ft-row{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:6px 16px;align-items:center;padding:12px 0;border-top:1px solid var(--b)}
+.ft-row:first-of-type{border-top:0}
+.ft-nm{font-weight:700;font-size:14.5px}
+.ft-ds{font-size:12.5px;color:var(--t2);margin-top:2px;line-height:1.45}
+.ft-ct{font-size:12px;color:var(--t2);margin-top:3px}
+.ft-sw{width:46px;height:26px;border-radius:999px;border:0;background:var(--b);position:relative;cursor:pointer;flex:none;padding:0}
+.ft-sw:after{content:'';position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:left .15s}
+.ft-sw.on{background:#2e7d5b}
+.ft-sw.on:after{left:23px}
+.ft-sw[disabled]{cursor:default}
+.ft-all{background:var(--card);border:1px solid var(--b);border-radius:9px;padding:7px 12px;font:600 12.5px var(--ui);color:var(--t);cursor:pointer;white-space:nowrap}
+.ft-all:hover{border-color:var(--strip);color:var(--strip)}
+.ft-ev{font-size:12px;color:var(--t2);white-space:nowrap}
+.ft-def{margin-top:12px;padding-top:12px;border-top:1px solid var(--b);font-size:13px;color:var(--t2);display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center}
+.ft-def label{display:inline-flex;gap:6px;align-items:center;color:var(--t);cursor:pointer}
+.ft-def input{width:16px;height:16px;accent-color:#2e7d5b;margin:0}
+.ft-note{font-size:12.5px;color:var(--t2);margin-top:10px}
+</style>
 </head>
 <body>
 
@@ -1509,6 +1573,7 @@ function openFocus(k){closeMenu();show('home');var f=document.getElementById('fo
     <button class="ai-hb" onclick="aiNew()" title="Start a new conversation">New</button>
     <button class="ai-hb ai-x" onclick="aiToggle(false)" aria-label="Close">&times;</button>
   </div>
+  <div class="ai-scope" id="aiScope"></div><!-- PT_AIBATCH_V1 -->
   <div class="ai-msgs" id="aiMsgs" aria-live="polite"></div>
   <div class="ai-in"><!-- PT_AIDOCS_V1 -->
     <div class="ai-atts" id="aiAtts"></div>
@@ -2249,6 +2314,11 @@ function openFocus(k){closeMenu();show('home');var f=document.getElementById('fo
           <input class="adm-input" id="newCoName" placeholder="New company name" style="margin:0;max-width:220px">
           <button class="tg" onclick="addCompany()">+ Add company</button>
         </div>
+      </div>
+      <div class="panel" id="featPanel" style="display:none;grid-column:1/-1"><!-- PT_FEATURES_V1 -->
+        <h3>Features <span class="superflag">SUPER ADMIN</span></h3>
+        <p class="psub" id="featSub">Switch features on or off for this company. Try something in one company first, then turn it on for every company. Switching a feature off hides it; nothing is deleted.</p>
+        <div id="featList"></div>
       </div>
       <div class="panel" style="grid-column:1/-1">
         <h3>People &amp; structure</h3>
@@ -3086,6 +3156,7 @@ function maybeReveal(){ if(revealPending && themeSeen && membersSeen) revealApp(
 function startApp(){
   renderCoSwitch();
   document.getElementById('superFlag').style.display=ME.isSuper?'':'none';
+  try{ featWatch(); }catch(_fe){} /* PT_FEATURES_V1 */
   var _aib=document.getElementById('aiBtn'); if(_aib)_aib.style.display=ME.isSuper?'':'none'; if(!ME.isSuper && typeof aiToggle==='function' && document.body.classList.contains('ai-open')) aiToggle(false); /* PT_ASKCLAUDE_V1 */
   var _eo=document.getElementById('enqOpen'); if(_eo)_eo.style.display=ME.isSuper?'':'none';
   var _uo=document.getElementById('usageOpen'); if(_uo)_uo.style.display=ME.isSuper?'':'none';
@@ -5235,7 +5306,7 @@ function wnCard(w){
   var mid=w.authorMid, m=members[mid]||{}, own=(mid===ME.mid), cur=(w.weekId===WINS.curWk), canDel=own||isAdmin;
   var team=(m.functionId&&fns[m.functionId])?(fns[m.functionId].name||''):'';
   var when=ms(w.createdAt)?new Date(ms(w.createdAt)).toLocaleDateString('en-US',{weekday:'long'}):'Just now';
-  var h='<div class="wn-card"><div class="wn-ch"><span class="wn-av" style="'+avBg(mid)+'" onclick="openProfile(\''+esc(mid)+'\')">'+avBody(mid)+'</span><div><div class="wn-nm" onclick="openProfile(\''+esc(mid)+'\')">'+esc(members[mid]?personName(mid):(w.authorName||'Former member'))+'</div><div class="wn-tm">'+esc([team,when].filter(Boolean).join(' \u00b7 '))+(ms(w.updatedAt)-ms(w.createdAt)>60000?' \u00b7 edited':'')+'</div></div>'
+  var h='<div class="wn-card"><div class="wn-ch"><span class="wn-av" style="'+avBg(mid)+'" onclick="openProfile(\''+esc(mid)+'\')">'+avBody(mid)+'</span><div><div class="wn-nm" onclick="openProfile(\''+esc(mid)+'\')">'+esc(members[mid]?personName(mid):(w.authorName||'Former member'))+'</div><div class="wn-tm">'+esc([team,when].filter(Boolean).join(' \u00b7 '))+(ms(w.updatedAt)-ms(w.createdAt)>60000?' \u00b7 edited':'')+(w.postedByUid&&w.postedByUid!==w.authorUid?(' \u00b7 added by '+esc(String(w.postedByName||'an admin').split(' ')[0])):'')+'</div></div>'
     +((own&&cur)||canDel?'<span class="wn-own">'+(own&&cur&&WINS.editId!==w.id?'<button type="button" onclick="wnEdit(\''+esc(w.id)+'\')">Edit</button>':'')+(canDel?'<button type="button" onclick="wnDelete(\''+esc(w.id)+'\')">Delete</button>':'')+'</span>':'')+'</div>';
   if(WINS.editId===w.id) h+='<div class="wn-edit"><textarea id="wnEditText" maxlength="2000">'+esc(w.text||'')+'</textarea><div class="wn-eb"><button type="button" class="c" onclick="wnEditCancel()">Cancel</button><button type="button" class="s" onclick="wnEditSave(\''+esc(w.id)+'\')">Save</button></div></div>';
   else h+='<div class="wn-tx">'+esc(w.text||'')+'</div>';
@@ -5410,6 +5481,76 @@ function syncNewBtn(screen){
 }
 window.newBtnAction=function(){ var btn=document.getElementById('newBtn'); var act=btn?btn.dataset.act:''; if(act==='priority')openRaisePriority(null); else if(act==='issue')openRaise(); };
 
+
+/* PT_FEATURES_V1 — per-company feature switches, set by the super admin. Effective value for a company:
+   its own switch if set, otherwise the default for new companies, otherwise the feature's built-in default.
+   Existing features are built-in ON, so every company keeps everything until a switch is turned off. */
+var FEATURE_LIST=[
+  {key:'wins',name:'Wins',desc:'The weekly Wins wall, its tab and badge.',on:true},
+  {key:'teamPri',name:'Team priorities',desc:'Priorities owned by a team, the team band on Priorities, and the \u201cOwned by\u201d switch.',on:true},
+  {key:'needHelp',name:'Need Help status',desc:'The Need Help status, asking people for help, and help notifications.',on:true},
+  {key:'archive',name:'Archive',desc:'The Archive tab of completed priorities and resolved issues.',on:true}
+];
+var FEAT={defaults:{},flags:{},uDef:null,uFlags:null,uOne:null,oneCid:null};
+function featBuiltIn(k){ for(var i=0;i<FEATURE_LIST.length;i++) if(FEATURE_LIST[i].key===k) return FEATURE_LIST[i].on; return true; }
+function featFor(cid,k){ var f=FEAT.flags[cid]; if(f&&typeof f[k]==='boolean') return f[k]; if(typeof FEAT.defaults[k]==='boolean') return FEAT.defaults[k]; return featBuiltIn(k); }
+function feat(k){ return activeCid?featFor(activeCid,k):true; }
+function featWatch(){
+  if(!ME.uid) return;
+  if(!FEAT.uDef) FEAT.uDef=db.collection('platform').doc('featureDefaults').onSnapshot(function(s){ FEAT.defaults=s.exists?(s.data()||{}):{}; featApply(); }, function(e){ console.warn('featureDefaults',e); });
+  if(ME.isSuper){ if(!FEAT.uFlags) FEAT.uFlags=db.collection('featureFlags').onSnapshot(function(qs){ var m={}; qs.forEach(function(d){ m[d.id]=d.data()||{}; }); FEAT.flags=m; featApply(); }, function(e){ console.warn('featureFlags',e); }); return; }
+  if(FEAT.oneCid!==activeCid){ if(FEAT.uOne){ FEAT.uOne(); FEAT.uOne=null; } FEAT.oneCid=activeCid; FEAT.flags={};
+    if(activeCid){ var c=activeCid; FEAT.uOne=db.collection('featureFlags').doc(c).onSnapshot(function(s){ if(activeCid!==c) return; FEAT.flags={}; FEAT.flags[c]=s.exists?(s.data()||{}):{}; featApply(); }, function(e){ console.warn('featureFlags',e); }); } }
+}
+function featApply(){
+  var tw=document.getElementById('tabWins'), ta=document.getElementById('tabArchive');
+  if(tw) tw.style.display=feat('wins')?'':'none'; if(ta) ta.style.display=feat('archive')?'':'none';
+  var act=document.querySelector('.screen.active'), id=act?act.id:'';
+  if((id==='wins'&&!feat('wins'))||(id==='archive'&&!feat('archive'))) goPriorities();
+  ['pd-status','pr-status'].forEach(function(sid){ var sel=document.getElementById(sid); if(!sel) return; Array.prototype.forEach.call(sel.options,function(o){ if(o.value==='Need Help'){ var keep=(sel.value==='Need Help'); o.hidden=!feat('needHelp')&&!keep; o.disabled=!feat('needHelp')&&!keep; } }); });
+  try{ if(!feat('wins')){ var wc=document.getElementById('winsCount'); if(wc) wc.style.display='none'; } updateBadge(); }catch(e){}
+  try{ var pr=document.getElementById('priorities'); if(pr&&pr.classList.contains('active')) renderPriorities(); }catch(e){}
+  try{ var fp=document.getElementById('featPanel'); if(fp&&fp.style.display!=='none') renderFeatures(); }catch(e){}
+}
+/* gates on existing features */
+var _ptRenderPriTeams=renderPriTeams; renderPriTeams=function(){ if(!feat('teamPri')){ var b=document.getElementById('priTeams'), mh=document.getElementById('priMineHead'); if(b) b.innerHTML=''; if(mh) mh.style.display='none'; return false; } return _ptRenderPriTeams.apply(this,arguments); };
+var _ptPrEligible=prEligibleTeams; prEligibleTeams=function(){ return feat('teamPri')?_ptPrEligible.apply(this,arguments):[]; };
+var _ptPfTeamFids=pfTeamFids; pfTeamFids=function(mid){ return feat('teamPri')?_ptPfTeamFids(mid):[]; };
+var _ptPoTeamBlock=poTeamBlock; poTeamBlock=function(f,list){ return feat('teamPri')?_ptPoTeamBlock(f,list):''; };
+var _ptHelpAsks=helpAsks; helpAsks=function(){ return feat('needHelp')?_ptHelpAsks():[]; };
+var _ptGoWins=window.goWins; window.goWins=function(){ if(!feat('wins')) return goPriorities(); return _ptGoWins.apply(this,arguments); };
+var _ptSwitch=window.switchCompany; window.switchCompany=function(cid){ var r=_ptSwitch.apply(this,arguments); try{ featWatch(); featApply(); if(!feat('wins')) goPriorities(); }catch(e){} return r; };
+var _ptRenderAdmin=renderAdmin; renderAdmin=function(){ var r=_ptRenderAdmin.apply(this,arguments); try{ renderFeatures(); }catch(e){} return r; };
+/* the panel */
+function featCompanies(){ return Object.keys(companies||{}); }
+function renderFeatures(){
+  var p=document.getElementById('featPanel'), box=document.getElementById('featList'); if(!p||!box) return;
+  if(!ME.isSuper||!activeCid){ p.style.display='none'; return; } p.style.display=''; featWatch();
+  var nm=esc((company&&company.name)||'this company'), all=featCompanies(), tot=all.length;
+  var sb=document.getElementById('featSub'); if(sb) sb.textContent='Switch features on or off for '+((company&&company.name)||'this company')+'. Try something in one company first, then turn it on for every company. Switching a feature off hides it; nothing is deleted.';
+  var h='';
+  FEATURE_LIST.forEach(function(f){ var on=featFor(activeCid,f.key), n=all.filter(function(c){ return featFor(c,f.key); }).length;
+    h+='<div class="ft-row"><div><div class="ft-nm">'+esc(f.name)+'</div><div class="ft-ds">'+esc(f.desc)+'</div><div class="ft-ct">On in '+n+' of '+tot+' compan'+(tot===1?'y':'ies')+'</div></div>'
+      +'<button type="button" role="switch" aria-checked="'+(on?'true':'false')+'" aria-label="'+esc(f.name)+' for '+nm+'" class="ft-sw'+(on?' on':'')+'" onclick="featToggle(\''+f.key+'\')"></button>'
+      +(n<tot?'<button type="button" class="ft-all" onclick="featAllOn(\''+f.key+'\')">Turn on for all '+tot+'</button>':'<span class="ft-ev">Everywhere</span>')+'</div>'; });
+  h+='<div class="ft-row"><div><div class="ft-nm">Ask Claude</div><div class="ft-ds">Set company by company in the Ask Claude panel, according to each client\u2019s agreement. It\u2019s never switched on in bulk.</div></div><span></span><span class="ft-ev">Per company</span></div>';
+  h+='<div class="ft-def"><span>New companies start with:</span>'+FEATURE_LIST.map(function(f){ var d=(typeof FEAT.defaults[f.key]==='boolean')?FEAT.defaults[f.key]:f.on; return '<label><input type="checkbox"'+(d?' checked':'')+' onchange="featDefault(\''+f.key+'\',this.checked)">'+esc(f.name)+'</label>'; }).join('')+'</div>';
+  if(FEAT.err) h+='<div class="ft-note" style="color:#8a2a1f">'+esc(FEAT.err)+'</div>';
+  box.innerHTML=h;
+}
+function featErr(e){ FEAT.err=/permission/i.test((e&&(e.code||e.message))||'')?'Couldn\u2019t save: the latest database rules haven\u2019t been published yet. Publish firestore.rules in the Firebase console, then try again.':('Couldn\u2019t save: '+((e&&e.message)||'try again.')); renderFeatures(); }
+window.featToggle=function(k){ if(!ME.isSuper||!activeCid) return; FEAT.err=''; var v=!featFor(activeCid,k), u={}; u[k]=v;
+  FEAT.flags[activeCid]=Object.assign({},FEAT.flags[activeCid]||{},u); featApply(); renderFeatures();
+  db.collection('featureFlags').doc(activeCid).set(u,{merge:true}).catch(featErr); };
+window.featAllOn=function(k){ if(!ME.isSuper) return; FEAT.err=''; var b=db.batch(), u={}; u[k]=true;
+  featCompanies().forEach(function(c){ b.set(db.collection('featureFlags').doc(c),u,{merge:true}); FEAT.flags[c]=Object.assign({},FEAT.flags[c]||{},u); });
+  featApply(); renderFeatures(); b.commit().catch(featErr); };
+window.featDefault=function(k,v){ if(!ME.isSuper) return; FEAT.err='';
+  /* pin every existing company to what it has now, so changing the default only affects NEW companies */
+  var b=db.batch(); featCompanies().forEach(function(c){ var f=FEAT.flags[c]||{}; if(typeof f[k]!=='boolean'){ var u={}; u[k]=featFor(c,k); b.set(db.collection('featureFlags').doc(c),u,{merge:true}); FEAT.flags[c]=Object.assign({},f,u); } });
+  var d={}; d[k]=!!v; b.set(db.collection('platform').doc('featureDefaults'),d,{merge:true}); FEAT.defaults=Object.assign({},FEAT.defaults,d);
+  renderFeatures(); b.commit().catch(featErr); };
+
 </script>
 <script>/* PL_RESIZE_V1 PL_RESIZE_V2 */window.addEventListener("message",function(e){var f=document.getElementById("pl-frame");if(f&&e.data&&typeof e.data.plHeight==="number"){var nh=e.data.plHeight+"px";if(f.style.height!==nh){f.style.height=nh;f.style.minHeight="0";}}});</script>
 <script>
@@ -5451,7 +5592,7 @@ function aiPolicyHTML(){ var nm=esc((company&&company.name)||'this company');
 function aiPolBarHTML(){ var nm=esc((company&&company.name)||'this company');
   if(AIPOL.step==='off') return '<div class="ai-polbar off">Switch off Ask Claude for '+nm+'?<span class="ai-pb"><button type="button" id="aiPolGo" onclick="aiPolicySet(false)">Switch off</button><button type="button" onclick="aiPolStep(null)">Keep on</button></span></div>'+(AIPOL.err?'<div class="ai-pol-err">'+esc(AIPOL.err)+'</div>':'');
   return '<div class="ai-polbar">AI processing allowed for '+nm+'<button type="button" onclick="aiPolStep(\'off\')">Switch off</button></div>'; }
-function aiFn(){ if(!AI.fn){ AI.fn=firebase.app().functions('us-central1').httpsCallable('askClaude',{timeout:120000}); } return AI.fn; }
+function aiFn(){ if(!AI.fn){ AI.fn=firebase.app().functions('us-central1').httpsCallable('askClaude',{timeout:300000}); } return AI.fn; }
 function wide(){ return window.innerWidth>=900; }
 function isMem(m){ return !!(m&&members[m]); }
 function isFn(f){ return !!(f&&fns[f]); }
@@ -5477,10 +5618,6 @@ function aiSnapshot(){
   return JSON.stringify({company:company.name||'',ceoMid:(isMem(company.ceoMemberId)?company.ceoMemberId:null),people:people,teams:teams,issues:iss,priorities:pri,winsThisWeek:wins});
 }
 
-function aiSync(){
-  if(AI.cid!==activeCid){ AIPOL.step=null; AIPOL.err=''; AI.cid=activeCid; AI.turns=[]; AI.drafts={}; AI.pending=[]; renderAtts(); }
-  var co=document.getElementById('aiCo'); if(co) co.textContent=(activeCid&&company&&company.name)?company.name:'';
-}
 window.aiToggle=function(force){
   if(!ME.isSuper) return;
   var open=(typeof force==='boolean')?force:!AI.open; AI.open=open;
@@ -5488,7 +5625,7 @@ window.aiToggle=function(force){
   var b=document.getElementById('aiBtn'); if(b){ b.classList.toggle('on',open); b.setAttribute('aria-expanded',open?'true':'false'); }
   if(open){ aiPolicyWatch(); aiSync(); aiRender(); setTimeout(function(){ var i=document.getElementById('aiInput'); if(i&&wide())i.focus(); },30); }
 };
-window.aiNew=function(){ if(AI.busy)return; AI.turns=[]; AI.drafts={}; AI.pending=[]; renderAtts(); aiRender(); var i=document.getElementById('aiInput'); if(i)i.focus(); };
+window.aiNew=function(){ if(AI.busy)return; AI.turns=[]; AI.drafts={}; AI.sets={}; AI.runs={}; AI.pending=[]; renderAtts(); aiRender(); var i=document.getElementById('aiInput'); if(i)i.focus(); };
 window.aiGrow=function(t){ t.style.height='auto'; var cap=Math.round(window.innerHeight*0.45); t.style.height=Math.max(96,Math.min(cap,t.scrollHeight+3))+'px'; };
 window.aiKey=function(e){ if(e.key==='Enter'&&!e.shiftKey&&!e.isComposing){ e.preventDefault(); aiSend(); } else if(e.key==='Escape'){ aiToggle(false); } };
 window.aiChip=function(i){ aiSend(SUGGEST[i]); };
@@ -5507,43 +5644,7 @@ function errText(e){
   return m||'Something went wrong. Try again.';
 }
 
-function turnForApi(t){
-  if(t.role==='user') return {role:'user',content:t.content,attachments:(t.attachments||[]).map(function(a){ return a.kind==='text'?{kind:'text',name:a.name,text:a.text}:{kind:a.kind,name:a.name,mediaType:a.mediaType,data:a.data}; })};
-  var s=t.content||'';
-  (t.drafts||[]).forEach(function(id){ var d=AI.drafts[id]; if(!d)return; var nm=(d.type==='person')?((d.input.first||'')+' '+(d.input.last||'')).trim():(d.input.title||d.input.text||'');
-    var st=d.state==='added'?'the user added it':(d.state==='cancelled'?'the user cancelled it':(d.state==='editing'?'the user opened it in the form to edit':'not yet confirmed'));
-    s+=(s?'\n':'')+'[Drafted '+d.type+': "'+clip(nm,80)+'" \u2014 '+st+']'; });
-  return {role:'assistant',content:s||'(drafted)'};
-}
 
-window.aiSend=function(preset){
-  if(AI.busy) return;
-  var inp=document.getElementById('aiInput');
-  var text=String(preset!=null?preset:(inp?inp.value:'')).trim();
-  aiSync();
-  if(AI.pending.some(function(a){ return a.state==='reading'; })) return;
-  var files=AI.pending.filter(function(a){ return a.state==='ready'; });
-  if(!text && !files.length) return;
-  if(files.length && convSize()+files.reduce(function(n,a){ return n+attSize(a); },0)>MAX_CONV){ AI.turns.push({role:'error',content:'Those files would make this conversation too large. Remove some, or tap New to start a fresh conversation.'}); aiRender(); return; }
-  if(!text) text='Please review the attached '+(files.length>1?'files':'file')+'.';
-  if(activeCid && !aiAllowed(activeCid)){ aiRender(); return; } /* PT_AIPOLICY_V1 */
-  var _L=window.__ptLoaded||{}; if(activeCid && !(_L.cid===activeCid && _L.co && _L.fns && _L.mem && _L.iss)){ AI.turns.push({role:'error',content:'Still loading this company. Try again in a moment.'}); aiRender(); return; } /* PT_RINGFENCE_V1 */
-  if(!activeCid){ AI.turns.push({role:'user',content:text}); AI.turns.push({role:'error',content:'Open a company first. Claude answers about the company in view.'}); if(inp){inp.value='';aiGrow(inp);} aiRender(); return; }
-  AI.turns.push({role:'user',content:text,attachments:files.map(function(a){ return {kind:a.kind,name:a.name,mediaType:a.mediaType,data:a.data,text:a.text,size:a.size}; })});
-  AI.pending=AI.pending.filter(function(a){ return a.state!=='ready'; }); renderAtts();
-  if(inp){ inp.value=''; aiGrow(inp); }
-  AI.busy=true; aiRender();
-  var cidAtSend=activeCid;
-  var payload={cid:activeCid,companyName:company.name||'',today:new Date().toDateString(),context:aiSnapshot(),
-    messages:AI.turns.filter(function(t){return t.role!=='error';}).map(turnForApi)};
-  aiFn()(payload).then(function(r){
-    if(AI.cid!==cidAtSend||activeCid!==cidAtSend) return;
-    var d=(r&&r.data)||{};
-    var ids=(d.drafts||[]).map(function(dr){ var id='d'+(++AI.seq); AI.drafts[id]={type:dr.type,input:dr.input||{},state:'pending'}; return id; });
-    AI.turns.push({role:'assistant',content:d.text||'',drafts:ids});
-  }).catch(function(e){ console.warn('askClaude',e); if(AI.cid===cidAtSend) AI.turns.push({role:'error',content:errText(e)}); })
-  .then(function(){ AI.busy=false; aiRender(); });
-};
 
 
 /* ---- attachments (PT_AIDOCS_V1) ---- */
@@ -5607,6 +5708,268 @@ window.aiFiles=function(list){
 window.aiPaste=function(e){ var it=(e.clipboardData&&e.clipboardData.files)||[]; var imgs=Array.prototype.filter.call(it,function(f){ return /^image\//.test(f.type); }); if(imgs.length){ e.preventDefault(); aiFiles(imgs); } };
 window.aiDrag=function(e,on){ e.preventDefault(); var p=document.getElementById('aiPanel'); if(p) p.classList.toggle('drag',!!on); };
 window.aiDrop=function(e){ e.preventDefault(); var p=document.getElementById('aiPanel'); if(p) p.classList.remove('drag'); if(e.dataTransfer&&e.dataTransfer.files) aiFiles(e.dataTransfer.files); };
+
+/* ===== PT_AIBATCH_V1 — Claude proposes a SET of changes for one company (or each company, one at a time);
+   you apply the set in place. Every set is pinned to its company; nothing crosses between companies. ===== */
+AI.scope='this'; AI.sets={}; AI.sseq=0;
+function hiddenIn(D,mid){ var m=D.members[mid]; return !m || !!m.coach || (m.email && SUPER_ADMIN_EMAILS.indexOf(String(m.email).toLowerCase())>=0); }
+function nameIn(D,mid){ var m=D.members[mid]; return m?(m.name||((m.first||'')+' '+(m.last||'')).trim()||'Someone'):'Someone'; }
+function aiDataCurrent(){ return {cid:activeCid,name:(company&&company.name)||'',company:company,fns:fns,members:members,issues:issues,priorities:priorities,
+  wins:((typeof WINS!=='undefined'&&WINS.cid===activeCid)?WINS.cur:[])}; }
+function aiLoadData(cid){
+  var base=companiesCol.doc(cid), wk=(typeof wnId==='function')?wnId():'';
+  var rows=function(qs,map){ var o=map?{}:[]; qs.forEach(function(d){ var x=d.data(); x.id=d.id; if(map){ x.mid=d.id; x.name=x.name||((x.first||'')+' '+(x.last||'')).trim(); o[d.id]=x; } else o.push(x); }); return o; };
+  return Promise.all([base.get(),base.collection('functions').get(),base.collection('members').get(),base.collection('issues').get(),base.collection('priorities').get(),
+      wk?base.collection('wins').where('weekId','==',wk).get():Promise.resolve({forEach:function(){}})])
+    .then(function(r){ var co=r[0].exists?r[0].data():{}; var fm={}; r[1].forEach(function(d){ var x=d.data(); x.id=d.id; fm[d.id]=x; });
+      return {cid:cid,name:co.name||((companies[cid]||{}).name)||'Company',company:co,fns:fm,members:rows(r[2],true),issues:rows(r[3]),priorities:rows(r[4]),wins:rows(r[5])}; });
+}
+function aiSnapshotFrom(D){
+  var M=D.members, F=D.fns;
+  var people=Object.keys(M).filter(function(m){ return !hiddenIn(D,m); }).map(function(mid){ var m=M[mid];
+    var o={mid:mid,name:nameIn(D,mid)}; if(m.title)o.title=m.title;
+    if(m.functionId&&F[m.functionId]){ o.fid=m.functionId; o.team=F[m.functionId].name; if(F[m.functionId].leaderMid===mid)o.leadsTeam=true; }
+    if(m.managerMid&&M[m.managerMid])o.reportsToMid=m.managerMid; if(D.company.ceoMemberId===mid)o.isCEO=true;
+    if(m.email)o.email=m.email; o.hasSignedIn=!!m.uid; var la=day(m.lastActiveAt); if(la)o.lastActive=la; return o; });
+  var teams=Object.keys(F).map(function(fid){ var f=F[fid]; var o={fid:fid,name:f.name||''}; if(f.leaderMid&&M[f.leaderMid])o.leaderMid=f.leaderMid; return o; });
+  var iss=D.issues.map(function(i){ var o={id:i.id,title:i.title||'',status:i.status||'open',kind:i.kind||'action',visibility:i.visibility||'team'};
+    if(i.description)o.description=clip(i.description,300); if(i.functionName)o.team=i.functionName; if(i.leaderMid)o.toMid=i.leaderMid;
+    if(i.raiserMid)o.raisedByMid=i.raiserMid; if(i.ballMid)o.ballMid=i.ballMid; o.created=day(i.createdAt); o.updated=day(i.updatedAt); return o; });
+  var pri=D.priorities.map(function(p){ var o={id:p.id,ownerMid:p.ownerMid,title:p.title||'',status:priLabel(p.status),visibility:priVisOf(p),agreedByManager:!!p.agreed};
+    if(p.ownerFid&&F[p.ownerFid]){ o.ownedByTeamFid=p.ownerFid; o.team=F[p.ownerFid].name; o.leadMid=p.ownerMid; } if(p.note)o.note=clip(p.note,300);
+    if(p.status==='Need Help'&&p.help){ o.askingForHelpFrom=p.help.from==='everyone'?'everyone':(p.help.mids||[]); } if((p.involves||[]).length)o.involves=p.involves;
+    o.updated=day(p.updatedAt); var c=day(p.completedAt); if(c)o.completed=c; return o; });
+  var wins=(D.wins||[]).map(function(w){ return {byMid:w.authorMid,text:clip(w.text,400),celebrations:(w.cheers||[]).length}; });
+  return JSON.stringify({company:D.name,ceoMid:(D.company.ceoMemberId&&M[D.company.ceoMemberId])?D.company.ceoMemberId:null,people:people,teams:teams,issues:iss,priorities:pri,winsThisWeek:wins});
+}
+/* ---- a change set ---- */
+var CH_GROUP={priority:'new priorit',issue:'new issue',update:'progress update',person:'new person',win:'win',change_priority:'priority change',change_issue:'issue change'};
+var CH_ORDER=['person','priority','change_priority','issue','change_issue','update','win'];
+function chPlural(t,n){ var b=CH_GROUP[t]||t; if(t==='priority') return n+' new priorit'+(n===1?'y':'ies'); if(t==='person') return n+' new '+(n===1?'person':'people'); return n+' '+b+(n===1?'':'s'); }
+function priIn(D,id){ for(var i=0;i<D.priorities.length;i++) if(D.priorities[i].id===id) return D.priorities[i]; return null; }
+function issIn(D,id){ for(var i=0;i<D.issues.length;i++) if(D.issues[i].id===id) return D.issues[i]; return null; }
+function chView(it,D){ var x=it.input||{}, M=D.members, F=D.fns, p=[], s='';
+  var mem=function(m){ return !!(m&&M[m]); }, fn=function(f){ return !!(f&&F[f]); };
+  if(it.type==='priority'){ var lead=x.ownerFid?(fn(x.ownerFid)?F[x.ownerFid].leaderMid:null):x.ownerMid;
+    if(x.ownerFid&&!fn(x.ownerFid)) p.push('team not found'); else if(!mem(lead)) p.push(x.ownerFid?'that team has no leader':'owner not found');
+    if(!String(x.title||'').trim()) p.push('no title');
+    s=(x.ownerFid&&fn(x.ownerFid)?(F[x.ownerFid].name+' team'):(mem(x.ownerMid)?nameIn(D,x.ownerMid):'?'))+': '+(x.title||''); }
+  else if(it.type==='issue'){ var to=x.targetType==='function'?(fn(x.targetId)?F[x.targetId].name:null):(mem(x.targetId)?nameIn(D,x.targetId):null);
+    if(!to) p.push('who it\u2019s for wasn\u2019t found'); if(!mem(x.raisedByMid)) p.push('needs who it\u2019s from'); if(!String(x.title||'').trim()) p.push('no title');
+    s=(x.title||'')+(to?(' \u2192 '+to):''); }
+  else if(it.type==='update'){ var on=x.onType==='priority'?priIn(D,x.onId):issIn(D,x.onId); if(!on) p.push('item not found'); if(!String(x.text||'').trim()) p.push('empty');
+    s=(on?(on.title||''):'?')+': '+clip(x.text,80); }
+  else if(it.type==='person'){ var em=String(x.email||'').trim().toLowerCase();
+    if(!String(x.first||'').trim()) p.push('no first name'); if(x.managerMid&&!mem(x.managerMid)) p.push('manager not found');
+    if(em && Object.keys(M).some(function(m){ return String(M[m].email||'').toLowerCase()===em; })) p.push('email already in this company');
+    s=((x.first||'')+' '+(x.last||'')).trim()+(x.title?(', '+x.title):'')+(fn(x.functionId)?(' \u00b7 '+F[x.functionId].name):''); }
+  else if(it.type==='win'){ if(typeof featFor==='function'&&!featFor(D.cid,'wins')) p.push('Wins is switched off for '+D.name); if(!mem(x.authorMid)) p.push('person not found'); if(!String(x.text||'').trim()) p.push('empty');
+    s=(mem(x.authorMid)?nameIn(D,x.authorMid):'?')+': '+clip(x.text,90); }
+  else if(it.type==='change_priority'){ var pr=priIn(D,x.id); if(!pr) p.push('priority not found');
+    var bits=[]; if(x.visibility) bits.push({private:'make private',manager:'share with manager',team:'share with team',everyone:'share with everyone'}[x.visibility]||x.visibility);
+    if(x.status) bits.push('status \u2192 '+x.status); if(x.ownerMid){ if(!mem(x.ownerMid)) p.push('new owner not found'); else if(pr&&pr.ownerFid) p.push('team priorities keep their team'); else bits.push('owner \u2192 '+nameIn(D,x.ownerMid)); }
+    if(!bits.length&&!p.length) p.push('nothing to change'); s=(pr?(pr.title||''):'?')+': '+bits.join(', '); }
+  else if(it.type==='change_issue'){ var is=issIn(D,x.id); if(!is) p.push('issue not found'); s=(is?(is.title||''):'?')+': '+({open:'reopen',prog:'mark in progress',done:'mark resolved'}[x.status]||x.status); }
+  else p.push('unknown change');
+  return {text:s,probs:p}; }
+/* ---- writers: same records the app's own forms create, written to the set's company only ---- */
+function sysMsg(ref,text){ return ref.collection('messages').add({type:'system',event:'ai',text:text,authorMid:null,authorUid:ME.uid,authorName:ME.name,createdAt:FV.serverTimestamp()}); }
+var VIA=' (via Ask Claude)';
+function chApply(it,D){
+  var x=it.input||{}, co=companiesCol.doc(D.cid), M=D.members, F=D.fns, TS=FV.serverTimestamp();
+  var nm=function(m){ return nameIn(D,m); };
+  if(it.type==='priority'){
+    var fid=x.ownerFid&&F[x.ownerFid]?x.ownerFid:null, owner=fid?F[fid].leaderMid:x.ownerMid, max=-1;
+    D.priorities.forEach(function(q){ if((fid?(q.ownerFid===fid):(q.ownerMid===owner&&!q.ownerFid)) && (q.order||0)>max) max=q.order||0; });
+    var st=['Scoping','Active','Blocked','Review'].indexOf(x.status)>=0?x.status:'Scoping';
+    var vis=['private','manager','team','everyone'].indexOf(x.visibility)>=0?x.visibility:(fid?'team':'private');
+    var inv=(x.involves||[]).filter(function(m){ return M[m]&&m!==owner; });
+    var doc={ownerMid:owner,ownerName:nm(owner),ownerFid:fid,title:String(x.title).trim(),note:String(x.note||'').trim(),involves:inv,status:st,visibility:vis,help:null,attachments:[],agreed:false,agreedBy:null,order:max+1,createdAt:TS,updatedAt:TS};
+    return co.collection('priorities').add(doc).then(function(ref){ D.priorities.push(Object.assign({id:ref.id},doc,{order:max+1})); sysMsg(ref,'Added'+VIA+' by '+(ME.first||ME.name)+'.'); return {kind:'pri',id:ref.id,label:(fid?(F[fid].name+' team'):nm(owner))+' \u00b7 '+doc.title}; });
+  }
+  if(it.type==='issue'){
+    var fnMode=(x.targetType==='function'), fid2=null, fName='', color=null, lm=null, ln='', lu=null;
+    if(fnMode){ var f=F[x.targetId]; fid2=x.targetId; fName=f.name||''; color=f.color||null; lm=f.leaderMid||null; ln=f.leaderName||(lm?nm(lm):''); lu=(lm&&M[lm]&&M[lm].uid)||null; }
+    else { var pm=M[x.targetId]||{}; lm=x.targetId; ln=nm(lm); lu=pm.uid||null; fid2=pm.functionId||null; var pf=fid2?F[fid2]:null; fName=pf?(pf.name||''):''; color=pf?(pf.color||null):null; }
+    var VIS=['private','teamleader','participants','dept','leader','team'], vis2=VIS.indexOf(x.visibility)>=0?x.visibility:(fnMode?'leader':'participants'); if(vis2==='dept'&&!fnMode) vis2='participants';
+    var kind=x.kind==='fyi'?'fyi':'action', rMid=x.raisedByMid, rm=M[rMid]||{};
+    var parts=[rMid]; if(lm&&parts.indexOf(lm)<0) parts.push(lm);
+    if(vis2!=='teamleader') (x.others||[]).forEach(function(m){ if(M[m]&&parts.indexOf(m)<0) parts.push(m); });
+    if(vis2==='private'){ lm=null; ln=''; lu=null; parts=[rMid]; kind='fyi'; }
+    var idoc={title:String(x.title).trim(),description:String(x.description||'').trim(),functionId:fid2,functionName:fName,color:color,leaderMid:lm,leaderName:ln,leaderUid:lu,raiserMid:rMid,raiserUid:rm.uid||null,raiserName:nm(rMid),raiserInitials:rm.initials||initials(nm(rMid)),conversationHad:false,visibility:vis2,targetType:fnMode?'fn':'person',kind:kind,ballMid:(kind==='action'?(lm||null):null),ballFromMid:(kind==='action'?rMid:null),status:'open',participants:parts,createdAt:TS,updatedAt:TS};
+    return co.collection('issues').add(idoc).then(function(ref){ D.issues.push(Object.assign({id:ref.id},idoc)); sysMsg(ref,(rm.first||nm(rMid))+' raised this'+(lm?(' and tagged '+ln):'')+VIA+', logged by '+(ME.first||ME.name)+'.'); return {kind:'iss',id:ref.id,label:idoc.title}; });
+  }
+  if(it.type==='update'){
+    var isP=(x.onType==='priority'), ref2=co.collection(isP?'priorities':'issues').doc(x.onId);
+    return ref2.collection('messages').add({type:'msg',text:String(x.text).trim()+'\n\n\u2014 posted'+VIA+' by '+(ME.first||ME.name),authorMid:null,authorUid:ME.uid,authorName:ME.name,createdAt:TS})
+      .then(function(){ return ref2.update({updatedAt:TS}); }).then(function(){ var o=isP?priIn(D,x.onId):issIn(D,x.onId); return {kind:isP?'pri':'iss',id:x.onId,label:'Update on '+((o&&o.title)||'item')}; });
+  }
+  if(it.type==='person'){
+    var first=String(x.first).trim(), last=String(x.last||'').trim(), name=(first+' '+last).trim(), pfid=(x.functionId&&F[x.functionId])?x.functionId:null, lead=!!(pfid&&x.isLeader);
+    var mdoc={first:first,last:last,name:name,initials:initials(name),email:String(x.email||'').trim().toLowerCase()||null,functionId:pfid,title:String(x.title||'').trim()||null,isLeader:lead,managerMid:(x.managerMid&&M[x.managerMid])?x.managerMid:null,uid:null,pid:newPid()};
+    return co.collection('members').add(mdoc).then(function(ref){ var t=[]; M[ref.id]=Object.assign({mid:ref.id},mdoc);
+      if(lead){ var oldL=F[pfid].leaderMid; if(oldL&&oldL!==ref.id&&M[oldL]) t.push(co.collection('members').doc(oldL).update({isLeader:false})); t.push(co.collection('functions').doc(pfid).update({leaderMid:ref.id,leaderName:name})); F[pfid].leaderMid=ref.id; }
+      return Promise.all(t).then(function(){ return {kind:'person',id:ref.id,label:name}; }); });
+  }
+  if(it.type==='win'){
+    var am=M[x.authorMid]||{}, wk=(x.weekOf&&/^\d{4}-\d{2}-\d{2}$/.test(x.weekOf))?wnId(wnDate(x.weekOf)):wnId();
+    var wdoc={authorMid:x.authorMid,authorUid:am.uid||null,authorName:nm(x.authorMid),text:String(x.text).trim().slice(0,2000),weekId:wk,priId:null,priTitle:'',cheers:[],postedByUid:ME.uid,postedByName:ME.name,createdAt:TS,updatedAt:TS};
+    return co.collection('wins').add(wdoc).then(function(ref){ return {kind:'win',id:ref.id,label:'Win \u00b7 '+nm(x.authorMid)}; });
+  }
+  if(it.type==='change_priority'){
+    var pr=priIn(D,x.id), ref3=co.collection('priorities').doc(x.id), u={updatedAt:TS}, said=[];
+    if(x.visibility&&['private','manager','team','everyone'].indexOf(x.visibility)>=0&&x.visibility!==priVisOf(pr)){ u.visibility=x.visibility; said.push('visibility changed to '+x.visibility); }
+    if(x.status&&x.status!==pr.status){ u.status=x.status; if(x.status==='Completed'){ u.completedAt=TS; u.help=null; } else { u.completedAt=null; if(pr.status==='Need Help') u.help=null; } said.push('moved to '+x.status); }
+    if(x.ownerMid&&M[x.ownerMid]&&!pr.ownerFid&&x.ownerMid!==pr.ownerMid){ u.ownerMid=x.ownerMid; u.ownerName=nm(x.ownerMid); said.push('owner changed to '+nm(x.ownerMid)); }
+    if(!said.length) return Promise.resolve({kind:'pri',id:x.id,label:(pr.title||'')+' (already that way)'});
+    return ref3.update(u).then(function(){ Object.assign(pr,u); sysMsg(ref3,'Changed'+VIA+' by '+(ME.first||ME.name)+': '+said.join(', ')+'.'); return {kind:'pri',id:x.id,label:(pr.title||'')+' \u00b7 '+said.join(', ')}; });
+  }
+  if(it.type==='change_issue'){
+    var is=issIn(D,x.id), ref4=co.collection('issues').doc(x.id), u2={status:x.status,updatedAt:TS};
+    if(x.status==='done'){ u2.ballMid=null; u2.resolvedAt=TS; }
+    return ref4.update(u2).then(function(){ is.status=x.status; sysMsg(ref4,({open:'Reopened',prog:'Marked in progress',done:'Resolved'}[x.status]||'Updated')+VIA+' by '+(ME.first||ME.name)+'.'); return {kind:'iss',id:x.id,label:(is.title||'')+' \u00b7 '+({open:'reopened',prog:'in progress',done:'resolved'}[x.status])}; });
+  }
+  return Promise.reject(new Error('Unknown change'));
+}
+/* ---- sets: build, render, apply ---- */
+function chMakeSet(D,drafts,truncated){ var id='s'+(++AI.sseq);
+  AI.sets[id]={id:id,cid:D.cid,name:D.name,D:D,truncated:!!truncated,state:'pending',open:{},
+    items:(drafts||[]).map(function(d,i){ return {n:i,type:d.type,input:d.input||{},on:true,state:'pending'}; })};
+  AI.sets[id].items.forEach(function(it){ if(chView(it,D).probs.length) it.on=false; });
+  return id; }
+function chGroups(S){ var g={}; S.items.forEach(function(it){ (g[it.type]=g[it.type]||[]).push(it); });
+  return CH_ORDER.filter(function(t){ return g[t]; }).concat(Object.keys(g).filter(function(t){ return CH_ORDER.indexOf(t)<0; })).map(function(t){ return {type:t,items:g[t]}; }); }
+function chCount(S){ return S.items.filter(function(it){ return it.on && !chView(it,S.D).probs.length; }).length; }
+window.chToggleItem=function(sid,n){ var S=AI.sets[sid]; if(!S||S.state!=='pending') return; var it=S.items[n]; if(chView(it,S.D).probs.length) return; it.on=!it.on; aiRender(); };
+window.chToggleGroup=function(sid,t){ var S=AI.sets[sid]; if(!S||S.state!=='pending') return; var its=S.items.filter(function(it){ return it.type===t && !chView(it,S.D).probs.length; }); var all=its.every(function(it){ return it.on; }); its.forEach(function(it){ it.on=!all; }); aiRender(); };
+window.chOpen=function(sid,t){ var S=AI.sets[sid]; if(!S) return; S.open[t]=!S.open[t]; aiRender(); };
+window.chDiscard=function(sid){ var S=AI.sets[sid]; if(S&&S.state==='pending'){ S.state='discarded'; aiRender(); } };
+function chApplySet(sid){ var S=AI.sets[sid]; if(!S||S.state!=='pending') return Promise.resolve();
+  if(AI.scope==='this' && S.cid!==activeCid){ S.err='You\u2019ve switched company since Claude proposed these. Open '+S.name+' again to apply them.'; aiRender(); return Promise.resolve(); }
+  if(!aiAllowed(S.cid)){ S.err='Ask Claude is switched off for '+S.name+'.'; aiRender(); return Promise.resolve(); }
+  var todo=S.items.filter(function(it){ return it.on && !chView(it,S.D).probs.length; }); if(!todo.length) return Promise.resolve();
+  S.state='applying'; S.done=0; S.total=todo.length; aiRender();
+  return todo.reduce(function(p,it){ return p.then(function(){ return chApply(it,S.D).then(function(res){ it.state='done'; it.res=res; }).catch(function(e){ console.warn('apply',e); it.state='failed'; it.err=(e&&e.message)||'failed'; }).then(function(){ S.done++; aiRender(); }); }); }, Promise.resolve())
+    .then(function(){ S.state='done'; aiRender(); }); }
+window.chApplyOne=function(sid){ chApplySet(sid); };
+window.chApplyAll=function(rid){ var R=AI.runs&&AI.runs[rid]; if(!R) return; R.sets.reduce(function(p,sid){ return p.then(function(){ return chApplySet(sid); }); }, Promise.resolve()); };
+window.chOpenRes=function(sid,n){ var S=AI.sets[sid]; if(!S) return; var it=S.items[n]; if(!it||!it.res) return;
+  if(S.cid!==activeCid){ switchCompany(S.cid); }
+  setTimeout(function(){ if(!wide()) aiToggle(false); var r=it.res; if(r.kind==='pri') openPriority(r.id); else if(r.kind==='iss') openIssue(r.id); else if(r.kind==='person') openProfile(r.id); else if(r.kind==='win') goWins(); }, S.cid!==activeCid?900:0); };
+function chSetHTML(sid){ var S=AI.sets[sid]; if(!S) return ''; var n=chCount(S), h='';
+  if(S.state==='done'){ var ok=S.items.filter(function(it){ return it.state==='done'; }), bad=S.items.filter(function(it){ return it.state==='failed'; });
+    h='<div class="ch-set done"><div class="ch-ok">\u2713 '+ok.length+' change'+(ok.length===1?'':'s')+' applied to '+esc(S.name)+'</div>';
+    ok.forEach(function(it){ h+='<button type="button" class="ch-res" onclick="chOpenRes(\''+sid+'\','+it.n+')"><span>'+esc(it.res.label)+'</span><span class="ch-go">Open</span></button>'; });
+    bad.forEach(function(it){ h+='<div class="ch-res bad"><span>'+esc(chView(it,S.D).text)+'</span><span>'+esc(it.err)+'</span></div>'; });
+    return h+'</div>'; }
+  if(S.state==='discarded') return '<div class="ch-set gone">Discarded changes to '+esc(S.name)+'.</div>';
+  if(!S.items.length) return S.truncated?'<div class="ch-warn">Claude ran out of room before proposing anything. Ask for fewer items at a time.</div>':'';
+  h='<div class="ch-set"><div class="ch-h">Proposed changes to '+esc(S.name)+' \u00b7 '+S.items.length+'</div>';
+  chGroups(S).forEach(function(g){ var valid=g.items.filter(function(it){ return !chView(it,S.D).probs.length; }), on=valid.filter(function(it){ return it.on; }).length, probs=g.items.length-valid.length;
+    h+='<div class="ch-g"><div class="ch-gh"><button type="button" class="ch-ck'+(on===valid.length&&on?' on':(on?' some':''))+'" onclick="chToggleGroup(\''+sid+'\',\''+g.type+'\')" aria-label="Include all"'+(S.state!=='pending'?' disabled':'')+'></button><span class="ch-gt">'+chPlural(g.type,g.items.length)+'</span>'
+      +(probs?'<span class="ch-gp">'+probs+' need'+(probs===1?'s':'')+' attention</span>':'')+'<button type="button" class="ch-rv" onclick="chOpen(\''+sid+'\',\''+g.type+'\')">'+(S.open[g.type]?'Hide':'Review')+'</button></div>';
+    if(S.open[g.type]) g.items.forEach(function(it){ var v=chView(it,S.D);
+      h+='<div class="ch-i'+(v.probs.length?' bad':'')+'"><button type="button" class="ch-ck'+(it.on?' on':'')+'" onclick="chToggleItem(\''+sid+'\','+it.n+')"'+(v.probs.length||S.state!=='pending'?' disabled':'')+' aria-label="Include"></button><span>'+esc(v.text)+(v.probs.length?'<em>'+esc(v.probs.join('; '))+'</em>':'')+'</span>'+(it.state==='done'?'<span class="ch-st">\u2713</span>':(it.state==='failed'?'<span class="ch-st bad">failed</span>':''))+'</div>'; });
+    h+='</div>'; });
+  if(S.truncated) h+='<div class="ch-warn">Claude ran out of room, so this list may be incomplete. Apply these, then ask for the rest.</div>';
+  if(S.err) h+='<div class="ch-warn">'+esc(S.err)+'</div>';
+  if(S.state==='applying') h+='<div class="ch-foot"><span class="ch-prog">Applying '+S.done+' of '+S.total+'\u2026</span></div>';
+  else h+='<div class="ch-foot"><button type="button" class="ch-apply" onclick="chApplyOne(\''+sid+'\')"'+(n?'':' disabled')+'>Apply '+n+' change'+(n===1?'':'s')+' to '+esc(S.name)+'</button><button type="button" class="ch-dis" onclick="chDiscard(\''+sid+'\')">Discard</button></div>';
+  return h+'</div>'; }
+window.aiScope=function(sc){ if(AI.busy) return; AI.scope=sc; AI.turns=[]; AI.sets={}; AI.pending=[]; renderAtts(); aiRenderScope(); aiRender(); };
+function aiRenderScope(){ var el=document.getElementById('aiScope'); if(!el) return;
+  el.innerHTML='<div class="ai-seg"><button type="button" class="'+(AI.scope==='this'?'on':'')+'" onclick="aiScope(\'this\')">'+esc(activeCid?((company&&company.name)||'This company'):'This company')+'</button><button type="button" class="'+(AI.scope==='all'?'on':'')+'" onclick="aiScope(\'all\')">All companies</button></div>';
+  var add=document.querySelector('#aiPanel .ai-add'), hint=document.querySelector('#aiPanel .ai-hint'), inp=document.getElementById('aiInput');
+  if(add) add.style.display=AI.scope==='all'?'none':''; if(hint) hint.textContent=AI.scope==='all'?'No files in all-companies mode: each company is handled on its own':'PDF, Word, Excel, images, CSV or text';
+  if(inp) inp.placeholder=AI.scope==='all'?'Tell Claude what to change in every company (each is handled separately)':'Ask about this company, or tell Claude to add or change something'; }
+function allCompaniesSplit(){ var on=[], off=[]; Object.keys(companies||{}).sort(function(a,b){ return String((companies[a]||{}).name||'').localeCompare(String((companies[b]||{}).name||'')); }).forEach(function(c){ (aiAllowed(c)?on:off).push(c); }); return {on:on,off:off}; }
+
+function aiSync(){
+  if(AI.cid!==activeCid){ AIPOL.step=null; AIPOL.err=''; AI.cid=activeCid; if(AI.scope==='this'){ AI.turns=[]; AI.sets={}; AI.pending=[]; renderAtts(); } }
+  var co=document.getElementById('aiCo'); if(co) co.textContent=AI.scope==='all'?'All companies':((activeCid&&company&&company.name)?company.name:'');
+  aiRenderScope();
+}
+function turnForApi(t){
+  if(t.role==='user') return {role:'user',content:t.content,attachments:(t.attachments||[]).map(function(a){ return a.kind==='text'?{kind:'text',name:a.name,text:a.text}:{kind:a.kind,name:a.name,mediaType:a.mediaType,data:a.data}; })};
+  var s=t.content||'', S=t.sid?AI.sets[t.sid]:null;
+  if(S){ var st=S.state==='done'?'applied':(S.state==='discarded'?'discarded':'not yet applied');
+    s+=(s?'\n':'')+'[Proposed '+S.items.length+' change(s); the user '+(st==='not yet applied'?'has not applied them yet':st+' them')+'. '+S.items.map(function(it){ return it.type+': '+clip(chView(it,S.D).text,60)+(it.state==='done'?' (done)':(it.state==='failed'?' (failed)':(it.on?'':' (excluded)'))); }).join('; ')+']'; }
+  return {role:'assistant',content:s||'(proposed changes)'};
+}
+function callFor(D,messages){ return aiFn()({cid:D.cid,companyName:D.name,today:new Date().toDateString(),context:aiSnapshotFrom(D),messages:messages}); }
+window.aiSend=function(preset){
+  if(AI.busy) return;
+  var inp=document.getElementById('aiInput');
+  var text=String(preset!=null?preset:(inp?inp.value:'')).trim();
+  aiSync();
+  if(AI.scope==='all'){ if(!text) return; return aiSendAll(text,inp); }
+  if(AI.pending.some(function(a){ return a.state==='reading'; })) return;
+  var files=AI.pending.filter(function(a){ return a.state==='ready'; });
+  if(!text && !files.length) return;
+  if(files.length && convSize()+files.reduce(function(n,a){ return n+attSize(a); },0)>MAX_CONV){ AI.turns.push({role:'error',content:'Those files would make this conversation too large. Remove some, or tap New to start a fresh conversation.'}); aiRender(); return; }
+  if(!text) text='Please review the attached '+(files.length>1?'files':'file')+'.';
+  if(!activeCid){ AI.turns.push({role:'error',content:'Open a company first, or switch to All companies.'}); aiRender(); return; }
+  if(!aiAllowed(activeCid)){ aiRender(); return; }
+  var _L=window.__ptLoaded||{}; if(!(_L.cid===activeCid && _L.co && _L.fns && _L.mem && _L.iss)){ AI.turns.push({role:'error',content:'Still loading this company. Try again in a moment.'}); aiRender(); return; }
+  AI.turns.push({role:'user',content:text,attachments:files.map(function(a){ return {kind:a.kind,name:a.name,mediaType:a.mediaType,data:a.data,text:a.text,size:a.size}; })});
+  AI.pending=AI.pending.filter(function(a){ return a.state!=='ready'; }); renderAtts();
+  if(inp){ inp.value=''; aiGrow(inp); }
+  AI.busy=true; AI.status='Claude is reading '+((company&&company.name)||'this company')+'\u2026'; aiRender();
+  var D=aiDataCurrent(), cidAtSend=activeCid;
+  callFor(D,AI.turns.filter(function(t){ return t.role!=='error'; }).map(turnForApi)).then(function(r){
+    if(AI.cid!==cidAtSend||activeCid!==cidAtSend||AI.scope!=='this') return;
+    var d=(r&&r.data)||{}; var sid=(d.drafts||[]).length||d.truncated?chMakeSet(D,d.drafts,d.truncated):null;
+    AI.turns.push({role:'assistant',content:d.text||'',sid:sid});
+  }).catch(function(e){ console.warn('askClaude',e); if(AI.cid===cidAtSend) AI.turns.push({role:'error',content:errText(e)}); })
+  .then(function(){ AI.busy=false; AI.status=''; aiRender(); });
+};
+function aiSendAll(text,inp){
+  var sp=allCompaniesSplit(); if(!sp.on.length){ AI.turns.push({role:'error',content:'Ask Claude isn\u2019t switched on for any company yet. Switch it on for each company you want included.'}); aiRender(); return; }
+  if(inp){ inp.value=''; aiGrow(inp); }
+  AI.runs=AI.runs||{}; var rid='r'+(++AI.sseq), R={id:rid,sets:[],parts:[],skipped:sp.off.slice()}; AI.runs[rid]=R;
+  AI.turns.push({role:'user',content:text}); AI.turns.push({role:'assistant',run:rid});
+  AI.busy=true; aiRender();
+  sp.on.reduce(function(p,cid,i){ return p.then(function(){
+      AI.status='Working on '+(i+1)+' of '+sp.on.length+': '+(((companies[cid]||{}).name)||'company')+'\u2026'; aiRender();
+      var L=window.__ptLoaded||{}, useCur=(cid===activeCid && L.cid===activeCid && L.co && L.fns && L.mem && L.iss);
+      return (useCur?Promise.resolve(aiDataCurrent()):aiLoadData(cid)).then(function(D){
+        return callFor(D,[{role:'user',content:text}]).then(function(r){ var d=(r&&r.data)||{}; var sid=((d.drafts||[]).length||d.truncated)?chMakeSet(D,d.drafts,d.truncated):null; if(sid) R.sets.push(sid); R.parts.push({cid:cid,name:D.name,text:d.text||'',sid:sid}); });
+      }).catch(function(e){ console.warn('askClaude all',cid,e); R.parts.push({cid:cid,name:((companies[cid]||{}).name)||'Company',err:errText(e)}); }).then(aiRender);
+    }); }, Promise.resolve()).then(function(){ AI.busy=false; AI.status=''; aiRender(); });
+}
+function aiRunHTML(R){ var h='', pend=R.sets.filter(function(s){ return AI.sets[s]&&AI.sets[s].state==='pending'&&chCount(AI.sets[s]); });
+  R.parts.forEach(function(p){ h+='<div class="ch-co"><div class="ch-con">'+esc(p.name)+'</div>'+(p.err?'<div class="ai-err">'+esc(p.err)+'</div>':(md(p.text)+(p.sid?chSetHTML(p.sid):(p.text?'':'<div class="ch-set gone">No changes needed.</div>'))))+'</div>'; });
+  if(R.skipped.length) h+='<div class="ch-skip">Skipped (Ask Claude is off): '+R.skipped.map(function(c){ return esc(((companies[c]||{}).name)||c); }).join(', ')+'</div>';
+  if(pend.length>1) h+='<button type="button" class="ch-applyall" onclick="chApplyAll(\''+R.id+'\')">Apply all changes to '+pend.length+' companies</button>';
+  return h; }
+function aiRender(){
+  var box=document.getElementById('aiMsgs'); if(!box) return;
+  aiRenderScope();
+  var h='';
+  if(AI.scope==='this'){
+    if(activeCid && !aiAllowed(activeCid)){ box.innerHTML=aiPolicyHTML(); var _s0=document.getElementById('aiSend'); if(_s0)_s0.disabled=true; return; }
+    if(activeCid) h+=aiPolBarHTML();
+  }
+  if(!AI.turns.length){
+    if(AI.scope==='all'){ var sp=allCompaniesSplit();
+      h+='<div class="ai-empty"><p>Give one instruction and Claude handles each company separately, with only that company\u2019s data. You review and apply each company\u2019s changes.</p>'
+        +'<p><b>Included ('+sp.on.length+'):</b> '+(sp.on.length?sp.on.map(function(c){ return esc((companies[c]||{}).name||c); }).join(', '):'none yet')+'</p>'
+        +(sp.off.length?'<p><b>Skipped, Ask Claude off ('+sp.off.length+'):</b> '+sp.off.map(function(c){ return esc((companies[c]||{}).name||c); }).join(', ')+'</p>':'')+'</div>';
+    } else {
+      h+='<div class="ai-empty"><p>'+(activeCid?('Ask about '+esc(company.name||'this company')+', or tell Claude to add or change things. Claude proposes the changes as one set; you review and apply them.'):'Open a company to work on it, or switch to All companies.')+'</p>'
+        +(activeCid?('<div class="ai-chips">'+SUGGEST.map(function(s,i){ return '<button class="ai-chip" onclick="aiChip('+i+')">'+esc(s)+'</button>'; }).join('')+'</div>'):'')+'</div>';
+    }
+  }
+  AI.turns.forEach(function(t){
+    if(t.role==='user') h+='<div class="ai-u">'+((t.attachments||[]).length?('<div class="ai-atts">'+t.attachments.map(function(a){ return fileChip(a,false); }).join('')+'</div>'):'')+esc(t.content)+'</div>';
+    else if(t.role==='error') h+='<div class="ai-err">'+esc(t.content)+'</div>';
+    else if(t.run) h+='<div class="ai-a">'+aiRunHTML(AI.runs[t.run])+'</div>';
+    else h+='<div class="ai-a">'+md(t.content)+(t.sid?chSetHTML(t.sid):'')+'</div>';
+  });
+  if(AI.busy) h+='<div class="ai-think">'+esc(AI.status||'Claude is thinking\u2026')+'</div>';
+  box.innerHTML=h; box.scrollTop=box.scrollHeight;
+  var s=document.getElementById('aiSend'); if(s) s.disabled=AI.busy||AI.pending.some(function(a){ return a.state==='reading'; });
+}
 
 /* ---- rendering ---- */
 function refBtn(kind,id,label){
@@ -5681,24 +6044,6 @@ function draftCard(id){
       +'<button class="ai-2" onclick="aiApply(\''+id+'\',true)">Edit</button><button class="ai-2" onclick="aiCancel(\''+id+'\')">Cancel</button></div>';
   }
   return h+'</div>';
-}
-function aiRender(){
-  var box=document.getElementById('aiMsgs'); if(!box) return;
-  var h='';
-  if(activeCid && !aiAllowed(activeCid)){ box.innerHTML=aiPolicyHTML(); var _s0=document.getElementById('aiSend'); if(_s0)_s0.disabled=true; return; } /* PT_AIPOLICY_V1 */
-  if(activeCid) h+=aiPolBarHTML();
-  if(!AI.turns.length){
-    h+='<div class="ai-empty"><p>'+(activeCid?('Ask about '+esc(company.name||'this company')+'\u2019s people, issues and priorities, or tell Claude to add something. You confirm every change.'):'Open a company to ask about it.')+'</p>'
-      +(activeCid?('<div class="ai-chips">'+SUGGEST.map(function(s,i){ return '<button class="ai-chip" onclick="aiChip('+i+')">'+esc(s)+'</button>'; }).join('')+'</div>'):'')+'</div>';
-  }
-  AI.turns.forEach(function(t){
-    if(t.role==='user') h+='<div class="ai-u">'+((t.attachments||[]).length?('<div class="ai-atts">'+t.attachments.map(function(a){ return fileChip(a,false); }).join('')+'</div>'):'')+esc(t.content)+'</div>';
-    else if(t.role==='error') h+='<div class="ai-err">'+esc(t.content)+'</div>';
-    else h+='<div class="ai-a">'+md(t.content)+(t.drafts||[]).map(draftCard).join('')+'</div>';
-  });
-  if(AI.busy) h+='<div class="ai-think">Claude is thinking\u2026</div>';
-  box.innerHTML=h; box.scrollTop=box.scrollHeight;
-  var s=document.getElementById('aiSend'); if(s) s.disabled=AI.busy||AI.pending.some(function(a){ return a.state==='reading'; });
 }
 window.aiCancel=function(id){ var d=AI.drafts[id]; if(d){ d.state='cancelled'; aiRender(); } };
 
