@@ -1,4 +1,4 @@
-/* PT_ASKCLAUDE_V1 PT_AIDOCS_V1 PT_TEAMPRI_V1 PT_AIPOLICY_V1 — "Ask Claude" for Progress Tracker (super admins only).
+/* PT_ASKCLAUDE_V1 PT_AIDOCS_V1 PT_TEAMPRI_V1 PT_AIPOLICY_V1 PT_AIBATCH_V1 — "Ask Claude" for Progress Tracker (super admins only).
  *
  * The browser never sees the Anthropic key. This callable function:
  *   1. requires a signed-in caller who is listed in platform/config.superAdminUids,
@@ -90,6 +90,45 @@ const TOOLS = [
       },
       required: ["first"]
     }
+  },
+  {
+    name: "draft_win",
+    description: "Post a win on a person's behalf in the company's weekly Wins (shared with everyone). Use for achievements, successes or good news about a person.",
+    input_schema: {
+      type: "object",
+      properties: {
+        authorMid: { type: "string", description: "mid of the person whose win it is." },
+        text: { type: "string", description: "The win, written as that person would share it. Under 600 characters." },
+        weekOf: { type: "string", description: "Optional date (YYYY-MM-DD) inside the week the win belongs to. Omit for this week." }
+      },
+      required: ["authorMid", "text"]
+    }
+  },
+  {
+    name: "change_priority",
+    description: "Change an EXISTING priority: its status, who can see it, or (for a personal priority) its owner. Use this, not draft_priority, when the item already exists.",
+    input_schema: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "Priority id from the snapshot." },
+        status: { type: "string", enum: ["Scoping", "Active", "Blocked", "Review", "Completed"] },
+        visibility: { type: "string", enum: ["private", "manager", "team", "everyone"] },
+        ownerMid: { type: "string", description: "New owner's mid (personal priorities only)." }
+      },
+      required: ["id"]
+    }
+  },
+  {
+    name: "change_issue",
+    description: "Change an EXISTING issue's status.",
+    input_schema: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "Issue id from the snapshot." },
+        status: { type: "string", enum: ["open", "prog", "done"], description: "open = Open, prog = In progress, done = Resolved." }
+      },
+      required: ["id", "status"]
+    }
   }
 ];
 
@@ -108,7 +147,7 @@ function systemPrompt(companyName, today) {
     "",
     "ATTACHMENTS: The user may attach documents (PDF, Word text, spreadsheets as CSV, plain text) or images. Read them carefully and refer to them by file name. When asked to turn a document into priorities, issues or updates, call the draft tools for each item, matching people and teams to the snapshot.",
     "",
-    "ADDING THINGS: When the user asks you to add, raise, create or log something, call the matching draft_ tool. The user sees a card and confirms it, so do not ask for confirmation in text first. Use ids from the snapshot. If an essential detail is genuinely ambiguous (for example two people share a first name), ask one short question instead of guessing. You may call several draft tools in one reply.",
+    "CHANGES: When the user asks you to add, raise, create, log, post, share, update or change anything, call the matching tool once per item: draft_priority, draft_issue, draft_update, draft_person, draft_win for new items; change_priority and change_issue for items that already exist (for example \"mark these as visible to everyone\" means change_priority with visibility everyone for each one). The user reviews all your proposed changes as one set and applies them together, so propose everything in one reply and do not ask for confirmation in text. Use ids from the snapshot only. If an essential detail is genuinely ambiguous, skip that item and say why in one line. Keep notes and descriptions short so many items fit. Your proposals apply to THIS company only.",
     "",
     "STYLE: Be concise and direct. Short paragraphs; use '- ' bullets only for genuine lists. No headers. American English. No emoji."
   ].join("\n");
@@ -191,7 +230,7 @@ exports.askClaude = onCall(
   {
     region: "us-central1",
     secrets: [ANTHROPIC_API_KEY],
-    timeoutSeconds: 120,
+    timeoutSeconds: 300,
     memory: "256MiB",
     maxInstances: 5,
     cors: ["https://progress-tracker.live", "https://www.progress-tracker.live"]
@@ -234,7 +273,7 @@ exports.askClaude = onCall(
         },
         body: JSON.stringify({
           model: CLAUDE_MODEL.value(),
-          max_tokens: 4000,
+          max_tokens: 16000,
           system: systemPrompt(companyName, today),
           tools: TOOLS,
           messages: messages
@@ -252,9 +291,11 @@ exports.askClaude = onCall(
     }
     const blocks = Array.isArray(body.content) ? body.content : [];
     const text = blocks.filter((b) => b.type === "text").map((b) => b.text).join("\n\n").trim();
-    const drafts = blocks
-      .filter((b) => b.type === "tool_use" && /^draft_/.test(b.name || ""))
-      .map((b) => ({ type: b.name.replace(/^draft_/, ""), input: b.input || {} }));
-    return { text: text, drafts: drafts, model: body.model || null };
+    // PT_AIBATCH_V1 — if Claude ran out of room, its last proposal may be cut off: drop it and say so.
+    const truncated = body.stop_reason === "max_tokens";
+    let uses = blocks.filter((b) => b.type === "tool_use" && /^(draft_|change_)/.test(b.name || ""));
+    if (truncated && uses.length) uses = uses.slice(0, -1);
+    const drafts = uses.map((b) => ({ type: b.name.replace(/^draft_/, ""), input: b.input || {} }));
+    return { text: text, drafts: drafts, truncated: truncated, model: body.model || null };
   }
 );
