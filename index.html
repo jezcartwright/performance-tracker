@@ -1254,6 +1254,31 @@ body.ai-open #aiPanel{display:flex}
 .added-entry span{display:block;font-size:12.5px;color:var(--t2);margin-top:1px}
 .sys .sys-dt{white-space:nowrap}
 </style>
+<style>
+/* PT_PRESENT_V1 — Presenting mode */
+.pres-wrap{position:relative;display:inline-flex}
+.pres-btn{display:inline-flex;align-items:center;gap:7px;height:38px;padding:0 13px;border-radius:8px;border:1.5px solid #fff;background:transparent;color:#fff;font:600 13px/1 var(--ui);cursor:pointer;white-space:nowrap}
+.pres-btn svg{width:16px;height:16px}
+.pres-btn:hover{background:#fff;color:var(--strip)}
+@media (max-width:600px){ .pres-btn .t{display:none} .pres-btn{padding:0;width:38px;justify-content:center} }
+.pres-menu{position:absolute;right:0;top:46px;z-index:95;width:320px;max-width:92vw;background:var(--card);color:var(--t);border:1px solid var(--b);border-radius:14px;padding:6px;box-shadow:0 8px 24px #d6d0c8;display:none;text-align:left}
+.pres-menu.on{display:block}
+.pres-h{font-size:11px;font-weight:800;letter-spacing:.8px;color:var(--t2);padding:9px 10px 6px}
+.pres-opt{display:flex;gap:11px;align-items:center;width:100%;background:var(--card);border:0;border-radius:10px;padding:10px;cursor:pointer;font:inherit;color:var(--t);text-align:left}
+.pres-opt:hover{background:var(--bg)}
+.pres-opt svg{width:19px;height:19px;flex:none;color:var(--t2)}
+.pres-opt b{display:block;font-size:14px;font-weight:700}
+.pres-opt span{display:block;font-size:12.5px;color:var(--t2);margin-top:1px}
+.pres-opt select{margin-left:auto;max-width:130px;border:1px solid var(--b);border-radius:7px;padding:5px 6px;font:500 12.5px var(--ui);background:var(--card);color:var(--t)}
+#presBanner{display:none;background:#ff6600;color:#fff;font:600 13.5px/1.35 var(--ui);padding:9px 16px;align-items:center;gap:10px}
+#presBanner.on{display:flex}
+#presBanner svg{width:18px;height:18px;flex:none}
+#presBanner .s{margin-left:auto;background:#fff;color:#c2560c;border:0;border-radius:8px;padding:7px 14px;font:700 13px var(--ui);cursor:pointer;flex:none}
+body.presenting #aiBtn, body.presenting #superFlag, body.presenting #tabAdmin, body.presenting .iconbtn[onclick="toggleNotif(event)"], body.presenting #aiPanel{display:none !important}
+body.presenting .posrel:has(> .iconbtn[onclick="toggleNotif(event)"]){display:none !important}
+.pres-toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%);background:#1c1c1c;color:#fff;border-radius:10px;padding:11px 16px;font:600 13.5px var(--ui);z-index:300;display:none}
+.pres-toast.on{display:block}
+</style>
 </head>
 <body>
 
@@ -1561,6 +1586,7 @@ function openFocus(k){closeMenu();show('home');var f=document.getElementById('fo
           <div id="coList" class="co-list"></div>
         </div>
       </div>
+      <span class="pres-wrap" id="presWrap" style="display:none"><button class="pres-btn" id="presBtn" type="button" onclick="presMenu(event)" aria-haspopup="true" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4M10 8l3 2-3 2z"/></svg><span class="t">Present</span></button><div class="pres-menu" id="presMenu" role="menu"></div></span><!-- PT_PRESENT_V1 -->
       <button class="ai-btn" id="aiBtn" style="display:none" onclick="aiToggle()" aria-expanded="false" aria-controls="aiPanel" title="Ask Claude"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2.5l2.2 6.6 6.8 2.4-6.8 2.4L12 20.5l-2.2-6.6L3 11.5l6.8-2.4z"/></svg><span class="ai-btn-t">Ask Claude</span></button><!-- PT_ASKCLAUDE_V1 -->
       <div class="posrel">
         <button class="iconbtn" onclick="toggleNotif(event)" aria-label="Notifications">
@@ -1575,6 +1601,7 @@ function openFocus(k){closeMenu();show('home');var f=document.getElementById('fo
       </div>
     </div>
 </div></header>
+<div id="presBanner" role="status"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4M10 8l3 2-3 2z"/></svg><span id="presBannerT"></span><button type="button" class="s" onclick="presStop()">Stop</button></div><!-- PT_PRESENT_V1 -->
 <aside id="aiPanel" aria-label="Ask Claude" ondragover="aiDrag(event,true)" ondragleave="aiDrag(event,false)" ondrop="aiDrop(event)"><!-- PT_ASKCLAUDE_V1 -->
   <div class="ai-hd">
     <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2.5l2.2 6.6 6.8 2.4-6.8 2.4L12 20.5l-2.2-6.6L3 11.5l6.8-2.4z"/></svg>
@@ -3166,6 +3193,9 @@ function startApp(){
   renderCoSwitch();
   document.getElementById('superFlag').style.display=ME.isSuper?'':'none';
   try{ featWatch(); }catch(_fe){} /* PT_FEATURES_V1 */
+  try{ var _pw=document.getElementById('presWrap'); if(_pw) _pw.style.display=(ME.isSuper||(typeof PRES_REAL!=='undefined'&&PRES_REAL))?'':'none';
+    if(typeof PRESENT!=='undefined' && !PRESENT && ME.isSuper){ var _ps=null; try{ _ps=JSON.parse(sessionStorage.getItem('ptPresent')||'null'); }catch(_e){} if(_ps){ PRESENT=_ps; presFlags(true); setTimeout(presRefresh,0); } }
+    else if(typeof PRESENT!=='undefined' && PRESENT){ presFlags(true); } }catch(_pe){} /* PT_PRESENT_V1 */
   var _aib=document.getElementById('aiBtn'); if(_aib)_aib.style.display=ME.isSuper?'':'none'; if(!ME.isSuper && typeof aiToggle==='function' && document.body.classList.contains('ai-open')) aiToggle(false); /* PT_ASKCLAUDE_V1 */
   var _eo=document.getElementById('enqOpen'); if(_eo)_eo.style.display=ME.isSuper?'':'none';
   var _uo=document.getElementById('usageOpen'); if(_uo)_uo.style.display=ME.isSuper?'':'none';
@@ -3190,7 +3220,7 @@ function startApp(){
   subC=cRef().onSnapshot(function(s){
     if(activeCid!==_ringCid) return; if(window.__ptLoaded&&window.__ptLoaded.cid===_ringCid) window.__ptLoaded.co=true;
     company=s.exists?s.data():{}; company.adminUids=company.adminUids||[];
-    isAdmin=amAdminOf(company);
+    isAdmin=amAdminOf(company); if(typeof PRESENT!=='undefined'&&PRESENT) isAdmin=false; /* PT_PRESENT_V1 */
     try{ ensurePriSub(); }catch(_pe){} /* PT_PRIFEED_V1 — admin status known: make sure the admin feed is running */
     applyTheme(company.theme||DEFAULT_THEME);
     renderClientLogo();
@@ -5577,6 +5607,89 @@ window.featDefault=function(k,v){ if(!ME.isSuper) return; FEAT.err='';
   var b=db.batch(); featCompanies().forEach(function(c){ var f=FEAT.flags[c]||{}; if(typeof f[k]!=='boolean'){ var u={}; u[k]=featFor(c,k); b.set(db.collection('featureFlags').doc(c),u,{merge:true}); FEAT.flags[c]=Object.assign({},f,u); } });
   var d={}; d[k]=!!v; b.set(db.collection('platform').doc('featureDefaults'),d,{merge:true}); FEAT.defaults=Object.assign({},FEAT.defaults,d);
   renderFeatures(); b.commit().catch(featErr); };
+
+
+/* PT_PRESENT_V1 — Presenting mode. Choose who is in the meeting; the app shows only what EVERY person in that
+   audience can already see under the normal sharing rules (admin powers ignored), and hides super-admin tools.
+   Stays on (per browser tab) until Stop, even across reloads and company switches. */
+var PRESENT=null, PRES_REAL=null;
+var PRES_ICONS={company:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M5 21V7l7-4 7 4v14M9 9h1M14 9h1M9 13h1M14 13h1M9 17h1M14 17h1"/></svg>',
+  team:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="4"/><path d="M2 21a7 7 0 0 1 14 0M17 4a4 4 0 0 1 0 8M22 21a7 7 0 0 0-4-6.3"/></svg>',
+  leaders:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7l4 4 5-6 5 6 4-4-2 12H5z"/></svg>',
+  person:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>'};
+function presAudience(){ if(!PRESENT) return null; var all=Object.keys(members).filter(function(m){ return !orgHidden(m); });
+  if(PRESENT.kind==='team'){ var f=PRESENT.id; if(!fns[f]) return all; var l=fnsLeader(f); return all.filter(function(m){ return members[m].functionId===f || m===l; }); }
+  if(PRESENT.kind==='leaders'){ var ceo=company.ceoMemberId; return all.filter(function(m){ return m===ceo || isLeaderOfMid(m); }); }
+  if(PRESENT.kind==='person'){ return members[PRESENT.id]?[PRESENT.id]:all; }
+  return all; }
+function presLabel(){ if(!PRESENT) return ''; var co=(company&&company.name)||'the company';
+  if(PRESENT.kind==='team'&&fns[PRESENT.id]) return (fns[PRESENT.id].name||'the team')+' ('+presAudience().length+' people)';
+  if(PRESENT.kind==='leaders') return 'the leadership team ('+presAudience().length+' people)';
+  if(PRESENT.kind==='person'&&members[PRESENT.id]) return personName(PRESENT.id)+' (one-to-one)';
+  return 'everyone at '+co; }
+/* "can this person see it?" — the app's sharing rules, for any person, without admin powers */
+function priSeesAs(p,mid){ if(!p||!mid) return false; if(p.ownerMid===mid) return true; var v=priVisOf(p); if(v==='private') return false;
+  if((p.involves||[]).indexOf(mid)>=0) return true; if(v==='everyone') return true;
+  var om=members[p.ownerMid]||{}, me=members[mid]||{};
+  if(v==='team') return p.ownerFid?(me.functionId===p.ownerFid):!!(om.functionId&&me.functionId&&om.functionId===me.functionId);
+  if(v==='manager') return om.managerMid===mid; return false; }
+function issSeesAs(i,mid){ if(!i||!mid) return false; var v=i.visibility||'team';
+  if(v==='private') return i.raiserMid===mid;
+  if(i.raiserMid===mid||i.leaderMid===mid||(i.participants||[]).indexOf(mid)>=0) return true;
+  if(v==='team') return true; if(v==='leader') return isLeaderOfMid(mid)||mid===company.ceoMemberId;
+  if(v==='dept'){ var f=(members[mid]||{}).functionId; return !!(f&&i.functionId===f); } return false; }
+function presPri(p){ var a=presAudience(); return !!(a&&a.length&&a.every(function(m){ return priSeesAs(p,m); })); }
+function presIss(i){ var a=presAudience(); return !!(a&&a.length&&a.every(function(m){ return issSeesAs(i,m); })); }
+/* gates (only change anything while presenting) */
+var _psCanSeePri=canSeePriority; canSeePriority=function(p){ return PRESENT?presPri(p):_psCanSeePri(p); };
+var _psCanSeeIss=canSeeIssue; canSeeIssue=function(i){ return PRESENT?presIss(i):_psCanSeeIss(i); };
+var _psApplyVis=applyVisibility; applyVisibility=function(list){ return PRESENT?list.filter(presIss):_psApplyVis(list); };
+var _psShared=poSharedWithMe; poSharedWithMe=function(p){ return PRESENT?presPri(p):_psShared(p); };
+var _psMine=myPriorities; myPriorities=function(){ var l=_psMine(); return PRESENT?l.filter(presPri):l; };
+var _psOpenPri=openPriority; openPriority=function(id){ if(PRESENT){ var p=priById(id); if(!p||!presPri(p)){ presToast('Not shown while presenting'); return; } } return _psOpenPri.apply(this,arguments); };
+var _psOpenIss=window.openIssue; window.openIssue=function(id){ if(PRESENT){ var i=null; for(var k=0;k<issues.length;k++){ if(issues[k].id===id){ i=issues[k]; break; } } if(!i||!presIss(i)){ presToast('Not shown while presenting'); return; } } return _psOpenIss.apply(this,arguments); };
+var _psOthers=renderPriOthers; renderPriOthers=function(){ var r=_psOthers.apply(this,arguments); if(PRESENT){ var h=document.querySelector('#priOthers .po-h2'); if(h) h.textContent='Shared priorities'; var sb=document.querySelector('#priOthers .po-sub'); if(sb) sb.textContent='Priorities shared with everyone in this meeting.'; } return r; };
+function presToast(t){ var el=document.getElementById('presToast'); if(!el){ el=document.createElement('div'); el.id='presToast'; el.className='pres-toast'; document.body.appendChild(el); } el.textContent=t; el.classList.add('on'); clearTimeout(el._t); el._t=setTimeout(function(){ el.classList.remove('on'); },2200); }
+/* menu */
+window.presMenu=function(ev){ if(ev) ev.stopPropagation(); var m=document.getElementById('presMenu'); if(!m) return; var open=!m.classList.contains('on');
+  if(open){ var teams=Object.keys(fns).sort(function(a,b){ return (fnOrd(a)-fnOrd(b))||String(fns[a].name||'').localeCompare(String(fns[b].name||'')); });
+    var ppl=Object.keys(members).filter(function(x){ return !orgHidden(x); }).sort(function(a,b){ return personName(a).localeCompare(personName(b)); });
+    var sel=function(id,opts){ return '<select id="'+id+'" onclick="event.stopPropagation()">'+opts+'</select>'; };
+    m.innerHTML='<div class="pres-h">PRESENT TO</div>'
+      +'<button type="button" class="pres-opt" onclick="presStart(\'company\')">'+PRES_ICONS.company+'<div><b>Whole company</b><span>All-hands, town halls</span></div></button>'
+      +'<div class="pres-opt" role="button" tabindex="0" onclick="presStart(\'team\',document.getElementById(\'presTeam\').value)">'+PRES_ICONS.team+'<div><b>A team</b><span>Team meetings</span></div>'+(teams.length?sel('presTeam',teams.map(function(f){ return '<option value="'+esc(f)+'">'+esc(fns[f].name||'Team')+'</option>'; }).join('')):'<span>No teams yet</span>')+'</div>'
+      +'<button type="button" class="pres-opt" onclick="presStart(\'leaders\')">'+PRES_ICONS.leaders+'<div><b>Leadership team</b><span>All team leaders and the CEO</span></div></button>'
+      +'<div class="pres-opt" role="button" tabindex="0" onclick="var v=document.getElementById(\'presPerson\').value; if(v) presStart(\'person\',v)">'+PRES_ICONS.person+'<div><b>One-to-one</b><span>Coaching sessions</span></div>'+sel('presPerson','<option value="">Choose\u2026</option>'+ppl.map(function(x){ return '<option value="'+esc(x)+'">'+esc(personName(x))+'</option>'; }).join(''))+'</div>';
+  }
+  m.classList.toggle('on',open); var b=document.getElementById('presBtn'); if(b) b.setAttribute('aria-expanded',open?'true':'false'); };
+document.addEventListener('click',function(e){ var m=document.getElementById('presMenu'); if(m&&m.classList.contains('on')&&!e.target.closest('#presWrap')) m.classList.remove('on'); });
+/* start / stop */
+function presFlags(on){
+  if(on){ if(!PRES_REAL) PRES_REAL={isSuper:!!ME.isSuper}; ME.isSuper=false; isAdmin=false; document.body.classList.add('presenting');
+    try{ if(typeof aiToggle==='function') aiToggle(false); }catch(e){} }
+  else { if(PRES_REAL){ ME.isSuper=PRES_REAL.isSuper; PRES_REAL=null; } isAdmin=activeCid?amAdminOf(company):!!ME.isSuper; document.body.classList.remove('presenting'); }
+  try{ ensurePriSub(); }catch(e){}
+}
+function presRefresh(){
+  var bn=document.getElementById('presBanner'); if(bn){ bn.classList.toggle('on',!!PRESENT); var t=document.getElementById('presBannerT'); if(t) t.textContent=PRESENT?('Presenting to '+presLabel()+' \u00b7 only what all of them can see'):''; }
+  try{ var vis=applyVisibility(issues); var ac=document.getElementById('allCount'); if(ac) ac.textContent=vis.filter(function(i){ return i.status!=='done'; }).length; var dc=document.getElementById('doneCount'); if(dc) dc.textContent=vis.filter(function(i){ return i.status==='done'; }).length; }catch(e){}
+  try{ updatePriCount(); }catch(e){}
+  var act=document.querySelector('.screen.active'), id=act?act.id:'';
+  try{ if(id==='priorities') renderPriorities(); else if(id==='dashboard') render(); else if(id==='team') renderTeam(); else if(id==='archive') renderArchive(); else if(id==='wins') renderWins();
+       else if(id==='admin'||id==='priDetail'||id==='detail'||id==='profile') goPriorities(); }catch(e){}
+}
+window.presStart=function(kind,id){ if(!(ME.isSuper||PRES_REAL)) return; var m=document.getElementById('presMenu'); if(m) m.classList.remove('on');
+  PRESENT={kind:kind,id:id||null}; try{ sessionStorage.setItem('ptPresent',JSON.stringify(PRESENT)); }catch(e){}
+  presFlags(true); presRefresh(); };
+window.presStop=function(){ PRESENT=null; try{ sessionStorage.removeItem('ptPresent'); }catch(e){} presFlags(false); presRefresh();
+  var aib=document.getElementById('aiBtn'); if(aib) aib.style.display=ME.isSuper?'':'none'; var sf=document.getElementById('superFlag'); if(sf) sf.style.display=ME.isSuper?'':'none'; };
+function presBanner(){ var t=document.getElementById('presBannerT'); if(t&&PRESENT) t.textContent='Presenting to '+presLabel()+' \u00b7 only what all of them can see'; }
+var _psResolve=resolveMyMid; resolveMyMid=function(){ var r=_psResolve.apply(this,arguments); if(PRESENT) presBanner(); return r; };
+var _psRenderPri=renderPriorities; renderPriorities=function(){ var r=_psRenderPri.apply(this,arguments); if(PRESENT) presBanner(); return r; };
+/* keep presenting across company switches: a team or person that isn't in the new company falls back to the whole company */
+var _psSwitch=window.switchCompany; window.switchCompany=function(){ var r=_psSwitch.apply(this,arguments); if(PRESENT){ presFlags(true); presRefresh(); } return r; };
+/* re-apply after the company record recomputes admin status */
+var _psFeat=featApply; featApply=function(){ var r=_psFeat.apply(this,arguments); if(PRESENT&&isAdmin){ isAdmin=false; } return r; };
 
 </script>
 <script>/* PL_RESIZE_V1 PL_RESIZE_V2 */window.addEventListener("message",function(e){var f=document.getElementById("pl-frame");if(f&&e.data&&typeof e.data.plHeight==="number"){var nh=e.data.plHeight+"px";if(f.style.height!==nh){f.style.height=nh;f.style.minHeight="0";}}});</script>
