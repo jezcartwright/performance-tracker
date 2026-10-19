@@ -1246,6 +1246,14 @@ body.ai-open #aiPanel{display:flex}
 .ft-note{font-size:12.5px;color:var(--t2);margin-top:10px}
 </style>
 <style>/* PT_AIPLUS_V1 */ .ai-add.off{color:var(--t2);border-style:dashed;background:var(--bg)}</style>
+<style>
+/* PT_ADDED_V1 */
+.added-entry{display:flex;gap:10px;align-items:flex-start;border:1px solid var(--b);border-radius:10px;padding:10px 12px;background:var(--bg);margin:2px 0 10px;text-align:left}
+.added-entry svg{width:18px;height:18px;flex:none;color:var(--t2);margin-top:1px}
+.added-entry b{display:block;font-size:13.5px;font-weight:700;color:var(--t)}
+.added-entry span{display:block;font-size:12.5px;color:var(--t2);margin-top:1px}
+.sys .sys-dt{white-space:nowrap}
+</style>
 </head>
 <body>
 
@@ -3748,7 +3756,7 @@ window.raiseIssue=function(){
     }).catch(function(e){ alert('Could not save changes: '+e.message); });
     return;
   }
-  issuesRef().add({ title:title, description:desc, functionId:fid, functionName:fName, color:color, leaderMid:leaderMid, leaderName:leaderName, leaderUid:leaderUid, raiserMid:rMid, raiserUid:rUid, raiserName:rName, raiserInitials:rInit, conversationHad:!!raiseConv, visibility:vis, targetType:riMode, kind:riKind, ballMid:(riKind==='action'?(leaderMid||null):null), ballFromMid:(riKind==='action'?(rMid||null):null), status:'open', participants:parts, createdAt:FV.serverTimestamp(), updatedAt:FV.serverTimestamp() })
+  issuesRef().add({ title:title, description:desc, functionId:fid, functionName:fName, color:color, leaderMid:leaderMid, leaderName:leaderName, leaderUid:leaderUid, raiserMid:rMid, raiserUid:rUid, raiserName:rName, raiserInitials:rInit, conversationHad:!!raiseConv, visibility:vis, targetType:riMode, kind:riKind, ballMid:(riKind==='action'?(leaderMid||null):null), ballFromMid:(riKind==='action'?(rMid||null):null), status:'open', participants:parts, createdByUid:ME.uid, createdByName:ME.name, createdAt:FV.serverTimestamp(), updatedAt:FV.serverTimestamp() })
   .then(function(ref){
     var who=leaderMid?('tagged '+(leaderName||personName(leaderMid))):(riMode==='person'?'tagged that person':'no leader is set for this function yet');
     var extra=(vis!=='teamleader'&&riOthers.length)?(' and '+riOthers.length+' other'+(riOthers.length>1?'s':'')):'';
@@ -3933,11 +3941,11 @@ function subscribeMsgs(id){
   msgsUnsub=issuesRef().doc(id).collection('messages').orderBy('createdAt','asc').onSnapshot(function(qs){
     var html=''; var arr=[];
     qs.forEach(function(d){ var m=d.data(); m.id=d.id; arr.push(m);
-      if(m.type==='system'){ html+='<div class="sys">'+esc(ownText(m.text))+'</div>'; return; }
+      if(m.type==='system'){ html+=sysLine(ownText(m.text),m.createdAt); return; } /* PT_ADDED_V1 */
       var meMsg=(m.authorMid&&m.authorMid===ME.mid);
-      html+='<div class="msg'+(meMsg?' me':'')+'"><span class="mini" style="'+avBg(m.authorMid)+'">'+avBody(m.authorMid)+'</span><div class="bub"><div class="nm">'+esc(m.authorName||personName(m.authorMid))+'</div>'+esc(m.text)+'<div class="tm">'+timeAgo(m.createdAt)+'</div></div></div>';
+      html+='<div class="msg'+(meMsg?' me':'')+'"><span class="mini" style="'+avBg(m.authorMid)+'">'+avBody(m.authorMid)+'</span><div class="bub"><div class="nm">'+esc(m.authorName||personName(m.authorMid))+'</div>'+esc(m.text)+'<div class="tm">'+fmtDT(m.createdAt)+'</div></div></div>';
     });
-    var c=document.getElementById('msgs'); c.innerHTML=html||'<div class="sys">No messages yet.</div>'; c.scrollTop=c.scrollHeight;
+    var c=document.getElementById('msgs'); c.innerHTML=issAddedHTML(curIssue)+(html||'<div class="sys">No messages yet.</div>'); c.scrollTop=c.scrollHeight;
     renderJourney(arr);
   });
 }
@@ -4863,13 +4871,13 @@ function openPriority(id){
   if(subPM){ try{ subPM(); }catch(e){} subPM=null; }
   var c=document.getElementById('pdMsgs'); if(c) c.innerHTML='<div class="sys">Loading\u2026</div>';
   subPM=prioritiesRef().doc(id).collection('messages').orderBy('createdAt','asc').onSnapshot(function(qs){
-    var html='';
+    var html=''; /* PT_ADDED_V1 */
     qs.forEach(function(d){ var m=d.data();
-      if(m.type==='system'&&m.event==='help'){ html+=helpMsgHTML(m); return; } if(m.type==='system'){ html+='<div class="sys">'+esc(m.text)+'</div>'; return; }
+      if(m.type==='system'&&m.event==='help'){ html+=helpMsgHTML(m); return; } if(m.type==='system'){ html+=sysLine(m.text,m.createdAt); return; }
       var meMsg=(m.authorMid&&m.authorMid===ME.mid);
-      html+='<div class="msg'+(meMsg?' me':'')+'"><span class="mini" style="'+avBg(m.authorMid)+'">'+avBody(m.authorMid)+'</span><div class="bub"><div class="nm">'+esc(m.authorName||personName(m.authorMid))+'</div>'+esc(m.text)+'<div class="tm">'+timeAgo(m.createdAt)+'</div></div></div>';
+      html+='<div class="msg'+(meMsg?' me':'')+'"><span class="mini" style="'+avBg(m.authorMid)+'">'+avBody(m.authorMid)+'</span><div class="bub"><div class="nm">'+esc(m.authorName||personName(m.authorMid))+'</div>'+esc(m.text)+'<div class="tm">'+fmtDT(m.createdAt)+'</div></div></div>';
     });
-    var cc=document.getElementById('pdMsgs'); if(cc){ cc.innerHTML=html||'<div class="sys">No updates yet \u2014 add the first below.</div>'; cc.scrollTop=cc.scrollHeight; }
+    var cc=document.getElementById('pdMsgs'); if(cc){ cc.innerHTML=priAddedHTML(priById(id)||curPri)+(html||'<div class="sys">No updates yet \u2014 add the first below.</div>'); cc.scrollTop=cc.scrollHeight; }
   });
   pdRenderDetail(); pdRenderVis(); show('priDetail');
 }
@@ -5094,7 +5102,7 @@ function priAskHelp(pid,p,h){ var ref=prioritiesRef().doc(pid); var upd={status:
   if(h.from==='people') upd.involves=helpInv(h,p.involves,p.ownerMid);
   if(p){ p.status='Need Help'; p.help=Object.assign({},h); if(nv)p.visibility=nv; if(upd.involves)p.involves=upd.involves; }
   return ref.update(upd).then(function(){ return helpLog(ref,h); }).catch(function(e){ alert('Could not ask for help: '+e.message); }); }
-function helpMsgHTML(m){ return '<div class="sys-help"><div class="h">Help requested</div>'+esc(m.text||'')+(m.note?'<div class="n">\u201c'+esc(m.note)+'\u201d</div>':'')+'<div class="tm">'+esc(m.authorName||personName(m.authorMid)||'')+' \u00b7 '+timeAgo(m.createdAt)+'</div></div>'; }
+function helpMsgHTML(m){ return '<div class="sys-help"><div class="h">Help requested</div>'+esc(m.text||'')+(m.note?'<div class="n">\u201c'+esc(m.note)+'\u201d</div>':'')+'<div class="tm">'+esc(m.authorName||personName(m.authorMid)||'')+' \u00b7 '+fmtDT(m.createdAt)+'</div></div>'; }
 /* detail page: who is being asked, with Change */
 function pdRenderHelp(){ var el=document.getElementById('pdHelp'); if(!el) return; var p=curPri;
   if(!p||p.status!=='Need Help'||!p.help){ el.innerHTML=''; return; }
@@ -5340,6 +5348,21 @@ function renderWins(keep){
   box.innerHTML=list.length?list.map(wnCard).join(''):('<div class="pri-note">'+(isCur?'No wins yet this week. Be the first to share one.':'No wins were shared this week.')+'</div>');
   if(isCur && (document.getElementById('wins')||{classList:{contains:function(){return false;}}}).classList.contains('active')) wnMarkSeen();
 }
+/* PT_ADDED_V1 — a dated "Added" entry at the top of every priority log and issue discussion, and dates on every log line */
+var ADDED_ICON='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>';
+function fmtDT(ts){ var m=ms(ts); if(!m) return 'just now'; var d=new Date(m), y=d.getFullYear()!==new Date().getFullYear();
+  return d.toLocaleDateString('en-US',y?{month:'short',day:'numeric',year:'numeric'}:{month:'short',day:'numeric'})+', '+d.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}); }
+function fmtDTLong(ts){ var m=ms(ts); if(!m) return null; var d=new Date(m);
+  return d.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric',year:'numeric'})+' at '+d.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}); }
+function sysLine(text,ts){ return '<div class="sys">'+esc(text)+' <span class="sys-dt">\u00b7 '+fmtDT(ts)+'</span></div>'; }
+function priAddedHTML(p){ if(!p) return ''; var when=fmtDTLong(p.createdAt);
+  var by=p.createdByName?('by '+p.createdByName+(p.createdVia==='ask-claude'?', via Ask Claude':'')):((p.ownerFid&&fns[p.ownerFid])?('for the '+(fns[p.ownerFid].name||'')+' team'):(p.ownerMid&&members[p.ownerMid]?('owned by '+personName(p.ownerMid)):''));
+  return '<div class="added-entry">'+ADDED_ICON+'<div><b>'+(when?('Added '+when):'Added just now')+'</b>'+(by?'<span>'+esc(by)+'</span>':'')+'</div></div>'; }
+function issAddedHTML(i){ if(!i) return ''; var when=fmtDTLong(i.createdAt);
+  var by=i.raiserMid&&members[i.raiserMid]?personName(i.raiserMid):(i.raiserName||'');
+  var to=i.leaderMid&&members[i.leaderMid]?personName(i.leaderMid):(i.functionName||'');
+  var logged=(i.createdByName&&i.createdByName!==by)?(' \u00b7 logged by '+i.createdByName+(i.createdVia==='ask-claude'?' via Ask Claude':'')):'';
+  return '<div class="added-entry">'+ADDED_ICON+'<div><b>'+(when?('Raised '+when):'Raised just now')+'</b><span>'+esc((by?('by '+by):'')+(to?(' \u00b7 to '+to):'')+logged)+'</span></div></div>'; }
 function renderProfilePriorities(mid){ ensurePriSub(); var el=document.getElementById('pfPriorities'); if(!el)return; var list=priorities.filter(function(p){return p.ownerMid===mid && !p.ownerFid && canSeePriority(p);}).sort(function(a,b){return (a.order||0)-(b.order||0);}); if(!list.length){ el.innerHTML='<div class="pf-empty">No priorities listed yet'+(mid===ME.mid?' \u2014 add some from the Priorities tab.':'.')+'</div>'; return; } var _drag=(isAdmin||mid===ME.mid) && list.length>1; /* PT_PROFREORDER_V1 */
   el.innerHTML='<ul class="pri-list'+(_drag?'':' pri-readonly')+'" id="pfPriList">'+list.map(function(p){ return priCardHTML(p,_drag,canEditPriority(p),canAgreePriority(p)); }).join('')+'</ul>';
   if(_drag){ var _h=document.getElementById('pfPriList'); priRenumberIn(_h); priBindDrag(_h); } priRenumberIn(el.querySelector('.pri-list')); }
@@ -5458,7 +5481,7 @@ window.savePriority=function(){
     _ref.update(upd).then(function(){ if(_hNew) helpLog(_ref,_hNew); if(_hClose) _ref.collection('messages').add({type:'system',event:'status',text:'Moved to '+status+' \u2014 help request closed.',authorMid:ME.mid,authorUid:ME.uid,authorName:ME.name,createdAt:FV.serverTimestamp()}); if(!_team && owner!==ME.mid){ openProfile(owner); } else { goPriorities(); } }).catch(function(e){alert(e.message);});
   } else {
     var max=-1; priorities.forEach(function(q){ if((_team?(q.ownerFid===_team):(q.ownerMid===owner&&!q.ownerFid)) && (q.order||0)>max)max=(q.order||0); });
-    prioritiesRef().add({ownerMid:owner, ownerName:ownerName, ownerFid:(_team||null), title:title, note:note, involves:inv, status:status, visibility:(_vNew||vis||'private'), help:(_hNew?helpDoc(_hNew):null), attachments:prDocs.slice(), agreed:false, agreedBy:null, order:max+1, createdAt:FV.serverTimestamp(), updatedAt:FV.serverTimestamp()}).then(function(_nref){ if(_hNew&&_nref) helpLog(_nref,_hNew); if(!_team && owner!==ME.mid){ openProfile(owner); } else { goPriorities(); } }).catch(function(e){alert('Could not add: '+e.message);});
+    prioritiesRef().add({ownerMid:owner, ownerName:ownerName, ownerFid:(_team||null), createdByUid:ME.uid, createdByName:ME.name, title:title, note:note, involves:inv, status:status, visibility:(_vNew||vis||'private'), help:(_hNew?helpDoc(_hNew):null), attachments:prDocs.slice(), agreed:false, agreedBy:null, order:max+1, createdAt:FV.serverTimestamp(), updatedAt:FV.serverTimestamp()}).then(function(_nref){ if(_hNew&&_nref) helpLog(_nref,_hNew); if(!_team && owner!==ME.mid){ openProfile(owner); } else { goPriorities(); } }).catch(function(e){alert('Could not add: '+e.message);});
   }
 };
 /*PL_PRICARD_V1*/function priCardOpen(e,id){if(e.target.closest('.pri-handle,.pri-status,.pri-agree,.pri-del,.pri-people,.doc-chip,button,a'))return;openPriority(id);}/* surface the optional detail line on the card */
@@ -5788,7 +5811,7 @@ function chApply(it,D){
     var st=['Scoping','Active','Blocked','Review'].indexOf(x.status)>=0?x.status:'Scoping';
     var vis=['private','manager','team','everyone'].indexOf(x.visibility)>=0?x.visibility:(fid?'team':'private');
     var inv=(x.involves||[]).filter(function(m){ return M[m]&&m!==owner; });
-    var doc={ownerMid:owner,ownerName:nm(owner),ownerFid:fid,title:String(x.title).trim(),note:String(x.note||'').trim(),involves:inv,status:st,visibility:vis,help:null,attachments:[],agreed:false,agreedBy:null,order:max+1,createdAt:TS,updatedAt:TS};
+    var doc={ownerMid:owner,ownerName:nm(owner),ownerFid:fid,createdByUid:ME.uid,createdByName:ME.name,createdVia:'ask-claude',title:String(x.title).trim(),note:String(x.note||'').trim(),involves:inv,status:st,visibility:vis,help:null,attachments:[],agreed:false,agreedBy:null,order:max+1,createdAt:TS,updatedAt:TS};
     return co.collection('priorities').add(doc).then(function(ref){ D.priorities.push(Object.assign({id:ref.id},doc,{order:max+1})); sysMsg(ref,'Added'+VIA+' by '+(ME.first||ME.name)+'.'); return {kind:'pri',id:ref.id,label:(fid?(F[fid].name+' team'):nm(owner))+' \u00b7 '+doc.title}; });
   }
   if(it.type==='issue'){
@@ -5800,7 +5823,7 @@ function chApply(it,D){
     var parts=[rMid]; if(lm&&parts.indexOf(lm)<0) parts.push(lm);
     if(vis2!=='teamleader') (x.others||[]).forEach(function(m){ if(M[m]&&parts.indexOf(m)<0) parts.push(m); });
     if(vis2==='private'){ lm=null; ln=''; lu=null; parts=[rMid]; kind='fyi'; }
-    var idoc={title:String(x.title).trim(),description:String(x.description||'').trim(),functionId:fid2,functionName:fName,color:color,leaderMid:lm,leaderName:ln,leaderUid:lu,raiserMid:rMid,raiserUid:rm.uid||null,raiserName:nm(rMid),raiserInitials:rm.initials||initials(nm(rMid)),conversationHad:false,visibility:vis2,targetType:fnMode?'fn':'person',kind:kind,ballMid:(kind==='action'?(lm||null):null),ballFromMid:(kind==='action'?rMid:null),status:'open',participants:parts,createdAt:TS,updatedAt:TS};
+    var idoc={title:String(x.title).trim(),description:String(x.description||'').trim(),functionId:fid2,functionName:fName,color:color,leaderMid:lm,leaderName:ln,leaderUid:lu,raiserMid:rMid,raiserUid:rm.uid||null,raiserName:nm(rMid),raiserInitials:rm.initials||initials(nm(rMid)),conversationHad:false,visibility:vis2,targetType:fnMode?'fn':'person',kind:kind,ballMid:(kind==='action'?(lm||null):null),ballFromMid:(kind==='action'?rMid:null),status:'open',participants:parts,createdByUid:ME.uid,createdByName:ME.name,createdVia:'ask-claude',createdAt:TS,updatedAt:TS};
     return co.collection('issues').add(idoc).then(function(ref){ D.issues.push(Object.assign({id:ref.id},idoc)); sysMsg(ref,(rm.first||nm(rMid))+' raised this'+(lm?(' and tagged '+ln):'')+VIA+', logged by '+(ME.first||ME.name)+'.'); return {kind:'iss',id:ref.id,label:idoc.title}; });
   }
   if(it.type==='update'){
