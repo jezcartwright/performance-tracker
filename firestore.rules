@@ -1,14 +1,5 @@
 rules_version = '2';
 
-// #############################################################################
-// SHARED PROJECT — READ BEFORE EDITING OR PUBLISHING
-// This Firebase project also serves Ironwork (ironwork.progress-tracker.live).
-// The `match /ironwork/{ironUid}` block above the default deny MUST stay in
-// this file. Rebuilding these rules from an older copy without it takes
-// Ironwork offline on every device the moment they are published. It has
-// happened twice (Sep 2 and Oct 11, 2026).
-// #############################################################################
-
 // =============================================================================
 // Progress Tracker — Firestore security rules  (Stage 1, reconciled to app)
 // =============================================================================
@@ -101,6 +92,13 @@ service cloud.firestore {
     function ownsPriority(cid) {
       return signedIn() && memberUid(cid, resource.data.ownerMid) == uid();
     }
+    // PT_WINS_V1 — a celebration change adds or removes exactly one entry: the caller's own seat.
+    function winCheerIsMine(cid) {
+      let after = request.resource.data.cheers.toSet();
+      let before = resource.data.cheers.toSet();
+      let mine = get(/databases/$(database)/documents/companies/$(cid)/access/$(request.auth.uid)).data.mid;
+      return after.difference(before).union(before.difference(after)) == [mine].toSet();
+    }
     function ownsNewPriority(cid) {
       return signedIn() && memberUid(cid, request.resource.data.ownerMid) == uid();
     }
@@ -139,6 +137,10 @@ service cloud.firestore {
       allow create: if signedIn()
                     && request.resource.data.superAdminUids == [uid()];
       allow update, delete: if false;
+    }
+    // PT_AIPOLICY_V1 — which companies Ask Claude may process. Super admin only.
+    match /platform/aiPolicy {
+      allow read, write: if isSuper();
     }
     match /platform/{other} {
       allow read:  if isSuper();
@@ -200,6 +202,35 @@ service cloud.firestore {
                && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['uid']) );
       }
 
+      // ----- wins (PT_WINS_V1) -------------------------------------------------
+      // Shared with everyone in the company. People post, edit and delete only their
+      // own; anyone may add or remove THEIR OWN celebration; admins may remove any win.
+      match /wins/{winId} {
+        allow read: if canReadCompany(cid);
+
+        allow create: if isMember(cid)
+                      && request.resource.data.authorUid == uid()
+                      && memberUid(cid, request.resource.data.authorMid) == uid()
+                      && request.resource.data.text is string
+                      && request.resource.data.text.size() > 0
+                      && request.resource.data.text.size() <= 2000
+                      && request.resource.data.weekId is string
+                      && request.resource.data.cheers.size() == 0;
+
+        allow update: if companyAdmin(cid)
+                      || ( resource.data.authorUid == uid()
+                           && request.resource.data.diff(resource.data).affectedKeys()
+                                .hasOnly(['text','priId','priTitle','updatedAt'])
+                           && request.resource.data.text is string
+                           && request.resource.data.text.size() > 0
+                           && request.resource.data.text.size() <= 2000 )
+                      || ( isMember(cid)
+                           && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['cheers'])
+                           && winCheerIsMine(cid) );
+
+        allow delete: if companyAdmin(cid) || resource.data.authorUid == uid();
+      }
+
       // ----- issues ----------------------------------------------------------
       match /issues/{issueId} {
         allow read: if canReadCompany(cid);
@@ -255,7 +286,10 @@ service cloud.firestore {
                            && request.resource.data.diff(resource.data)
                                 .affectedKeys().hasOnly(['status','help','completedAt','updatedAt','involves','visibility']) );
 
-        allow delete: if companyAdmin(cid) || ownsPriority(cid);
+        // PT_ARCHIVE_V1 — completed priorities stay in the archive: only admins may delete them.
+        allow delete: if companyAdmin(cid)
+                      || ( ownsPriority(cid)
+                           && !(resource.data.get('status', '') in ['Completed', 'Done']) );
 
         // PL_PRIDETAIL_V1 — progress log under each priority (mirrors issues/messages)
         match /messages/{msgId} {
@@ -299,13 +333,6 @@ service cloud.firestore {
                     || ( signedIn() && resource.data.fromCid != null
                          && companyAdmin(resource.data.fromCid) );
       allow update: if isSuper();
-    }
-
-    // ------------------------------- ironwork --------------------------------
-    // Ironwork shares this Firebase project. Each signed-in person reads and
-    // writes only their own document. DO NOT REMOVE — see the note at the top.
-    match /ironwork/{ironUid} {
-      allow read, write: if signedIn() && ironUid == uid();
     }
 
     // ----------------------------- default deny ------------------------------

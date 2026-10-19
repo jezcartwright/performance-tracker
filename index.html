@@ -1169,6 +1169,18 @@ body.ai-open #aiPanel{display:flex}
 .ai-polbar{display:flex;align-items:center;gap:8px;font-size:12px;color:#2e7d5b;background:#e2f1ea;border:1px solid #bfe0cf;border-radius:9px;padding:6px 10px}
 .ai-polbar button{margin-left:auto;background:none;border:0;padding:0;font:600 12px var(--ui);color:var(--t2);cursor:pointer;text-decoration:underline}
 </style>
+<style>
+/* PT_AIPOLICY_V2 */
+.ai-pol-ck{display:flex;gap:9px;align-items:flex-start;margin:4px 0 12px;font-size:13.5px;color:var(--t);cursor:pointer}
+.ai-pol-ck input{width:17px;height:17px;margin:2px 0 0;flex:none;accent-color:var(--strip)}
+.ai-pol-btns{display:flex;gap:8px}
+.ai-pol button[disabled]{background:var(--b);color:var(--t2);cursor:default}
+.ai-pol .ai-pol-c{background:var(--card);color:var(--t2);border:1px solid var(--b)}
+.ai-pol-err{margin-top:10px;font-size:13px;line-height:1.5;color:#8a2a1f;background:#fbefed;border:1px solid #e3b3ad;border-radius:9px;padding:8px 10px}
+.ai-polbar.off{color:#7a4a12;background:#fff6ee;border-color:#f3cfaa}
+.ai-polbar .ai-pb{margin-left:auto;display:flex;gap:10px}
+.ai-polbar .ai-pb button{margin:0}
+</style>
 </head>
 <body>
 
@@ -5418,12 +5430,27 @@ var SUGGEST=['What\u2019s stuck right now?','Who has no priorities yet?','Summar
 var AI_POLICY={allowed:{}}, _aiPolSub=null;
 function aiPolicyWatch(){ if(_aiPolSub||!ME.isSuper) return; _aiPolSub=db.collection('platform').doc('aiPolicy').onSnapshot(function(s){ AI_POLICY=s.exists?(s.data()||{}):{}; AI_POLICY.allowed=AI_POLICY.allowed||{}; if(typeof aiRender==='function') aiRender(); }, function(e){ console.warn('aiPolicy',e); }); }
 function aiAllowed(cid){ var a=AI_POLICY.allowed&&AI_POLICY.allowed[cid]; return !!(a&&a.on===true); }
+/* PT_AIPOLICY_V2 — confirm inside the panel (no browser pop-ups); errors shown in plain English */
+var AIPOL={step:null,err:''};
+function aiPolErr(e){ var m=(e&&(e.code||e.message))||''; return /permission/i.test(m)?'Couldn\u2019t save the switch: the latest database rules haven\u2019t been published yet. Publish firestore.rules in the Firebase console, then try again.':('Couldn\u2019t save the switch: '+((e&&e.message)||'please try again.')); }
+window.aiPolStep=function(step){ AIPOL.step=step; AIPOL.err=''; aiRender(); };
+window.aiPolCheck=function(cb){ var b=document.getElementById('aiPolGo'); if(b) b.disabled=!cb.checked; };
 window.aiPolicySet=function(on){ if(!ME.isSuper||!activeCid) return; var nm=(company&&company.name)||'this company';
-  if(on && !confirm('Switch on Ask Claude for '+nm+'?\n\nOnly do this if '+nm+'\u2019s agreement allows their data to be processed by Anthropic (in the US; not used for training; deleted within 30 days).\n\nLeave it off for clients who need zero data retention or EU/UK data residency.')) return;
   var upd={allowed:{}}; upd.allowed[activeCid]={on:!!on,name:nm,by:ME.uid,at:FV.serverTimestamp()};
-  db.collection('platform').doc('aiPolicy').set(upd,{merge:true}).catch(function(e){ alert('Could not update: '+e.message); }); };
+  AIPOL.err=''; var b=document.getElementById('aiPolGo'); if(b){ b.disabled=true; b.textContent=on?'Switching on\u2026':'Switching off\u2026'; }
+  db.collection('platform').doc('aiPolicy').set(upd,{merge:true}).then(function(){ AIPOL.step=null; AIPOL.err=''; aiRender(); })
+    .catch(function(e){ console.warn('aiPolicy',e); AIPOL.err=aiPolErr(e); aiRender(); }); };
 function aiPolicyHTML(){ var nm=esc((company&&company.name)||'this company');
-  return '<div class="ai-pol"><b>Ask Claude is off for '+nm+'</b><p>Switching it on sends '+nm+'\u2019s people, teams, issues, priorities and wins to Anthropic each time you ask a question.</p><ul><li>Processed in the US</li><li>Not used to train models</li><li>Deleted within 30 days</li></ul><p>Only switch it on if '+nm+'\u2019s agreement allows this. Leave it off for clients who need zero data retention or EU/UK data residency.</p><button type="button" onclick="aiPolicySet(true)">Switch on for '+nm+'</button></div>'; }
+  var h='<div class="ai-pol"><b>Ask Claude is off for '+nm+'</b><p>Switching it on sends '+nm+'\u2019s people, teams, issues, priorities and wins to Anthropic each time you ask a question.</p><ul><li>Processed in the US</li><li>Not used to train models</li><li>Deleted within 30 days</li></ul><p>Leave it off for clients who need zero data retention or EU/UK data residency.</p>';
+  if(AIPOL.step==='on'){
+    h+='<label class="ai-pol-ck"><input type="checkbox" onchange="aiPolCheck(this)"><span>'+nm+'\u2019s agreement allows their data to be processed by Anthropic.</span></label>'
+      +'<div class="ai-pol-btns"><button type="button" id="aiPolGo" disabled onclick="aiPolicySet(true)">Switch on</button><button type="button" class="ai-pol-c" onclick="aiPolStep(null)">Cancel</button></div>';
+  } else h+='<button type="button" onclick="aiPolStep(\'on\')">Switch on for '+nm+'</button>';
+  if(AIPOL.err) h+='<div class="ai-pol-err">'+esc(AIPOL.err)+'</div>';
+  return h+'</div>'; }
+function aiPolBarHTML(){ var nm=esc((company&&company.name)||'this company');
+  if(AIPOL.step==='off') return '<div class="ai-polbar off">Switch off Ask Claude for '+nm+'?<span class="ai-pb"><button type="button" id="aiPolGo" onclick="aiPolicySet(false)">Switch off</button><button type="button" onclick="aiPolStep(null)">Keep on</button></span></div>'+(AIPOL.err?'<div class="ai-pol-err">'+esc(AIPOL.err)+'</div>':'');
+  return '<div class="ai-polbar">AI processing allowed for '+nm+'<button type="button" onclick="aiPolStep(\'off\')">Switch off</button></div>'; }
 function aiFn(){ if(!AI.fn){ AI.fn=firebase.app().functions('us-central1').httpsCallable('askClaude',{timeout:120000}); } return AI.fn; }
 function wide(){ return window.innerWidth>=900; }
 function isMem(m){ return !!(m&&members[m]); }
@@ -5451,7 +5478,7 @@ function aiSnapshot(){
 }
 
 function aiSync(){
-  if(AI.cid!==activeCid){ AI.cid=activeCid; AI.turns=[]; AI.drafts={}; AI.pending=[]; renderAtts(); }
+  if(AI.cid!==activeCid){ AIPOL.step=null; AIPOL.err=''; AI.cid=activeCid; AI.turns=[]; AI.drafts={}; AI.pending=[]; renderAtts(); }
   var co=document.getElementById('aiCo'); if(co) co.textContent=(activeCid&&company&&company.name)?company.name:'';
 }
 window.aiToggle=function(force){
@@ -5659,7 +5686,7 @@ function aiRender(){
   var box=document.getElementById('aiMsgs'); if(!box) return;
   var h='';
   if(activeCid && !aiAllowed(activeCid)){ box.innerHTML=aiPolicyHTML(); var _s0=document.getElementById('aiSend'); if(_s0)_s0.disabled=true; return; } /* PT_AIPOLICY_V1 */
-  if(activeCid) h+='<div class="ai-polbar">AI processing allowed for '+esc(company.name||'this company')+'<button type="button" onclick="if(confirm(\'Switch off Ask Claude for this company?\'))aiPolicySet(false)">Switch off</button></div>';
+  if(activeCid) h+=aiPolBarHTML();
   if(!AI.turns.length){
     h+='<div class="ai-empty"><p>'+(activeCid?('Ask about '+esc(company.name||'this company')+'\u2019s people, issues and priorities, or tell Claude to add something. You confirm every change.'):'Open a company to ask about it.')+'</p>'
       +(activeCid?('<div class="ai-chips">'+SUGGEST.map(function(s,i){ return '<button class="ai-chip" onclick="aiChip('+i+')">'+esc(s)+'</button>'; }).join('')+'</div>'):'')+'</div>';
